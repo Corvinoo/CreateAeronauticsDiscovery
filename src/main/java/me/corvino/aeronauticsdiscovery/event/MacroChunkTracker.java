@@ -29,7 +29,13 @@ public final class MacroChunkTracker {
         Map<Long, Integer> cooldowns = CHUNK_COOLDOWNS.computeIfAbsent(dimKey, k -> new HashMap<>());
 
         for (Long chunkKey : activeChunks) {
-            int cd = cooldowns.getOrDefault(chunkKey, 0);
+            if (!cooldowns.containsKey(chunkKey)) {
+                int seed = Config.flyoverCooldownTicks / 2
+                        + RANDOM.nextInt(Config.flyoverCooldownTicks / 2 + 1);
+                cooldowns.put(chunkKey, seed);
+                continue;
+            }
+            int cd = cooldowns.get(chunkKey);
             if (cd > 0) {
                 cooldowns.put(chunkKey, cd - 1);
                 continue;
