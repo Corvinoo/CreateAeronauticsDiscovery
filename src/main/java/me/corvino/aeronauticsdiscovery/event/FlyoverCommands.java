@@ -7,6 +7,7 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import net.minecraft.core.BlockPos;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -68,6 +69,9 @@ public final class FlyoverCommands {
                         .then(Commands.literal("status")
                                 .executes(ctx -> executeStatus(ctx.getSource()))
                         )
+                        .then(Commands.literal("chunks")
+                                .executes(ctx -> executeChunks(ctx.getSource()))
+                        )
                         .then(Commands.literal("list")
                                 .executes(ctx -> executeList(ctx.getSource()))
                         )
@@ -108,13 +112,44 @@ public final class FlyoverCommands {
         ServerLevel level = source.getLevel();
         FlyoverManager manager = FlyoverManager.get(level);
         int activeCount = manager.getAllFlyovers().size();
+        int chunkCount = MacroChunkTracker.getChunkCooldowns(level).size();
 
         source.sendSuccess(
                 () -> Component.literal("Flyover events: " + (FlyoverEventScheduler.isEnabled() ? "enabled" : "disabled")
                         + " | " + configCount + " config(s) loaded"
-                        + " | " + activeCount + " active flyover(s)"),
+                        + " | " + activeCount + " active flyover(s)"
+                        + " | " + chunkCount + " macro chunk(s)"),
                 false
         );
+        return 1;
+    }
+
+    private static int executeChunks(CommandSourceStack source) {
+        ServerLevel level = source.getLevel();
+        var cooldowns = MacroChunkTracker.getChunkCooldowns(level);
+
+        if (cooldowns.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("No active macro chunks."), false);
+            return 1;
+        }
+
+        int chunkSize = Config.macroChunkSize;
+        source.sendSuccess(() -> Component.literal("=== Macro Chunks (" + cooldowns.size() + " active, size=" + chunkSize + ") ==="), false);
+
+        for (var entry : cooldowns.entrySet()) {
+            long key = entry.getKey();
+            int ticks = entry.getValue();
+            int cx = (int) (key >> 32);
+            int cz = (int) key;
+            BlockPos center = MacroChunkTracker.getChunkCenter(key, chunkSize);
+
+            String status = ticks == 0
+                    ? ChatFormatting.GREEN + "ready" + ChatFormatting.RESET
+                    : ticks + " ticks left";
+            source.sendSuccess(() -> Component.literal(
+                    "  [" + cx + ", " + cz + "] center (" + center.getX() + ", " + center.getZ() + "): " + status
+            ), false);
+        }
         return 1;
     }
 
