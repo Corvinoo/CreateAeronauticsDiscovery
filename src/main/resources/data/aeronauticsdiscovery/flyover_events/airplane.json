@@ -4,7 +4,6 @@
   "max_altitude": 260,
   "horizontal_offset": 80,
   "weight": 1,
-  "cooldown_ticks": 1200,
   "initial_velocity": {
     "linear": [0.0, 0.0, 0.0],
     "angular": [0.0, 0.0, 0.0],
