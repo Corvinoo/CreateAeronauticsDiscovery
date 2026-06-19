@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "aeronauticsdiscovery:balloon_loot",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1739402181,
+    "spacing": 32,
+    "separation": 16
+  }
+}

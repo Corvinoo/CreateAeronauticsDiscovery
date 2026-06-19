@@ -1,0 +1,11 @@
+{
+  "type": "aeronauticsdiscovery:generated_prefab",
+  "biomes": "#aeronauticsdiscovery:has_structure/balloon_loot",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {},
+  "template": "aeronauticsdiscovery:balloon_loot",
+  "fixed_y": 150,
+  "random_rotation": true,
+  "activation_distance": 128
+}

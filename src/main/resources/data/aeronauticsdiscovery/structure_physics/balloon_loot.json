@@ -1,0 +1,8 @@
+{
+  "template": "aeronauticsdiscovery:balloon_loot",
+  "initial_velocity": {
+    "linear": [0, 25, 0],
+    "angular": [0.0, 0.0, 0.0],
+    "impulse": false
+  }
+}
