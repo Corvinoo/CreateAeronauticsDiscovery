@@ -11,7 +11,6 @@ public record FlyoverEventConfig(
         int maxAltitude,
         int horizontalOffset,
         int weight,
-        int cooldownTicks,
         InitialVelocity velocity,
         boolean randomizeYaw
 ) {
@@ -21,7 +20,6 @@ public record FlyoverEventConfig(
             Codec.INT.optionalFieldOf("max_altitude", 280).forGetter(FlyoverEventConfig::maxAltitude),
             Codec.INT.optionalFieldOf("horizontal_offset", 80).forGetter(FlyoverEventConfig::horizontalOffset),
             Codec.INT.optionalFieldOf("weight", 1).forGetter(FlyoverEventConfig::weight),
-            Codec.INT.optionalFieldOf("cooldown_ticks", 12000).forGetter(FlyoverEventConfig::cooldownTicks),
             InitialVelocity.CODEC.codec().optionalFieldOf("initial_velocity", InitialVelocity.NONE).forGetter(FlyoverEventConfig::velocity),
             Codec.BOOL.optionalFieldOf("randomize_yaw", true).forGetter(FlyoverEventConfig::randomizeYaw)
     ).apply(instance, FlyoverEventConfig::new));
