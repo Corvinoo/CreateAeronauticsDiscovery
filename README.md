@@ -31,6 +31,9 @@ New interactions are planned for the existing planes, such as *increased prices 
 
 ---
 
+## Credits structures
+Default plane nbt: @bitmochibit
+
 ## Attributions
 
 - [Create](https://github.com/Creators-of-Create/Create) (licensed under MIT license)
