@@ -38,6 +38,10 @@ public class FlyoverEventRegistry extends SimpleJsonResourceReloadListener {
     }
 
     public FlyoverEventConfig pickRandom(Random random) {
+        return pickRandom(configs, random);
+    }
+
+    static FlyoverEventConfig pickRandom(List<FlyoverEventConfig> configs, Random random) {
         if (configs.isEmpty()) return null;
         int totalWeight = configs.stream().mapToInt(FlyoverEventConfig::weight).sum();
         if (totalWeight <= 0) return configs.get(random.nextInt(configs.size()));
