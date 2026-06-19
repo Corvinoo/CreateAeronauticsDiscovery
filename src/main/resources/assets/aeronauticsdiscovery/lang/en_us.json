@@ -1,0 +1,15 @@
+{
+  "entity.aeronauticsdiscovery.soaring_trader": "Soaring Trader",
+  "item.aeronauticsdiscovery.soaring_trader_spawn_egg": "Soaring Trader Spawn Egg",
+  "filled_map.village_plains": "Plains Village Map",
+  "filled_map.village_desert": "Desert Village Map",
+  "filled_map.village_savanna": "Savanna Village Map",
+  "filled_map.village_snowy": "Snowy Village Map",
+  "filled_map.village_taiga": "Taiga Village Map",
+  "filled_map.aeronauticsdiscovery.jungle_temple": "Jungle Temple Map",
+  "filled_map.aeronauticsdiscovery.desert_pyramid": "Desert Pyramid Map",
+  "filled_map.aeronauticsdiscovery.trail_ruins": "Trail Ruins Map",
+  "filled_map.aeronauticsdiscovery.igloo": "Igloo Map",
+  "filled_map.aeronauticsdiscovery.ancient_city": "Ancient City Map",
+  "filled_map.aeronauticsdiscovery.mineshaft": "Mineshaft Map"
+}

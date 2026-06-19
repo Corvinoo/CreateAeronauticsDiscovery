@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.corvino.aeronauticsdiscovery.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "AeronauticsDiscovery.refmap.json",
+  "mixins": [],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
