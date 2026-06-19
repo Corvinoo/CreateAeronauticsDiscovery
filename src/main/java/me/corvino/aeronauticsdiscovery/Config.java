@@ -25,9 +25,9 @@ public class Config {
 
     static final ModConfigSpec SPEC = BUILDER.build();
 
-    public static int flyoverMaxLifetimeTicks;
-    public static int flyoverCooldownTicks;
-    public static int macroChunkSize;
+    public static int flyoverMaxLifetimeTicks = 18000;
+    public static int flyoverCooldownTicks = 6000;
+    public static int macroChunkSize = 128;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
