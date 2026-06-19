@@ -54,7 +54,7 @@ public final class MacroChunkTracker {
 
         try {
             FlyoverEventScheduler.spawnAtPosition(level, config, center, RANDOM);
-            CreateAeronauticsDiscovery.LOGGER.debug("[FLYOVER] Spawned '{}' in macro chunk {}", config.template(), chunkKey);
+            CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Spawned '{}' in macro chunk {}", config.template(), chunkKey);
         } catch (Exception e) {
             CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Failed to spawn '{}': {}", config.template(), e.getMessage());
         }
@@ -74,5 +74,9 @@ public final class MacroChunkTracker {
         int cx = (int) (key >> 32);
         int cz = (int) key;
         return new BlockPos(cx * chunkSize + chunkSize / 2, 0, cz * chunkSize + chunkSize / 2);
+    }
+
+    public static Map<Long, Integer> getChunkCooldowns(ServerLevel level) {
+        return CHUNK_COOLDOWNS.getOrDefault(level.dimension().location(), Map.of());
     }
 }
