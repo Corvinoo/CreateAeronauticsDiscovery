@@ -33,6 +33,7 @@ public class PlaceBlocksStep implements AssemblyStep {
             return AssemblyResult.FAIL;
         }
 
+        ctx.worldSeatPositions.clear();
         ctx.worldSeatPositions.addAll(SeatPopulator.findSeatPositions(ctx.level, ctx.bounds));
 
         return AssemblyResult.SUCCESS;

@@ -37,6 +37,7 @@ public class AssemblyContext {
     @Nullable public BlockPos assemblerPos;
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
     public final List<BlockPos> worldSeatPositions = new ArrayList<>();
+    public boolean seatsPopulated;
 
     // Builder 
 
