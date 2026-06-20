@@ -3,7 +3,7 @@ package me.corvino.aeronauticsdiscovery.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import me.corvino.aeronauticsdiscovery.assembly.PrefabService;
+import me.corvino.aeronauticsdiscovery.assembly.*;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -61,23 +61,25 @@ public final class PrefabCommands {
             pos = new BlockPos(0, 150, 0);
         }
 
+        ResourceLocation finalId = structureId;
+        BlockPos finalPos = pos;
+
         try {
-            var template = PrefabService.loadPrefab(level, structureId);
+            AssemblyContext ctx = AssemblyContext.builder(level, finalId, AssemblySource.COMMAND)
+                    .anchor(finalPos)
+                    .rotation(net.minecraft.world.level.block.Rotation.NONE)
+                    .activationDistance(128)
+                    .maxRetries(5)
+                    .build();
 
-            var result = PrefabService.placeAndAssemble(level, template, pos, structureId);
-
-            if (result == null) {
-                source.sendFailure(Component.literal("Prefab assembly failed."));
-                return 0;
-            }
+            AssemblyQueue.get(level).enqueue(Pipelines.STANDARD, ctx);
 
             source.sendSuccess(
-                    () -> Component.literal("Prefab placed and assembled."),
+                    () -> Component.literal("Prefab '" + finalId.getPath() + "' enqueued for assembly at " + finalPos.toShortString()),
                     true
             );
 
             return 1;
-
         } catch (Exception e) {
             source.sendFailure(Component.literal("Error: " + e.getMessage()));
             e.printStackTrace();

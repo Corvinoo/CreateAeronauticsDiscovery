@@ -1,7 +1,7 @@
 package me.corvino.aeronauticsdiscovery.event;
 
-import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.assembly.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,17 +31,18 @@ public final class FlyoverEventScheduler {
         MacroChunkTracker.tick(level);
     }
 
-    public static SimAssemblyHelper.AssemblyResult spawnForPlayer(
+    public static void spawnForPlayer(
             ServerLevel level, FlyoverEventConfig config, ServerPlayer player, Random random
-    ) throws Exception {
-        return spawnAtPosition(level, config, player.blockPosition(), random);
+    ) {
+        spawnAtPosition(level, config, player.blockPosition(), random);
     }
 
-    public static SimAssemblyHelper.AssemblyResult spawnAtPosition(
+    public static void spawnAtPosition(
             ServerLevel level, FlyoverEventConfig config, BlockPos centerPos, Random random
-    ) throws Exception {
+    ) {
         if (isFlatWorld(level)) {
-            throw new IllegalStateException("Flyover events are not available in superflat worlds.");
+            CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Skipping flyover in flat world");
+            return;
         }
 
         int altitude = config.minAltitude();
@@ -67,7 +68,19 @@ public final class FlyoverEventScheduler {
         double theta = Math.atan2(centerPos.getZ() - spawnPos.getZ(), centerPos.getX() - spawnPos.getX());
         double yawRadians = -theta - Math.PI / 2;
 
-        return FlyoverSpawner.spawn(level, config, spawnPos, yawRadians);
+        AssemblyContext ctx = AssemblyContext.builder(level, config.template(), AssemblySource.FLYOVER)
+                .anchor(spawnPos)
+                .rotation(net.minecraft.world.level.block.Rotation.NONE)
+                .yawRadians(yawRadians)
+                .flyoverConfig(config)
+                .velocityOverride(config.velocity())
+                .activationDistance(128)
+                .maxRetries(20)
+                .build();
+
+        AssemblyQueue.get(level).enqueue(Pipelines.STANDARD, ctx);
+
+        CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Enqueued '{}' at {}", config.template(), spawnPos);
     }
 
     static boolean isFlatWorld(ServerLevel level) {
