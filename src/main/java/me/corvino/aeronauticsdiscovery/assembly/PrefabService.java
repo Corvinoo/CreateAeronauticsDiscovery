@@ -1,9 +1,10 @@
-package me.corvino.aeronauticsdiscovery;
+package me.corvino.aeronauticsdiscovery.assembly;
 
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
+import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
@@ -23,6 +24,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -221,6 +223,59 @@ public final class PrefabService {
         }
 
         throw new IllegalStateException("Prefab placement area contains only air: " + bounds);
+    }
+
+    public static void applyVelocity(
+            ServerLevel level,
+            SimAssemblyHelper.AssemblyResult result,
+            ResourceLocation templateId,
+            @Nullable InitialVelocity velocityOverride,
+            double yawRadians
+    ) {
+        if (result == null) return;
+
+        InitialVelocity vel = velocityOverride;
+        if (vel == null || vel.equals(InitialVelocity.NONE)) {
+            vel = templateId == null ? InitialVelocity.NONE
+                    : PrefabPhysicsRegistry.getInstance()
+                    .get(templateId)
+                    .map(PrefabPhysicsConfig::initialVelocity)
+                    .orElse(InitialVelocity.NONE);
+        }
+        if (vel.equals(InitialVelocity.NONE)) return;
+
+        Vec3 linear  = rotateVec3(vel.linear(),  yawRadians);
+        Vec3 angular = rotateVec3(vel.angular(), yawRadians);
+
+        RigidBodyHandle handle = RigidBodyHandle.of((ServerSubLevel) result.subLevel());
+
+        CreateAeronauticsDiscovery.LOGGER.info(
+                "[PHYSICS] Applying velocity to '{}' (yaw={} rad): linear={}, angular={}, impulse={}",
+                templateId, String.format("%.3f", yawRadians), linear, angular, vel.impulse()
+        );
+
+        if (vel.impulse()) {
+            handle.applyLinearAndAngularImpulse(
+                    new org.joml.Vector3d(linear.x, linear.y, linear.z),
+                    new org.joml.Vector3d(angular.x, angular.y, angular.z)
+            );
+        } else {
+            handle.addLinearAndAngularVelocity(
+                    new org.joml.Vector3d(linear.x, linear.y, linear.z),
+                    new org.joml.Vector3d(angular.x, angular.y, angular.z)
+            );
+        }
+    }
+
+    public static Vec3 rotateVec3(Vec3 vec, double yawRadians) {
+        if (yawRadians == 0.0) return vec;
+        double cos = Math.cos(yawRadians);
+        double sin = Math.sin(yawRadians);
+        return new Vec3(
+                vec.x * cos + vec.z * sin,
+                vec.y,
+                -vec.x * sin + vec.z * cos
+        );
     }
 
     private record AssemblyStart(BlockPos selfPos, BlockPos toAssemble, String reason) {}
