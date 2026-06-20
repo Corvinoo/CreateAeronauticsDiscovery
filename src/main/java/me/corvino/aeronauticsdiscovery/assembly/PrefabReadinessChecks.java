@@ -11,12 +11,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 
-/**
- * Centralised readiness checks run before a placed prefab is assembled.
- *
- * Add new checks to ALL — both PendingPrefabAssemblies and FlyoverSpawner
- * (when it gains deferred assembly) will automatically pick them up.
- */
 public final class PrefabReadinessChecks {
     private PrefabReadinessChecks() {}
 

@@ -18,7 +18,7 @@ public class GeneratedPrefabStructure extends Structure {
             ResourceLocation.CODEC.fieldOf("template").forGetter(structure -> structure.template),
             Codec.INT.optionalFieldOf("fixed_y", 150).forGetter(structure -> structure.fixedY),
             Codec.BOOL.optionalFieldOf("random_rotation", true).forGetter(structure -> structure.randomRotation),
-            Codec.INT.optionalFieldOf("activation_distance", PendingPrefabAssemblies.DEFAULT_ACTIVATION_DISTANCE).forGetter(structure -> structure.activationDistance)
+            Codec.INT.optionalFieldOf("activation_distance", 128).forGetter(structure -> structure.activationDistance)
     ).apply(instance, GeneratedPrefabStructure::new));
 
     private final ResourceLocation template;

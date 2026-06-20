@@ -4,11 +4,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.ryanhcode.sable.sublevel.SubLevel;
-import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
-import net.minecraft.core.BlockPos;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
 public final class FlyoverCommands {
     private static final Random RANDOM = new Random();
 
-    private static final Map<UUID, UUID> DEBUG_SESSIONS = new HashMap<>();
+    private static final Map<UUID, ResourceLocation> DEBUG_SESSIONS = new HashMap<>();
 
     private FlyoverCommands() {}
 
@@ -300,17 +299,15 @@ public final class FlyoverCommands {
         }
 
         try {
-            SimAssemblyHelper.AssemblyResult result = FlyoverEventScheduler.spawnForPlayer(level, config, player, RANDOM);
-
-            UUID flyoverId = result.subLevel().getUniqueId();
+            FlyoverEventScheduler.spawnForPlayer(level, config, player, RANDOM);
 
             if (enableDebug) {
-                DEBUG_SESSIONS.put(player.getUUID(), flyoverId);
-                source.sendSuccess(() -> Component.literal("Spawned flyover '" + config.template().getPath()
-                        + "' (UUID: " + flyoverId + "). Debug active — check your actionbar."), true);
+                DEBUG_SESSIONS.put(player.getUUID(), config.template());
+                source.sendSuccess(() -> Component.literal("Enqueued flyover '" + config.template().getPath()
+                        + "'. Debug active — check your actionbar."), true);
             } else {
                 source.sendSuccess(
-                        () -> Component.literal("Spawned flyover '" + config.template().getPath() + "' near " + player.getName().getString()),
+                        () -> Component.literal("Enqueued flyover '" + config.template().getPath() + "' near " + player.getName().getString()),
                         true
                 );
             }
@@ -318,7 +315,7 @@ public final class FlyoverCommands {
             return 1;
         } catch (Exception e) {
             CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Command failed: {}", e.getMessage());
-            source.sendFailure(Component.literal("Failed to spawn flyover: " + e.getMessage()));
+            source.sendFailure(Component.literal("Failed to enqueue flyover: " + e.getMessage()));
             return 0;
         }
     }
@@ -326,63 +323,59 @@ public final class FlyoverCommands {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        UUID flyoverId = DEBUG_SESSIONS.get(player.getUUID());
-        if (flyoverId == null) return;
+        ResourceLocation templateId = DEBUG_SESSIONS.get(player.getUUID());
+        if (templateId == null) return;
 
         ServerLevel level = player.serverLevel();
         FlyoverManager manager = FlyoverManager.get(level);
 
-        FlyoverData data = manager.getFlyoverData(flyoverId);
-        SubLevel subLevel = manager.getSubLevel(flyoverId);
+        var allFlyovers = manager.getAllFlyovers();
+        var matching = allFlyovers.entrySet().stream()
+                .filter(e -> e.getValue().templateId().equals(templateId))
+                .findFirst();
 
-        boolean managerTracked = data != null;
-        boolean subLevelExists = subLevel != null;
-        boolean worldAlive = subLevelExists && !subLevel.isRemoved();
-
-        // Auto-clean when flyover is completely gone from both tracking and world
-        if (!managerTracked && !subLevelExists) {
-            DEBUG_SESSIONS.remove(player.getUUID());
+        if (matching.isEmpty()) {
+            boolean timedOut = manager.getAllFlyovers().values().stream()
+                    .noneMatch(d -> d.templateId().equals(templateId));
+            if (timedOut) {
+                DEBUG_SESSIONS.remove(player.getUUID());
+                player.displayClientMessage(
+                        Component.literal("\u2708 " + templateId.getPath() + " | " + ChatFormatting.RED + "GONE"),
+                        true
+                );
+            } else {
+                player.displayClientMessage(
+                        Component.literal("\u2708 " + templateId.getPath() + " | " + ChatFormatting.YELLOW + "WAITING"),
+                        true
+                );
+            }
             return;
         }
 
-        String templateName = data != null ? data.templateId().getPath() : "unknown";
+        UUID flyoverId = matching.get().getKey();
+        FlyoverData data = manager.getFlyoverData(flyoverId);
+        var subLevel = manager.getSubLevel(flyoverId);
+
+        boolean subLevelExists = subLevel != null;
+        boolean worldAlive = subLevelExists && !subLevel.isRemoved();
+
+        String templateName = data.templateId().getPath();
         Component msg;
 
-        if (managerTracked && worldAlive) {
+        if (worldAlive) {
             int elapsedSec = data.lifeTicks() / 20;
             int maxSec = Config.flyoverMaxLifetimeTicks / 20;
             msg = Component.literal(String.format(
-                    "\u2708 %s | %d/%ds (%d%%) | %sTRACKED | %sALIVE",
+                    "\u2708 %s | %d/%ds (%d%%) | %sALIVE",
                     templateName,
                     elapsedSec, maxSec, (data.lifeTicks() * 100 / Config.flyoverMaxLifetimeTicks),
-                    ChatFormatting.GREEN, ChatFormatting.GREEN
-            ));
-        } else if (managerTracked && !subLevelExists) {
-            int elapsedSec = data.lifeTicks() / 20;
-            int maxSec = Config.flyoverMaxLifetimeTicks / 20;
-            boolean expired = data.lifeTicks() >= Config.flyoverMaxLifetimeTicks;
-            String worldState = expired ? "PENDING_REMOVAL" : "UNLOADED";
-            ChatFormatting color = expired ? ChatFormatting.RED : ChatFormatting.YELLOW;
-            msg = Component.literal(String.format(
-                    "\u2708 %s | %d/%ds (%d%%) | %sTRACKED | %s%s",
-                    templateName,
-                    elapsedSec, maxSec, (data.lifeTicks() * 100 / Config.flyoverMaxLifetimeTicks),
-                    ChatFormatting.GREEN, color, worldState
+                    ChatFormatting.GREEN
             ));
         } else {
-            String managerStatus = managerTracked
-                    ? ChatFormatting.GREEN + "TRACKED"
-                    : ChatFormatting.RED + "REMOVED";
-            String worldStatus = worldAlive
-                    ? ChatFormatting.GREEN + "ALIVE"
-                    : subLevelExists
-                            ? ChatFormatting.RED + "REMOVED"
-                            : ChatFormatting.RED + "GONE";
             msg = Component.literal(String.format(
-                    "\u2708 %s | %sDESPAWNED | Manager: %s%s | World: %s%s",
+                    "\u2708 %s | %sDESPAWNED",
                     templateName,
-                    ChatFormatting.RED, managerStatus, ChatFormatting.RESET,
-                    worldStatus, ChatFormatting.RESET
+                    ChatFormatting.RED
             ));
         }
 

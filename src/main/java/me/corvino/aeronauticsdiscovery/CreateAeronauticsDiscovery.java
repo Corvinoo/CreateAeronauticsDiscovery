@@ -12,7 +12,7 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
-import me.corvino.aeronauticsdiscovery.worldgen.PendingPrefabAssemblies;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.api.distmarker.Dist;
@@ -68,7 +68,7 @@ public class CreateAeronauticsDiscovery {
         // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
-        NeoForge.EVENT_BUS.addListener(PendingPrefabAssemblies::onLevelTick);
+        NeoForge.EVENT_BUS.addListener(AssemblyQueue::onLevelTick);
         NeoForge.EVENT_BUS.addListener(FlyoverEventScheduler::onLevelTick);
         NeoForge.EVENT_BUS.addListener(FlyoverManager::onLevelTick);
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);
