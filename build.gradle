@@ -114,6 +114,15 @@ runs {
         systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
     }
 
+    clientMutliplayer {
+        runType 'client'
+
+        systemProperties 'forge.enabledGameTestNamespaces': project.mod_id
+        workingDirectory file('run-dev2')
+        arguments '--username', 'Dev2'
+    }
+    
+
     server {
         systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
         arguments.add '--nogui'
