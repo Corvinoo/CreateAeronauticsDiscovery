@@ -4,7 +4,7 @@ import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
-import me.corvino.aeronauticsdiscovery.PrefabService;
+import me.corvino.aeronauticsdiscovery.assembly.PrefabService;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
@@ -32,7 +31,8 @@ public final class FlyoverSpawner {
         );
 
         rotateAssembledBodyContinuous(result, template, pos, yawRadians);
-        applyVelocityContinuous(level, result, config, yawRadians);
+
+        PrefabService.applyVelocity(level, result, config.template(), config.velocity(), yawRadians);
 
         result.subLevel().setName("flyover");
         FlyoverManager.get(level).addFlyover(result.subLevel(), config.template());
@@ -58,53 +58,6 @@ public final class FlyoverSpawner {
                 bounds.minZ() + (bounds.maxZ() - bounds.minZ() + 1) / 2.0
         );
         handle.teleport(bodyPos, new Quaterniond().rotationY(yawRadians));
-    }
-
-    private static void applyVelocityContinuous(ServerLevel level, SimAssemblyHelper.AssemblyResult result,
-                                                  FlyoverEventConfig config, double yawRadians) {
-        InitialVelocity velocity = resolveVelocity(config);
-        if (velocity.equals(InitialVelocity.NONE)) return;
-
-        Vec3 linear = rotateVec3(velocity.linear(), yawRadians);
-        Vec3 angular = rotateVec3(velocity.angular(), yawRadians);
-
-        RigidBodyHandle handle = RigidBodyHandle.of((ServerSubLevel) result.subLevel());
-
-        CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Applying velocity to '{}' (yaw={} rad): linear={}, angular={}, impulse={}",
-                config.template(), String.format("%.3f", yawRadians), linear, angular, velocity.impulse());
-
-        if (velocity.impulse()) {
-            handle.applyLinearAndAngularImpulse(
-                    new org.joml.Vector3d(linear.x, linear.y, linear.z),
-                    new org.joml.Vector3d(angular.x, angular.y, angular.z)
-            );
-        } else {
-            handle.addLinearAndAngularVelocity(
-                    new org.joml.Vector3d(linear.x, linear.y, linear.z),
-                    new org.joml.Vector3d(angular.x, angular.y, angular.z)
-            );
-        }
-    }
-
-    private static InitialVelocity resolveVelocity(FlyoverEventConfig config) {
-        InitialVelocity velocity = config.velocity();
-        if (velocity == null || velocity.equals(InitialVelocity.NONE)) {
-            velocity = PrefabPhysicsRegistry.getInstance()
-                    .get(config.template())
-                    .map(PrefabPhysicsConfig::initialVelocity)
-                    .orElse(InitialVelocity.NONE);
-        }
-        return velocity;
-    }
-
-    public static Vec3 rotateVec3(Vec3 vec, double yawRadians) {
-        double cos = Math.cos(yawRadians);
-        double sin = Math.sin(yawRadians);
-        return new Vec3(
-                vec.x * cos + vec.z * sin,
-                vec.y,
-                -vec.x * sin + vec.z * cos
-        );
     }
 
 }
