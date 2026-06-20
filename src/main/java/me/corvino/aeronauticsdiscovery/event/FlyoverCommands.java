@@ -309,7 +309,7 @@ public final class FlyoverCommands {
                 PENDING_SESSIONS.put(player.getUUID(), config.template());
                 PENDING_SPAWN_TICKS.put(player.getUUID(), level.getGameTime());
                 source.sendSuccess(() -> Component.literal("Enqueued flyover '" + config.template().getPath()
-                        + "'. Debug active — check your actionbar."), true);
+                        + "'. Debug active - check your actionbar."), true);
             } else {
                 source.sendSuccess(
                         () -> Component.literal("Enqueued flyover '" + config.template().getPath() + "' near " + player.getName().getString()),
@@ -330,68 +330,52 @@ public final class FlyoverCommands {
 
         UUID playerId = player.getUUID();
 
+        // ---- Phase 1: resolved UUID-based tracking ----
         UUID flyoverId = DEBUG_SESSIONS.get(playerId);
         if (flyoverId != null) {
             ServerLevel level = player.serverLevel();
             FlyoverManager manager = FlyoverManager.get(level);
-
             FlyoverData data = manager.getFlyoverData(flyoverId);
             SubLevel subLevel = manager.getSubLevel(flyoverId);
 
-            boolean managerTracked = data != null;
-            boolean subLevelExists = subLevel != null;
-            boolean worldAlive = subLevelExists && !subLevel.isRemoved();
+            boolean alive = data != null && subLevel != null && !subLevel.isRemoved();
+            boolean unloaded = data != null && subLevel == null;
+            boolean expired = data != null && data.lifeTicks() >= Config.flyoverMaxLifetimeTicks;
 
-            if (!managerTracked && !subLevelExists) {
+            if (data == null && subLevel == null) {
                 DEBUG_SESSIONS.remove(playerId);
                 return;
             }
 
             String templateName = data != null ? data.templateId().getPath() : "unknown";
-            Component msg;
+            String status;
 
-            if (managerTracked && worldAlive) {
-                int elapsedSec = data.lifeTicks() / 20;
-                int maxSec = Config.flyoverMaxLifetimeTicks / 20;
-                msg = Component.literal(String.format(
-                        "\u2708 %s | %d/%ds (%d%%) | %sTRACKED | %sALIVE",
-                        templateName,
-                        elapsedSec, maxSec, (data.lifeTicks() * 100 / Config.flyoverMaxLifetimeTicks),
-                        ChatFormatting.GREEN, ChatFormatting.GREEN
-                ));
-            } else if (managerTracked && !subLevelExists) {
-                int elapsedSec = data.lifeTicks() / 20;
-                int maxSec = Config.flyoverMaxLifetimeTicks / 20;
-                boolean expired = data.lifeTicks() >= Config.flyoverMaxLifetimeTicks;
-                String worldState = expired ? "PENDING_REMOVAL" : "UNLOADED";
-                ChatFormatting color = expired ? ChatFormatting.RED : ChatFormatting.YELLOW;
-                msg = Component.literal(String.format(
-                        "\u2708 %s | %d/%ds (%d%%) | %sTRACKED | %s%s",
-                        templateName,
-                        elapsedSec, maxSec, (data.lifeTicks() * 100 / Config.flyoverMaxLifetimeTicks),
-                        ChatFormatting.GREEN, color, worldState
-                ));
+            if (alive) {
+                status = ChatFormatting.GREEN + "ALIVE" + ChatFormatting.RESET;
+            } else if (unloaded) {
+                status = (expired ? ChatFormatting.RED : ChatFormatting.YELLOW) + "UNLOADED" + ChatFormatting.RESET;
             } else {
-                String managerStatus = managerTracked
-                        ? ChatFormatting.GREEN + "TRACKED"
-                        : ChatFormatting.RED + "REMOVED";
-                String worldStatus = worldAlive
-                        ? ChatFormatting.GREEN + "ALIVE"
-                        : subLevelExists
-                                ? ChatFormatting.RED + "REMOVED"
-                                : ChatFormatting.RED + "GONE";
-                msg = Component.literal(String.format(
-                        "\u2708 %s | %sDESPAWNED | Manager: %s%s | World: %s%s",
-                        templateName,
-                        ChatFormatting.RED, managerStatus, ChatFormatting.RESET,
-                        worldStatus, ChatFormatting.RESET
-                ));
+                status = ChatFormatting.RED + "DESPAWNED" + ChatFormatting.RESET;
             }
 
-            player.displayClientMessage(msg, true);
+            String lifeInfo;
+            if (data != null) {
+                int elapsedSec = data.lifeTicks() / 20;
+                int maxSec = Config.flyoverMaxLifetimeTicks / 20;
+                int pct = data.lifeTicks() * 100 / Config.flyoverMaxLifetimeTicks;
+                lifeInfo = String.format("%d/%ds (%d%%) | %s", elapsedSec, maxSec, pct, status);
+            } else {
+                lifeInfo = "??/??s | " + status;
+            }
+
+            player.displayClientMessage(
+                    Component.literal("\u2708 " + templateName + " | " + lifeInfo),
+                    true
+            );
             return;
         }
 
+        // ---- Phase 2: pending templateId-based tracking (UUID not yet known) ----
         ResourceLocation templateId = PENDING_SESSIONS.get(playerId);
         if (templateId == null) return;
 
@@ -399,10 +383,9 @@ public final class FlyoverCommands {
         long spawnTick = PENDING_SPAWN_TICKS.getOrDefault(playerId, 0L);
         long elapsed = level.getGameTime() - spawnTick;
 
-        FlyoverManager manager = FlyoverManager.get(level);
-        var matching = manager.getAllFlyovers().entrySet().stream()
+        var matching = FlyoverManager.get(level).getAllFlyovers().entrySet().stream()
                 .filter(e -> e.getValue().templateId().equals(templateId))
-                .findFirst();
+                .reduce((a, b) -> b);
 
         if (matching.isPresent()) {
             UUID resolvedId = matching.get().getKey();
@@ -412,7 +395,6 @@ public final class FlyoverCommands {
             return;
         }
 
-        // Not yet registered
         if (elapsed < PENDING_TIMEOUT_TICKS) {
             player.displayClientMessage(
                     Component.literal("\u2708 " + templateId.getPath() + " | " + ChatFormatting.YELLOW + "WAITING (" + elapsed + "t)"),
