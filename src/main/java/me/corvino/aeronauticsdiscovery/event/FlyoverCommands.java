@@ -19,10 +19,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public final class FlyoverCommands {
     private static final Random RANDOM = new Random();
@@ -112,43 +110,125 @@ public final class FlyoverCommands {
         ServerLevel level = source.getLevel();
         FlyoverManager manager = FlyoverManager.get(level);
         int activeCount = manager.getAllFlyovers().size();
-        int chunkCount = MacroChunkTracker.getChunkSpawnCooldowns(level).size();
 
-        source.sendSuccess(
-                () -> Component.literal("Flyover events: " + (FlyoverEventScheduler.isEnabled() ? "enabled" : "disabled")
-                        + " | " + configCount + " config(s) loaded"
-                        + " | " + activeCount + " active flyover(s)"
-                        + " | " + chunkCount + " macro chunk(s)"),
-                false
-        );
+        var playerCDs = MacroChunkTracker.getPlayerCooldowns(level);
+        var chunkCDs  = MacroChunkTracker.getChunkSpawnCooldowns(level);
+        int eligibleCount = (int) playerCDs.values().stream().filter(cd -> cd == 0).count();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Flyover events: ").append(FlyoverEventScheduler.isEnabled() ? "enabled" : "disabled");
+        sb.append(" | ").append(configCount).append(" config(s)");
+        sb.append(" | ").append(playerCDs.size()).append(" player(s)");
+        sb.append(" | ").append(eligibleCount).append(" eligible");
+        sb.append(" | ").append(activeCount).append(" active flyover(s)");
+        sb.append(" | ").append(chunkCDs.size()).append(" chunk rate-limiter(s)");
+
+        ServerPlayer player = source.getPlayer();
+        if (player != null) {
+            int chunkSize = Config.macroChunkSize;
+            long chunkKey = MacroChunkTracker.getChunkKey(player.blockPosition(), chunkSize);
+            int cx = (int) (chunkKey >> 32);
+            int cz = (int) chunkKey;
+            BlockPos center = MacroChunkTracker.getChunkCenter(chunkKey, chunkSize);
+            int personalCD = playerCDs.getOrDefault(player.getUUID(), -1);
+
+            sb.append(" | You: chunk [").append(cx).append(", ").append(cz).append("]");
+            sb.append(" center (").append(center.getX()).append(", ").append(center.getZ()).append(")");
+
+            if (personalCD < 0) {
+                sb.append(" | personal CD: ").append(ChatFormatting.YELLOW).append("new").append(ChatFormatting.RESET);
+            } else if (personalCD == 0) {
+                if (chunkCDs.containsKey(chunkKey)) {
+                    sb.append(" | ").append(ChatFormatting.YELLOW).append("eligible (blocked by chunk)").append(ChatFormatting.RESET);
+                } else {
+                    sb.append(" | ").append(ChatFormatting.GREEN).append("eligible (ready!)").append(ChatFormatting.RESET);
+                }
+            } else {
+                sb.append(" | personal CD: ").append(personalCD).append(" ticks");
+            }
+
+            sb.append(" | chunk CD: ");
+            if (chunkCDs.containsKey(chunkKey)) {
+                sb.append(ChatFormatting.RED).append(chunkCDs.get(chunkKey)).append(" ticks").append(ChatFormatting.RESET);
+            } else {
+                sb.append(ChatFormatting.GREEN).append("none").append(ChatFormatting.RESET);
+            }
+        }
+
+        String msg = sb.toString();
+        source.sendSuccess(() -> Component.literal(msg), false);
         return 1;
     }
 
     private static int executeChunks(CommandSourceStack source) {
         ServerLevel level = source.getLevel();
-        var cooldowns = MacroChunkTracker.getChunkSpawnCooldowns(level);
+        var chunkCDs  = MacroChunkTracker.getChunkSpawnCooldowns(level);
+        var playerCDs = MacroChunkTracker.getPlayerCooldowns(level);
+        int chunkSize = Config.macroChunkSize;
 
-        if (cooldowns.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("No active macro chunks."), false);
+        // Group online players by their macro chunk
+        Map<Long, List<ServerPlayer>> playersByChunk = new HashMap<>();
+        for (ServerPlayer p : level.players()) {
+            playersByChunk.computeIfAbsent(
+                    MacroChunkTracker.getChunkKey(p.blockPosition(), chunkSize),
+                    k -> new ArrayList<>()
+            ).add(p);
+        }
+
+        // Union of chunk keys from rate-limiters and player positions
+        Set<Long> allKeys = new HashSet<>(chunkCDs.keySet());
+        allKeys.addAll(playersByChunk.keySet());
+
+        if (allKeys.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("No macro chunks with rate-limiters or players."), false);
             return 1;
         }
 
-        int chunkSize = Config.macroChunkSize;
-        source.sendSuccess(() -> Component.literal("=== Macro Chunks (" + cooldowns.size() + " active, size=" + chunkSize + ") ==="), false);
+        source.sendSuccess(() -> Component.literal("=== Macro Chunks (" + allKeys.size() + " total, size=" + chunkSize + ") ==="), false);
 
-        for (var entry : cooldowns.entrySet()) {
-            long key = entry.getKey();
-            int ticks = entry.getValue();
+        List<Long> sortedKeys = new ArrayList<>(allKeys);
+        Collections.sort(sortedKeys);
+
+        for (long key : sortedKeys) {
             int cx = (int) (key >> 32);
             int cz = (int) key;
             BlockPos center = MacroChunkTracker.getChunkCenter(key, chunkSize);
 
-            String status = ticks == 0
-                    ? ChatFormatting.GREEN + "ready" + ChatFormatting.RESET
-                    : ticks + " ticks left";
-            source.sendSuccess(() -> Component.literal(
-                    "  [" + cx + ", " + cz + "] center (" + center.getX() + ", " + center.getZ() + "): " + status
-            ), false);
+            String header;
+            if (chunkCDs.containsKey(key)) {
+                int ticks = chunkCDs.get(key);
+                header = String.format("  [%d, %d] center (%d, %d): %s%d ticks%s",
+                        cx, cz, center.getX(), center.getZ(),
+                        ChatFormatting.RED, ticks, ChatFormatting.RESET);
+            } else {
+                header = String.format("  [%d, %d] center (%d, %d): %sready%s",
+                        cx, cz, center.getX(), center.getZ(),
+                        ChatFormatting.GREEN, ChatFormatting.RESET);
+            }
+            source.sendSuccess(() -> Component.literal(header), false);
+
+            List<ServerPlayer> chunkPlayers = playersByChunk.get(key);
+            if (chunkPlayers != null) {
+                for (ServerPlayer p : chunkPlayers) {
+                    int cd = playerCDs.getOrDefault(p.getUUID(), -1);
+                    String line;
+                    if (cd < 0) {
+                        line = String.format("    %s: %snew%s",
+                                p.getName().getString(), ChatFormatting.YELLOW, ChatFormatting.RESET);
+                    } else if (cd == 0) {
+                        if (chunkCDs.containsKey(key)) {
+                            line = String.format("    %s: %seligible (blocked by chunk)%s",
+                                    p.getName().getString(), ChatFormatting.YELLOW, ChatFormatting.RESET);
+                        } else {
+                            line = String.format("    %s: %seligible (ready!)%s",
+                                    p.getName().getString(), ChatFormatting.GREEN, ChatFormatting.RESET);
+                        }
+                    } else {
+                        line = String.format("    %s: %d ticks", p.getName().getString(), cd);
+                    }
+                    source.sendSuccess(() -> Component.literal(line), false);
+                }
+            }
         }
         return 1;
     }
