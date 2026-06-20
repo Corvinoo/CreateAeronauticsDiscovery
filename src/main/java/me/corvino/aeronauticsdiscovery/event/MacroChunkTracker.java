@@ -19,16 +19,19 @@ public final class MacroChunkTracker {
         ResourceLocation dimKey = level.dimension().location();
         int chunkSize = Config.macroChunkSize;
 
-        Set<Long> activeChunks = new HashSet<>();
+        Map<Long, List<ServerPlayer>> playersByChunk = new HashMap<>();
         for (ServerPlayer player : level.players()) {
-            activeChunks.add(getChunkKey(player.blockPosition(), chunkSize));
+            playersByChunk.computeIfAbsent(
+                    getChunkKey(player.blockPosition(), chunkSize), k -> new ArrayList<>()
+            ).add(player);
         }
 
-        if (activeChunks.isEmpty()) return;
+        if (playersByChunk.isEmpty()) return;
 
         Map<Long, Integer> cooldowns = CHUNK_COOLDOWNS.computeIfAbsent(dimKey, k -> new HashMap<>());
 
-        for (Long chunkKey : activeChunks) {
+        for (Map.Entry<Long, List<ServerPlayer>> entry : playersByChunk.entrySet()) {
+            Long chunkKey = entry.getKey();
             if (!cooldowns.containsKey(chunkKey)) {
                 int seed = Config.flyoverCooldownTicks / 2
                         + RANDOM.nextInt(Config.flyoverCooldownTicks / 2 + 1);
@@ -40,29 +43,28 @@ public final class MacroChunkTracker {
                 cooldowns.put(chunkKey, cd - 1);
                 continue;
             }
-            trySpawn(level, chunkKey, cooldowns);
+            ServerPlayer player = entry.getValue().get(RANDOM.nextInt(entry.getValue().size()));
+            trySpawn(level, player, chunkKey, cooldowns);
         }
 
-        cooldowns.keySet().retainAll(activeChunks);
+        cooldowns.keySet().retainAll(playersByChunk.keySet());
         if (cooldowns.isEmpty()) {
             CHUNK_COOLDOWNS.remove(dimKey);
         }
     }
 
-    private static void trySpawn(ServerLevel level, Long chunkKey, Map<Long, Integer> cooldowns) {
+    private static void trySpawn(ServerLevel level, ServerPlayer player, Long chunkKey, Map<Long, Integer> cooldowns) {
         FlyoverEventRegistry registry = FlyoverEventRegistry.getInstance();
         if (registry == null || registry.getConfigs().isEmpty()) return;
 
         FlyoverEventConfig config = registry.pickRandom(RANDOM);
         if (config == null) return;
 
-        BlockPos center = getChunkCenter(chunkKey, Config.macroChunkSize);
-
         try {
-            FlyoverEventScheduler.spawnAtPosition(level, config, center, RANDOM);
-            CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Spawned '{}' in macro chunk {}", config.template(), chunkKey);
+            FlyoverEventScheduler.spawnForPlayer(level, config, player, RANDOM);
+            CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Spawned '{}' in macro chunk {} near player {}", config.template(), chunkKey, player.getName().getString());
         } catch (Exception e) {
-            CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Failed to spawn '{}': {}", config.template(), e.getMessage());
+            CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Failed to spawn '{}' near player '{}': {}", config.template(), player.getName().getString(), e.getMessage());
         }
 
         int base = Config.flyoverCooldownTicks;
