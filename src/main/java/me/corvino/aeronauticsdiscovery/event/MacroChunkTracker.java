@@ -10,66 +10,113 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.*;
 
 public final class MacroChunkTracker {
-    private static final Map<ResourceLocation, Map<Long, Integer>> CHUNK_COOLDOWNS = new HashMap<>();
+
+    private static final Map<ResourceLocation, Map<UUID, Integer>> PLAYER_COOLDOWNS =
+            new HashMap<>();
+
+
+    private static final Map<ResourceLocation, Map<Long, Integer>> CHUNK_SPAWN_CDS =
+            new HashMap<>();
+
     private static final Random RANDOM = new Random();
 
     private MacroChunkTracker() {}
 
+
     public static void tick(ServerLevel level) {
-        ResourceLocation dimKey = level.dimension().location();
-        int chunkSize = Config.macroChunkSize;
+        ResourceLocation   dimKey    = level.dimension().location();
+        int                chunkSize = Config.macroChunkSize;
+        Map<UUID, Integer> playerCDs = PLAYER_COOLDOWNS.computeIfAbsent(dimKey, k -> new HashMap<>());
+        Map<Long, Integer> chunkCDs  = CHUNK_SPAWN_CDS.computeIfAbsent(dimKey, k -> new HashMap<>());
 
-        Map<Long, List<ServerPlayer>> playersByChunk = new HashMap<>();
+        //Tick chunk rate-limiters globally, independent of player presence
+        chunkCDs.entrySet().removeIf(e -> {
+            int next = e.getValue() - 1;
+            if (next <= 0) return true; //expired: remove entry
+            e.setValue(next);
+            return false;
+        });
+
+        Set<UUID> online = new HashSet<>();
+
         for (ServerPlayer player : level.players()) {
-            playersByChunk.computeIfAbsent(
-                    getChunkKey(player.blockPosition(), chunkSize), k -> new ArrayList<>()
-            ).add(player);
-        }
+            UUID uuid = player.getUUID();
+            online.add(uuid);
 
-        if (playersByChunk.isEmpty()) return;
+            int cd = playerCDs.getOrDefault(uuid, -1);
 
-        Map<Long, Integer> cooldowns = CHUNK_COOLDOWNS.computeIfAbsent(dimKey, k -> new HashMap<>());
-
-        for (Map.Entry<Long, List<ServerPlayer>> entry : playersByChunk.entrySet()) {
-            Long chunkKey = entry.getKey();
-            if (!cooldowns.containsKey(chunkKey)) {
+            // First time we see this player in this dimension: randomise the
+            // initial delay so a fresh server doesn't fire for everyone at once
+            if (cd < 0) {
                 int seed = Config.flyoverCooldownTicks / 2
                         + RANDOM.nextInt(Config.flyoverCooldownTicks / 2 + 1);
-                cooldowns.put(chunkKey, seed);
+                playerCDs.put(uuid, seed);
                 continue;
             }
-            int cd = cooldowns.get(chunkKey);
+
             if (cd > 0) {
-                cooldowns.put(chunkKey, cd - 1);
+                playerCDs.put(uuid, cd - 1);
                 continue;
             }
-            ServerPlayer player = entry.getValue().get(RANDOM.nextInt(entry.getValue().size()));
-            trySpawn(level, player, chunkKey, cooldowns);
+
+            // cd == 0: player is eligible.  Check chunk rate-limit
+            long chunkKey = getChunkKey(player.blockPosition(), chunkSize);
+            if (chunkCDs.containsKey(chunkKey)) {
+                // Another player already spawned here recently
+                // This player stays at cd = 0 and retries next tick, no data written
+                continue;
+            }
+
+            trySpawn(level, player, chunkKey, playerCDs, chunkCDs);
         }
 
-        cooldowns.keySet().retainAll(playersByChunk.keySet());
-        if (cooldowns.isEmpty()) {
-            CHUNK_COOLDOWNS.remove(dimKey);
-        }
+        // Drop entries for players who left this dimension or logged off
+        playerCDs.keySet().retainAll(online);
+        if (playerCDs.isEmpty()) PLAYER_COOLDOWNS.remove(dimKey);
+        if (chunkCDs.isEmpty()) CHUNK_SPAWN_CDS.remove(dimKey);
     }
 
-    private static void trySpawn(ServerLevel level, ServerPlayer player, Long chunkKey, Map<Long, Integer> cooldowns) {
+
+    private static void trySpawn(
+            ServerLevel        level,
+            ServerPlayer       player,
+            long               chunkKey,
+            Map<UUID, Integer> playerCDs,
+            Map<Long, Integer> chunkCDs
+    ) {
         FlyoverEventRegistry registry = FlyoverEventRegistry.getInstance();
-        if (registry == null || registry.getConfigs().isEmpty()) return;
+        if (registry == null || registry.getConfigs().isEmpty()) {
+            // Registry not ready: leave player at cd = 0, retry next tick
+            return;
+        }
 
         FlyoverEventConfig config = registry.pickRandom(RANDOM);
         if (config == null) return;
 
+        boolean spawned = false;
         try {
             FlyoverEventScheduler.spawnForPlayer(level, config, player, RANDOM);
-            CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Spawned '{}' in macro chunk {} near player {}", config.template(), chunkKey, player.getName().getString());
+            spawned = true;
+            CreateAeronauticsDiscovery.LOGGER.info(
+                    "[FLYOVER] Spawned '{}' in macro chunk {} near player {}",
+                    config.template(), chunkKey, player.getName().getString());
         } catch (Exception e) {
-            CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Failed to spawn '{}' near player '{}': {}", config.template(), player.getName().getString(), e.getMessage());
+            CreateAeronauticsDiscovery.LOGGER.warn(
+                    "[FLYOVER] Failed to spawn '{}' near '{}': {}",
+                    config.template(), player.getName().getString(), e.getMessage());
         }
 
-        int base = Config.flyoverCooldownTicks;
+        if (spawned) {
+            // Arm the chunk rate-limiter so the next eligible player in this area
+            // waits rather than spawning a second plane on the same tick or shortly after.
+            chunkCDs.put(chunkKey, Config.flyoverCooldownTicks/2);
+        }
+
+        // Always advance the player's personal cooldown after an eligible attempt
+        // so a persistently broken spawn path doesn't lock them at cd = 0 forever.
+        int base     = Config.flyoverCooldownTicks;
         int adjusted = base + RANDOM.nextInt(base / 2 + 1);
-        cooldowns.put(chunkKey, adjusted);
+        playerCDs.put(player.getUUID(), adjusted);
     }
 
     public static long getChunkKey(BlockPos pos, int chunkSize) {
@@ -84,7 +131,13 @@ public final class MacroChunkTracker {
         return new BlockPos(cx * chunkSize + chunkSize / 2, 0, cz * chunkSize + chunkSize / 2);
     }
 
-    public static Map<Long, Integer> getChunkCooldowns(ServerLevel level) {
-        return CHUNK_COOLDOWNS.getOrDefault(level.dimension().location(), Map.of());
+    public static Map<UUID, Integer> getPlayerCooldowns(ServerLevel level) {
+        return Collections.unmodifiableMap(
+                PLAYER_COOLDOWNS.getOrDefault(level.dimension().location(), Map.of()));
+    }
+
+    public static Map<Long, Integer> getChunkSpawnCooldowns(ServerLevel level) {
+        return Collections.unmodifiableMap(
+                CHUNK_SPAWN_CDS.getOrDefault(level.dimension().location(), Map.of()));
     }
 }

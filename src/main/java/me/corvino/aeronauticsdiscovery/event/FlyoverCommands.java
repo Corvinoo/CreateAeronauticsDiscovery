@@ -112,7 +112,7 @@ public final class FlyoverCommands {
         ServerLevel level = source.getLevel();
         FlyoverManager manager = FlyoverManager.get(level);
         int activeCount = manager.getAllFlyovers().size();
-        int chunkCount = MacroChunkTracker.getChunkCooldowns(level).size();
+        int chunkCount = MacroChunkTracker.getChunkSpawnCooldowns(level).size();
 
         source.sendSuccess(
                 () -> Component.literal("Flyover events: " + (FlyoverEventScheduler.isEnabled() ? "enabled" : "disabled")
@@ -126,7 +126,7 @@ public final class FlyoverCommands {
 
     private static int executeChunks(CommandSourceStack source) {
         ServerLevel level = source.getLevel();
-        var cooldowns = MacroChunkTracker.getChunkCooldowns(level);
+        var cooldowns = MacroChunkTracker.getChunkSpawnCooldowns(level);
 
         if (cooldowns.isEmpty()) {
             source.sendSuccess(() -> Component.literal("No active macro chunks."), false);
