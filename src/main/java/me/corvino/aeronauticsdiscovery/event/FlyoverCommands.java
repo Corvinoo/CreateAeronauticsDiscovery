@@ -23,8 +23,12 @@ import java.util.stream.Collectors;
 
 public final class FlyoverCommands {
     private static final Random RANDOM = new Random();
+    private static final int PENDING_TIMEOUT_TICKS = 600; // 30 seconds
 
-    private static final Map<UUID, ResourceLocation> DEBUG_SESSIONS = new HashMap<>();
+    private static final Map<UUID, UUID> DEBUG_SESSIONS = new HashMap<>();
+
+    private static final Map<UUID, ResourceLocation> PENDING_SESSIONS = new HashMap<>();
+    private static final Map<UUID, Long> PENDING_SPAWN_TICKS = new HashMap<>();
 
     private FlyoverCommands() {}
 
@@ -302,7 +306,8 @@ public final class FlyoverCommands {
             FlyoverEventScheduler.spawnForPlayer(level, config, player, RANDOM);
 
             if (enableDebug) {
-                DEBUG_SESSIONS.put(player.getUUID(), config.template());
+                PENDING_SESSIONS.put(player.getUUID(), config.template());
+                PENDING_SPAWN_TICKS.put(player.getUUID(), level.getGameTime());
                 source.sendSuccess(() -> Component.literal("Enqueued flyover '" + config.template().getPath()
                         + "'. Debug active — check your actionbar."), true);
             } else {
@@ -323,62 +328,103 @@ public final class FlyoverCommands {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        ResourceLocation templateId = DEBUG_SESSIONS.get(player.getUUID());
-        if (templateId == null) return;
+        UUID playerId = player.getUUID();
 
-        ServerLevel level = player.serverLevel();
-        FlyoverManager manager = FlyoverManager.get(level);
+        UUID flyoverId = DEBUG_SESSIONS.get(playerId);
+        if (flyoverId != null) {
+            ServerLevel level = player.serverLevel();
+            FlyoverManager manager = FlyoverManager.get(level);
 
-        var allFlyovers = manager.getAllFlyovers();
-        var matching = allFlyovers.entrySet().stream()
-                .filter(e -> e.getValue().templateId().equals(templateId))
-                .findFirst();
+            FlyoverData data = manager.getFlyoverData(flyoverId);
+            SubLevel subLevel = manager.getSubLevel(flyoverId);
 
-        if (matching.isEmpty()) {
-            boolean timedOut = manager.getAllFlyovers().values().stream()
-                    .noneMatch(d -> d.templateId().equals(templateId));
-            if (timedOut) {
-                DEBUG_SESSIONS.remove(player.getUUID());
-                player.displayClientMessage(
-                        Component.literal("\u2708 " + templateId.getPath() + " | " + ChatFormatting.RED + "GONE"),
-                        true
-                );
-            } else {
-                player.displayClientMessage(
-                        Component.literal("\u2708 " + templateId.getPath() + " | " + ChatFormatting.YELLOW + "WAITING"),
-                        true
-                );
+            boolean managerTracked = data != null;
+            boolean subLevelExists = subLevel != null;
+            boolean worldAlive = subLevelExists && !subLevel.isRemoved();
+
+            if (!managerTracked && !subLevelExists) {
+                DEBUG_SESSIONS.remove(playerId);
+                return;
             }
+
+            String templateName = data != null ? data.templateId().getPath() : "unknown";
+            Component msg;
+
+            if (managerTracked && worldAlive) {
+                int elapsedSec = data.lifeTicks() / 20;
+                int maxSec = Config.flyoverMaxLifetimeTicks / 20;
+                msg = Component.literal(String.format(
+                        "\u2708 %s | %d/%ds (%d%%) | %sTRACKED | %sALIVE",
+                        templateName,
+                        elapsedSec, maxSec, (data.lifeTicks() * 100 / Config.flyoverMaxLifetimeTicks),
+                        ChatFormatting.GREEN, ChatFormatting.GREEN
+                ));
+            } else if (managerTracked && !subLevelExists) {
+                int elapsedSec = data.lifeTicks() / 20;
+                int maxSec = Config.flyoverMaxLifetimeTicks / 20;
+                boolean expired = data.lifeTicks() >= Config.flyoverMaxLifetimeTicks;
+                String worldState = expired ? "PENDING_REMOVAL" : "UNLOADED";
+                ChatFormatting color = expired ? ChatFormatting.RED : ChatFormatting.YELLOW;
+                msg = Component.literal(String.format(
+                        "\u2708 %s | %d/%ds (%d%%) | %sTRACKED | %s%s",
+                        templateName,
+                        elapsedSec, maxSec, (data.lifeTicks() * 100 / Config.flyoverMaxLifetimeTicks),
+                        ChatFormatting.GREEN, color, worldState
+                ));
+            } else {
+                String managerStatus = managerTracked
+                        ? ChatFormatting.GREEN + "TRACKED"
+                        : ChatFormatting.RED + "REMOVED";
+                String worldStatus = worldAlive
+                        ? ChatFormatting.GREEN + "ALIVE"
+                        : subLevelExists
+                                ? ChatFormatting.RED + "REMOVED"
+                                : ChatFormatting.RED + "GONE";
+                msg = Component.literal(String.format(
+                        "\u2708 %s | %sDESPAWNED | Manager: %s%s | World: %s%s",
+                        templateName,
+                        ChatFormatting.RED, managerStatus, ChatFormatting.RESET,
+                        worldStatus, ChatFormatting.RESET
+                ));
+            }
+
+            player.displayClientMessage(msg, true);
             return;
         }
 
-        UUID flyoverId = matching.get().getKey();
-        FlyoverData data = manager.getFlyoverData(flyoverId);
-        var subLevel = manager.getSubLevel(flyoverId);
+        ResourceLocation templateId = PENDING_SESSIONS.get(playerId);
+        if (templateId == null) return;
 
-        boolean subLevelExists = subLevel != null;
-        boolean worldAlive = subLevelExists && !subLevel.isRemoved();
+        ServerLevel level = player.serverLevel();
+        long spawnTick = PENDING_SPAWN_TICKS.getOrDefault(playerId, 0L);
+        long elapsed = level.getGameTime() - spawnTick;
 
-        String templateName = data.templateId().getPath();
-        Component msg;
+        FlyoverManager manager = FlyoverManager.get(level);
+        var matching = manager.getAllFlyovers().entrySet().stream()
+                .filter(e -> e.getValue().templateId().equals(templateId))
+                .findFirst();
 
-        if (worldAlive) {
-            int elapsedSec = data.lifeTicks() / 20;
-            int maxSec = Config.flyoverMaxLifetimeTicks / 20;
-            msg = Component.literal(String.format(
-                    "\u2708 %s | %d/%ds (%d%%) | %sALIVE",
-                    templateName,
-                    elapsedSec, maxSec, (data.lifeTicks() * 100 / Config.flyoverMaxLifetimeTicks),
-                    ChatFormatting.GREEN
-            ));
-        } else {
-            msg = Component.literal(String.format(
-                    "\u2708 %s | %sDESPAWNED",
-                    templateName,
-                    ChatFormatting.RED
-            ));
+        if (matching.isPresent()) {
+            UUID resolvedId = matching.get().getKey();
+            DEBUG_SESSIONS.put(playerId, resolvedId);
+            PENDING_SESSIONS.remove(playerId);
+            PENDING_SPAWN_TICKS.remove(playerId);
+            return;
         }
 
-        player.displayClientMessage(msg, true);
+        // Not yet registered
+        if (elapsed < PENDING_TIMEOUT_TICKS) {
+            player.displayClientMessage(
+                    Component.literal("\u2708 " + templateId.getPath() + " | " + ChatFormatting.YELLOW + "WAITING (" + elapsed + "t)"),
+                    true
+            );
+        } else {
+            PENDING_SESSIONS.remove(playerId);
+            PENDING_SPAWN_TICKS.remove(playerId);
+            player.displayClientMessage(
+                    Component.literal("\u2708 " + templateId.getPath() + " | " + ChatFormatting.RED + "GONE"),
+                    true
+            );
+        }
     }
 }
