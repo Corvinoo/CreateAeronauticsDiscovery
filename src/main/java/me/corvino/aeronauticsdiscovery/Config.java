@@ -15,7 +15,7 @@ public class Config {
 
     private static final ModConfigSpec.IntValue FLYOVER_COOLDOWN = BUILDER
             .comment("Base cooldown between flyover spawns per macro chunk (20 ticks = 1 second)")
-            .defineInRange("flyover.baseCooldownTicks", 18000, 1, Integer.MAX_VALUE);
+            .defineInRange("flyover.baseCooldownTicks", 12000, 1, Integer.MAX_VALUE);
 
     private static final ModConfigSpec.IntValue MACRO_CHUNK_SIZE = BUILDER
             .comment("Length in blocks of each macro chunk.")
