@@ -2,6 +2,10 @@ package me.corvino.aeronauticsdiscovery.worldgen;
 
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
+import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -86,9 +90,11 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
     private void enqueueAssemblies(WorldGenLevel level) {
         ResourceLocation templateId = ResourceLocation.parse(this.templateName);
         BoundingBox templateBounds = this.template.getBoundingBox(this.placeSettings, this.templatePosition);
+        var serverLevel = level.getLevel();
 
         int assemblerCount = 0;
         BlockPos firstNonAir = null;
+        AssemblyQueue queue = AssemblyQueue.get(serverLevel);
 
         for (BlockPos pos : BlockPos.betweenClosed(
                 templateBounds.minX(), templateBounds.minY(), templateBounds.minZ(),
@@ -105,15 +111,14 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
 
             if (state.getBlock() instanceof PhysicsAssemblerBlock) {
                 assemblerCount++;
-                PendingPrefabAssemblies.enqueue(
-                        level.getLevel(),
-                        templateId,
-                        this.templatePosition,
-                        worldPos,
-                        this.placeSettings.getRotation(),
-                        templateBounds,
-                        this.activationDistance
-                );
+                queue.enqueue(Pipelines.STANDARD,
+                        AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
+                                .templatePos(this.templatePosition)
+                                .rotation(this.placeSettings.getRotation())
+                                .bounds(templateBounds)
+                                .activationDistance(this.activationDistance)
+                                .assemblerPos(worldPos)
+                                .build());
 
                 CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] Queued assembly for PhysicsAssembler at {} (Template: {}, Dist: {})",
                         worldPos, templateId, this.activationDistance);
@@ -123,15 +128,14 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
         if (assemblerCount == 0 && firstNonAir != null) { 
             CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
                     templateId, firstNonAir);
-            PendingPrefabAssemblies.enqueue(
-                    level.getLevel(),
-                    templateId,
-                    this.templatePosition,
-                    firstNonAir,
-                    this.placeSettings.getRotation(),
-                    templateBounds,
-                    this.activationDistance
-            );
+            queue.enqueue(Pipelines.STANDARD,
+                    AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
+                            .templatePos(this.templatePosition)
+                            .rotation(this.placeSettings.getRotation())
+                            .bounds(templateBounds)
+                            .activationDistance(this.activationDistance)
+                            .assemblerPos(firstNonAir)
+                            .build());
         } else if (assemblerCount == 0) {
             CreateAeronauticsDiscovery.LOGGER.warn("[WARN] Template '{}' placed with NO blocks at all!", templateId);
         }
