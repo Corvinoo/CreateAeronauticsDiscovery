@@ -49,6 +49,10 @@ public class AssemblyQueue extends SavedData {
         }
     }
 
+    public List<Entry> getEntries() {
+        return List.copyOf(entries);
+    }
+
     public void enqueue(AssemblyPipeline pipeline, AssemblyContext ctx) {
         entries.add(new Entry(ctx.templateId, pipeline, ctx, 0));
         setDirty();
