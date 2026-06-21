@@ -111,7 +111,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
 
             if (state.getBlock() instanceof PhysicsAssemblerBlock) {
                 assemblerCount++;
-                queue.enqueue(Pipelines.STANDARD,
+                queue.enqueue(Pipelines.WORLDGEN,
                         AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
                                 .templatePos(this.templatePosition)
                                 .rotationTemplate(this.placeSettings.getRotation())
@@ -128,7 +128,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
         if (assemblerCount == 0 && firstNonAir != null) { 
             CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
                     templateId, firstNonAir);
-            queue.enqueue(Pipelines.STANDARD,
+            queue.enqueue(Pipelines.WORLDGEN,
                     AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
                             .templatePos(this.templatePosition)
                             .rotationTemplate(this.placeSettings.getRotation())

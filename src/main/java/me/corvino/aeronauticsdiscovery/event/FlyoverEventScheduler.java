@@ -78,7 +78,7 @@ public final class FlyoverEventScheduler {
                 .maxRetries(20)
                 .build();
 
-        AssemblyQueue.get(level).enqueue(Pipelines.STANDARD, ctx);
+        AssemblyQueue.get(level).enqueue(Pipelines.FLYOVER, ctx);
 
         CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Enqueued '{}' at {}", config.template(), spawnPos);
     }

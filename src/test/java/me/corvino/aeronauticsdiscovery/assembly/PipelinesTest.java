@@ -8,16 +8,42 @@ import static org.junit.jupiter.api.Assertions.*;
 class PipelinesTest {
 
     @Test
-    void standardPipelineIsRegistered() {
-        AssemblyPipeline pipeline = Pipelines.byName("standard");
+    void flyoverPipelineIsRegistered() {
+        AssemblyPipeline pipeline = Pipelines.byName("flyover");
         assertNotNull(pipeline);
-        assertEquals("standard", pipeline.name());
+        assertEquals("flyover", pipeline.name());
     }
 
     @Test
-    void standardPipelineHasAllSteps() {
-        AssemblyPipeline pipeline = Pipelines.byName("standard");
+    void flyoverPipelineHasAllSteps() {
+        AssemblyPipeline pipeline = Pipelines.byName("flyover");
         assertEquals(10, pipeline.steps().size());
+    }
+
+    @Test
+    void worldgenPipelineIsRegistered() {
+        AssemblyPipeline pipeline = Pipelines.byName("worldgen");
+        assertNotNull(pipeline);
+        assertEquals("worldgen", pipeline.name());
+    }
+
+    @Test
+    void worldgenPipelineHasCorrectSteps() {
+        AssemblyPipeline pipeline = Pipelines.byName("worldgen");
+        assertEquals(6, pipeline.steps().size());
+    }
+
+    @Test
+    void commandPipelineIsRegistered() {
+        AssemblyPipeline pipeline = Pipelines.byName("command");
+        assertNotNull(pipeline);
+        assertEquals("command", pipeline.name());
+    }
+
+    @Test
+    void commandPipelineHasCorrectSteps() {
+        AssemblyPipeline pipeline = Pipelines.byName("command");
+        assertEquals(8, pipeline.steps().size());
     }
 
     @Test
@@ -31,8 +57,8 @@ class PipelinesTest {
     }
 
     @Test
-    void standardPipelineContainsAllExpectedStepTypes() {
-        AssemblyPipeline pipeline = Pipelines.byName("standard");
+    void flyoverPipelineContainsAllExpectedStepTypes() {
+        AssemblyPipeline pipeline = Pipelines.byName("flyover");
         Class<?>[] expectedTypes = {
                 LoadTemplateStep.class,
                 PlaceBlocksStep.class,
@@ -44,6 +70,44 @@ class PipelinesTest {
                 RotateBodyStep.class,
                 NameSubLevelStep.class,
                 RegisterFlyoverStep.class,
+        };
+        for (int i = 0; i < expectedTypes.length; i++) {
+            assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
+                    "Step " + i + " should be " + expectedTypes[i].getSimpleName()
+                            + " but was " + pipeline.steps().get(i).getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    void worldgenPipelineContainsExpectedStepTypes() {
+        AssemblyPipeline pipeline = Pipelines.byName("worldgen");
+        Class<?>[] expectedTypes = {
+                LoadTemplateStep.class,
+                ReadinessCheckStep.class,
+                AssembleStep.class,
+                PopulateSeatsStep.class,
+                ApplyVelocityStep.class,
+                NameSubLevelStep.class,
+        };
+        for (int i = 0; i < expectedTypes.length; i++) {
+            assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
+                    "Step " + i + " should be " + expectedTypes[i].getSimpleName()
+                            + " but was " + pipeline.steps().get(i).getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    void commandPipelineContainsExpectedStepTypes() {
+        AssemblyPipeline pipeline = Pipelines.byName("command");
+        Class<?>[] expectedTypes = {
+                LoadTemplateStep.class,
+                PlaceBlocksStep.class,
+                FindAssemblyStartStep.class,
+                ReadinessCheckStep.class,
+                AssembleStep.class,
+                PopulateSeatsStep.class,
+                ApplyVelocityStep.class,
+                NameSubLevelStep.class,
         };
         for (int i = 0; i < expectedTypes.length; i++) {
             assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),

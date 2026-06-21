@@ -9,7 +9,27 @@ import java.util.Map;
 public final class Pipelines {
     private static final Map<String, AssemblyPipeline> REGISTRY = new HashMap<>();
 
-    public static final AssemblyPipeline STANDARD = register(new AssemblyPipeline("standard", List.of(
+    public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", List.of(
+            new LoadTemplateStep(),
+            new PlaceBlocksStep(),
+            new ReadinessCheckStep(),
+            new FindAssemblyStartStep(),
+            new AssembleStep(),
+            new PopulateSeatsStep(),
+            new ApplyVelocityStep(),
+            new RotateBodyStep(),
+            new NameSubLevelStep(),
+            new RegisterFlyoverStep()
+    )));
+
+    public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", List.of(
+            new LoadTemplateStep(),
+            new ReadinessCheckStep(),
+            new AssembleStep(),
+            new NameSubLevelStep()
+    )));
+
+    public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", List.of(
             new LoadTemplateStep(),
             new PlaceBlocksStep(),
             new FindAssemblyStartStep(),
@@ -17,9 +37,7 @@ public final class Pipelines {
             new AssembleStep(),
             new PopulateSeatsStep(),
             new ApplyVelocityStep(),
-            new RotateBodyStep(),
-            new NameSubLevelStep(),
-            new RegisterFlyoverStep()
+            new NameSubLevelStep()
     )));
 
     private Pipelines() {}
