@@ -72,7 +72,7 @@ public final class PrefabCommands {
                     .maxRetries(5)
                     .build();
 
-            AssemblyQueue.get(level).enqueue(Pipelines.STANDARD, ctx);
+            AssemblyQueue.get(level).enqueue(Pipelines.COMMAND, ctx);
 
             source.sendSuccess(
                     () -> Component.literal("Prefab '" + finalId.getPath() + "' enqueued for assembly at " + finalPos.toShortString()),
