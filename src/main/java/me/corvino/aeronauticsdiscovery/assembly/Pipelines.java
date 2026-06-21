@@ -12,8 +12,8 @@ public final class Pipelines {
     public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", List.of(
             new LoadTemplateStep(),
             new PlaceBlocksStep(),
-            new ReadinessCheckStep(),
             new FindAssemblyStartStep(),
+            new ReadinessCheckStep(),
             new AssembleStep(),
             new PopulateSeatsStep(),
             new ApplyVelocityStep(),
@@ -26,6 +26,8 @@ public final class Pipelines {
             new LoadTemplateStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
+            new PopulateSeatsStep(),
+            new ApplyVelocityStep(),
             new NameSubLevelStep()
     )));
 
@@ -55,5 +57,9 @@ public final class Pipelines {
             throw new IllegalArgumentException("Unknown pipeline: " + name);
         }
         return pipeline;
+    }
+
+    public static Map<String, AssemblyPipeline> getAll() {
+        return Map.copyOf(REGISTRY);
     }
 }
