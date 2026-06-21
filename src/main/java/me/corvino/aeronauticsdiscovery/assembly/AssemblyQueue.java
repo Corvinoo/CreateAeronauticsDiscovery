@@ -16,8 +16,8 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class AssemblyQueue extends SavedData {
     private static final String DATA_NAME = CreateAeronauticsDiscovery.MODID + "_assembly_queue";
@@ -60,7 +60,7 @@ public class AssemblyQueue extends SavedData {
         long startNanos = System.nanoTime();
         int beforeCount = entries.size();
 
-        Iterator<Entry> it = entries.iterator();
+        ListIterator<Entry> it = entries.listIterator();
         while (it.hasNext()) {
             Entry entry = it.next();
             AssemblyContext ctx = entry.context;
@@ -95,13 +95,13 @@ public class AssemblyQueue extends SavedData {
                 case FAIL -> {
                     CreateAeronauticsDiscovery.LOGGER.warn("[QUEUE] FAIL: '{}' (src={}, attempt {}/{})",
                             ctx.templateId, ctx.source, entry.retryCount + 1, ctx.maxRetries);
-                    entry = entry.withRetryCount(entry.retryCount + 1);
+                    it.set(entry.withRetryCount(entry.retryCount + 1));
                     setDirty();
                 }
                 case DEFER -> {
                     CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] DEFER: '{}' (src={}, attempt {}/{})",
                             ctx.templateId, ctx.source, entry.retryCount + 1, ctx.maxRetries);
-                    entry = entry.withRetryCount(entry.retryCount + 1);
+                    it.set(entry.withRetryCount(entry.retryCount + 1));
                     setDirty();
                 }
             }
