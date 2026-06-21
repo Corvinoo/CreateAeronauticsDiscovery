@@ -6,7 +6,6 @@ import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
 import me.corvino.aeronauticsdiscovery.seat.SeatPopulator;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 
 public class PlaceBlocksStep implements AssemblyStep {
@@ -16,7 +15,7 @@ public class PlaceBlocksStep implements AssemblyStep {
             return AssemblyResult.SUCCESS;
         }
 
-        Rotation rot = ctx.rotation != null ? ctx.rotation : Rotation.NONE;
+        Rotation rot = ctx.rotationTemplate != null ? ctx.rotationTemplate : Rotation.NONE;
         StructurePlaceSettings settings = new StructurePlaceSettings()
                 .setMirror(Mirror.NONE)
                 .setRotation(rot);

@@ -176,8 +176,8 @@ public class AssemblyQueue extends SavedData {
         tag.putString("Trigger", entry.context.trigger.name());
         writeOptPos(tag, "Anchor", entry.context.anchor);
         writeOptPos(tag, "TemplatePos", entry.context.templatePos);
-        if (entry.context.rotation != null) {
-            tag.putString("Rotation", entry.context.rotation.name());
+        if (entry.context.rotationTemplate != null) {
+            tag.putString("Rotation", entry.context.rotationTemplate.name());
         }
         writeBounds(tag, entry.context.bounds);
         tag.putDouble("YawRadians", entry.context.yawRadians);
@@ -200,7 +200,7 @@ public class AssemblyQueue extends SavedData {
                     readOptPos(tag, "TemplatePos"),
                     tag.contains("Rotation") ? Rotation.valueOf(tag.getString("Rotation")) : null,
                     readBounds(tag),
-                    null, null,
+                    null,
                     tag.getDouble("YawRadians"),
                     tag.getInt("ActivationDistance"),
                     tag.getInt("MaxRetries")

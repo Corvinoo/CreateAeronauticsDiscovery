@@ -5,6 +5,7 @@ import me.corvino.aeronauticsdiscovery.assembly.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
@@ -70,9 +71,8 @@ public final class FlyoverEventScheduler {
 
         AssemblyContext ctx = AssemblyContext.builder(level, config.template(), AssemblySource.FLYOVER)
                 .anchor(spawnPos)
-                .rotation(net.minecraft.world.level.block.Rotation.NONE)
+                .rotationTemplate(Rotation.NONE)
                 .yawRadians(yawRadians)
-                .flyoverConfig(config)
                 .velocityOverride(config.velocity())
                 .activationDistance(128)
                 .maxRetries(20)

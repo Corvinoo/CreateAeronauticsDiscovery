@@ -24,15 +24,14 @@ public class AssemblyContext {
 
     @Nullable public final BlockPos anchor;
     @Nullable public final BlockPos templatePos;
-    @Nullable public final Rotation rotation;
+    @Nullable public final Rotation rotationTemplate;
     @Nullable public BoundingBox bounds;
-    @Nullable public final FlyoverEventConfig flyoverConfig;
     @Nullable public final InitialVelocity velocityOverride;
     public final double yawRadians;
     public final int activationDistance;
     public final int maxRetries;
 
-    // === Accumulated results (populated by pipeline steps) ===
+    //  Accumulated results (populated by pipeline steps)
     @Nullable public StructureTemplate template;
     @Nullable public BlockPos assemblerPos;
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
@@ -43,7 +42,7 @@ public class AssemblyContext {
 
     AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,
                     TriggerType trigger, BlockPos anchor, BlockPos templatePos,
-                    Rotation rotation, BoundingBox bounds, FlyoverEventConfig flyoverConfig,
+                    Rotation rotationTemplate, BoundingBox bounds,
                     InitialVelocity velocityOverride, double yawRadians,
                     int activationDistance, int maxRetries) {
         this.level = level;
@@ -52,9 +51,8 @@ public class AssemblyContext {
         this.trigger = trigger;
         this.anchor = anchor;
         this.templatePos = templatePos;
-        this.rotation = rotation;
+        this.rotationTemplate = rotationTemplate;
         this.bounds = bounds;
-        this.flyoverConfig = flyoverConfig;
         this.velocityOverride = velocityOverride;
         this.yawRadians = yawRadians;
         this.activationDistance = activationDistance;
@@ -76,9 +74,8 @@ public class AssemblyContext {
         private TriggerType trigger;
         private BlockPos anchor;
         private BlockPos templatePos;
-        private Rotation rotation;
+        private Rotation rotationTemplate;
         private BoundingBox bounds;
-        private FlyoverEventConfig flyoverConfig;
         private InitialVelocity velocityOverride;
         private double yawRadians;
         private int activationDistance = 128;
@@ -95,9 +92,8 @@ public class AssemblyContext {
         public Builder trigger(TriggerType trigger) { this.trigger = trigger; return this; }
         public Builder anchor(BlockPos anchor) { this.anchor = anchor; return this; }
         public Builder templatePos(BlockPos templatePos) { this.templatePos = templatePos; return this; }
-        public Builder rotation(Rotation rotation) { this.rotation = rotation; return this; }
+        public Builder rotationTemplate(Rotation rotation) { this.rotationTemplate = rotation; return this; }
         public Builder bounds(BoundingBox bounds) { this.bounds = bounds; return this; }
-        public Builder flyoverConfig(FlyoverEventConfig flyoverConfig) { this.flyoverConfig = flyoverConfig; return this; }
         public Builder velocityOverride(InitialVelocity velocityOverride) { this.velocityOverride = velocityOverride; return this; }
         public Builder yawRadians(double yawRadians) { this.yawRadians = yawRadians; return this; }
         public Builder activationDistance(int activationDistance) { this.activationDistance = activationDistance; return this; }
@@ -106,7 +102,7 @@ public class AssemblyContext {
 
         public AssemblyContext build() {
             AssemblyContext ctx = new AssemblyContext(level, templateId, source, trigger, anchor, templatePos,
-                    rotation, bounds, flyoverConfig, velocityOverride, yawRadians,
+                    rotationTemplate, bounds, velocityOverride, yawRadians,
                     activationDistance, maxRetries);
             ctx.assemblerPos = this.assemblerPos;
             return ctx;
