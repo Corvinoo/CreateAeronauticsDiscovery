@@ -26,7 +26,7 @@ public final class Pipelines {
             new LoadTemplateStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
-            new PopulateSeatsStep(),
+//            new PopulateSeatsStep(),
             new ApplyVelocityStep(),
             new NameSubLevelStep()
     )));
