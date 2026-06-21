@@ -51,9 +51,8 @@ class AssemblyContextTest {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.FLYOVER)
                 .anchor(anchor)
                 .templatePos(templatePos)
-                .rotation(rotation)
+                .rotationTemplate(rotation)
                 .bounds(bounds)
-                .flyoverConfig(config)
                 .velocityOverride(velocity)
                 .yawRadians(1.57)
                 .activationDistance(200)
@@ -63,9 +62,8 @@ class AssemblyContextTest {
 
         assertEquals(anchor, ctx.anchor);
         assertEquals(templatePos, ctx.templatePos);
-        assertEquals(rotation, ctx.rotation);
+        assertEquals(rotation, ctx.rotationTemplate);
         assertEquals(bounds, ctx.bounds);
-        assertSame(config, ctx.flyoverConfig);
         assertEquals(velocity, ctx.velocityOverride);
         assertEquals(1.57, ctx.yawRadians, 1e-6);
         assertEquals(200, ctx.activationDistance);
@@ -79,9 +77,8 @@ class AssemblyContextTest {
 
         assertNull(ctx.anchor);
         assertNull(ctx.templatePos);
-        assertNull(ctx.rotation);
+        assertNull(ctx.rotationTemplate);
         assertNull(ctx.bounds);
-        assertNull(ctx.flyoverConfig);
         assertNull(ctx.velocityOverride);
         assertEquals(0.0, ctx.yawRadians, 1e-6);
         assertEquals(128, ctx.activationDistance);

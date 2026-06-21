@@ -114,7 +114,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                 queue.enqueue(Pipelines.STANDARD,
                         AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
                                 .templatePos(this.templatePosition)
-                                .rotation(this.placeSettings.getRotation())
+                                .rotationTemplate(this.placeSettings.getRotation())
                                 .bounds(templateBounds)
                                 .activationDistance(this.activationDistance)
                                 .assemblerPos(worldPos)
@@ -131,7 +131,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
             queue.enqueue(Pipelines.STANDARD,
                     AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
                             .templatePos(this.templatePosition)
-                            .rotation(this.placeSettings.getRotation())
+                            .rotationTemplate(this.placeSettings.getRotation())
                             .bounds(templateBounds)
                             .activationDistance(this.activationDistance)
                             .assemblerPos(firstNonAir)
