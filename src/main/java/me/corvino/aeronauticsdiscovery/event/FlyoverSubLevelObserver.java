@@ -1,0 +1,22 @@
+package me.corvino.aeronauticsdiscovery.event;
+
+import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
+
+public class FlyoverSubLevelObserver implements SubLevelObserver {
+    private final FlyoverManager manager;
+
+    FlyoverSubLevelObserver(FlyoverManager manager) {
+        this.manager = manager;
+    }
+
+    @Override
+    public void onSubLevelRemoved(SubLevel subLevel, SubLevelRemovalReason reason) {
+        if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
+        if (!manager.flyovers.containsKey(subLevel.getUniqueId())) return;
+
+        FlyoverManager.removeAllEntitiesInSublevel(serverSubLevel, true);
+    }
+}
