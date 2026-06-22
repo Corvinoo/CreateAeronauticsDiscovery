@@ -13,8 +13,8 @@ class ReadinessCheckStepTest {
     private static final ResourceLocation TEMPLATE_ID = ResourceLocation.parse("aeronauticsdiscovery:test");
 
     @Test
-    void defersWhenBoundsAreNull() {
+    void failsWhenBoundsAreNull() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN).build();
-        assertEquals(AssemblyResult.DEFER, new ReadinessCheckStep().run(ctx));
+        assertEquals(AssemblyResult.FAIL, new ReadinessCheckStep().run(ctx));
     }
 }

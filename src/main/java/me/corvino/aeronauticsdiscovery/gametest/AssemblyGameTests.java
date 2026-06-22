@@ -71,32 +71,6 @@ public class AssemblyGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
-    public void pipelineShortCircuitsOnDefer(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
-        BlockPos rA = new BlockPos(1, 2, 1);
-        BlockPos rB = new BlockPos(2, 2, 1);
-        BlockPos rC = new BlockPos(3, 2, 1);
-        BlockPos a = helper.absolutePos(rA);
-        BlockPos b = helper.absolutePos(rB);
-        BlockPos c = helper.absolutePos(rC);
-
-        AssemblyPipeline p = new AssemblyPipeline("defer_mid", List.of(
-                ctx -> { level.setBlockAndUpdate(a, Blocks.REDSTONE_BLOCK.defaultBlockState()); return AssemblyResult.SUCCESS; },
-                ctx -> { level.setBlockAndUpdate(b, Blocks.DIAMOND_BLOCK.defaultBlockState());   return AssemblyResult.DEFER;   },
-                ctx -> { level.setBlockAndUpdate(c, Blocks.EMERALD_BLOCK.defaultBlockState());   return AssemblyResult.SUCCESS; }
-        ));
-
-        AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build());
-        if (result != AssemblyResult.DEFER) {
-            throw new GameTestAssertException("Expected DEFER but got " + result);
-        }
-        helper.assertBlockPresent(Blocks.REDSTONE_BLOCK, rA);
-        helper.assertBlockPresent(Blocks.DIAMOND_BLOCK, rB);
-        helper.assertBlockNotPresent(Blocks.EMERALD_BLOCK, rC);
-        helper.succeed();
-    }
-
     // ========================================================================
     // Queue integration – IMMEDIATE trigger processing
     // ========================================================================
@@ -160,45 +134,6 @@ public class AssemblyGameTests {
         helper.succeedWhen(() -> {
             if (!level.getBlockState(a1).is(Blocks.REDSTONE_BLOCK)) throw new GameTestAssertException("Attempt 0 not made");
             if (!level.getBlockState(a2).is(Blocks.REDSTONE_BLOCK)) throw new GameTestAssertException("Attempt 1 not made");
-            if (!level.getBlockState(a3).is(Blocks.AIR))           throw new GameTestAssertException("Attempt 2 should have been discarded");
-        });
-    }
-
-    // ========================================================================
-    // Queue retry behaviour on DEFER
-    // ========================================================================
-
-    @GameTest(template = "empty")
-    public void queueRetriesOnDeferThenDiscards(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
-        BlockPos r1 = new BlockPos(1, 2, 1);
-        BlockPos r2 = new BlockPos(2, 2, 1);
-        BlockPos r3 = new BlockPos(3, 2, 1);
-        BlockPos a1 = helper.absolutePos(r1);
-        BlockPos a2 = helper.absolutePos(r2);
-        BlockPos a3 = helper.absolutePos(r3);
-
-        int[] callCount = {0};
-        AssemblyPipeline deferPipeline = new AssemblyPipeline("defer", List.of(ctx -> {
-            callCount[0]++;
-            BlockPos p = switch (callCount[0]) {
-                case 1 -> a1;
-                case 2 -> a2;
-                case 3 -> a3;
-                default -> null;
-            };
-            if (p != null) level.setBlockAndUpdate(p, Blocks.DIAMOND_BLOCK.defaultBlockState());
-            return AssemblyResult.DEFER;
-        }));
-
-        AssemblyQueue.get(level).enqueue(deferPipeline, AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND)
-                .trigger(TriggerType.IMMEDIATE)
-                .maxRetries(2)
-                .build());
-
-        helper.succeedWhen(() -> {
-            if (!level.getBlockState(a1).is(Blocks.DIAMOND_BLOCK)) throw new GameTestAssertException("Attempt 0 not made");
-            if (!level.getBlockState(a2).is(Blocks.DIAMOND_BLOCK)) throw new GameTestAssertException("Attempt 1 not made");
             if (!level.getBlockState(a3).is(Blocks.AIR))           throw new GameTestAssertException("Attempt 2 should have been discarded");
         });
     }
