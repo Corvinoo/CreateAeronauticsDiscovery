@@ -117,7 +117,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                                 .rotationTemplate(this.placeSettings.getRotation())
                                 .bounds(templateBounds)
                                 .activationDistance(this.activationDistance)
-                                .assemblerPos(worldPos)
+                                .anchor(worldPos)
                                 .build());
 
                 CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] Queued assembly for PhysicsAssembler at {} (Template: {}, Dist: {})",
@@ -134,7 +134,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                             .rotationTemplate(this.placeSettings.getRotation())
                             .bounds(templateBounds)
                             .activationDistance(this.activationDistance)
-                            .assemblerPos(firstNonAir)
+                            .anchor(firstNonAir)
                             .build());
         } else if (assemblerCount == 0) {
             CreateAeronauticsDiscovery.LOGGER.warn("[WARN] Template '{}' placed with NO blocks at all!", templateId);

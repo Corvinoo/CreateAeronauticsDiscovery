@@ -59,7 +59,6 @@ public final class FlyoverEventScheduler {
         int offset = Math.max(48, maxDist - 24 + random.nextInt(17) - 8);
 
         double angle = random.nextDouble() * 2 * Math.PI;
-
         int dx = (int) (Math.cos(angle) * offset);
         int dz = (int) (Math.sin(angle) * offset);
 
@@ -91,7 +90,6 @@ public final class FlyoverEventScheduler {
     static boolean isFlatWorld(ServerLevel level) {
         var generator = level.getChunkSource().getGenerator();
         if (generator instanceof FlatLevelSource) return true;
-        if (generator.getClass().getName().equals(FlatLevelSource.class.getName())) return true;
-        return false;
+        return generator.getClass().getName().equals(FlatLevelSource.class.getName());
     }
 }

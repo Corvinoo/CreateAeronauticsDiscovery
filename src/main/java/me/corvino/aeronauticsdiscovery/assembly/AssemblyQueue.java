@@ -163,7 +163,7 @@ public class AssemblyQueue extends SavedData {
         if (ctx.bounds == null) return false;
         int distance = Math.max(1, ctx.activationDistance);
         double maxDistSqr = (double) distance * distance;
-        BlockPos center = ctx.assemblerPos != null ? ctx.assemblerPos
+        BlockPos center = ctx.anchor != null ? ctx.anchor
                 : new BlockPos(
                         (ctx.bounds.minX() + ctx.bounds.maxX()) / 2,
                         (ctx.bounds.minY() + ctx.bounds.maxY()) / 2,
@@ -225,7 +225,6 @@ public class AssemblyQueue extends SavedData {
         writeBounds(tag, entry.context.bounds);
         tag.putInt("ActivationDistance", entry.context.activationDistance);
         tag.putInt("MaxRetries", entry.context.maxRetries);
-        writeOptPos(tag, "AssemblerPos", entry.context.assemblerPos);
         tag.putDouble("YawRadians", entry.context.yawRadians);
         if (entry.context.subLevelName != null) {
             tag.putString("SubLevelName", entry.context.subLevelName);
@@ -250,7 +249,6 @@ public class AssemblyQueue extends SavedData {
                     tag.getInt("ActivationDistance"),
                     tag.getInt("MaxRetries")
             );
-            ctx.assemblerPos = readOptPos(tag, "AssemblerPos");
             ctx.yawRadians = tag.getDouble("YawRadians");
             if (tag.contains("SubLevelName")) {
                 ctx.subLevelName = tag.getString("SubLevelName");
