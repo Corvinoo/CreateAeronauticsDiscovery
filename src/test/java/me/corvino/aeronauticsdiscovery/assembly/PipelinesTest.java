@@ -17,7 +17,7 @@ class PipelinesTest {
     @Test
     void flyoverPipelineHasAllSteps() {
         AssemblyPipeline pipeline = Pipelines.byName("flyover");
-        assertEquals(10, pipeline.steps().size());
+        assertEquals(6, pipeline.steps().size());
     }
 
     @Test
@@ -30,7 +30,7 @@ class PipelinesTest {
     @Test
     void worldgenPipelineHasCorrectSteps() {
         AssemblyPipeline pipeline = Pipelines.byName("worldgen");
-        assertEquals(6, pipeline.steps().size());
+        assertEquals(3, pipeline.steps().size());
     }
 
     @Test
@@ -43,7 +43,7 @@ class PipelinesTest {
     @Test
     void commandPipelineHasCorrectSteps() {
         AssemblyPipeline pipeline = Pipelines.byName("command");
-        assertEquals(8, pipeline.steps().size());
+        assertEquals(6, pipeline.steps().size());
     }
 
     @Test
@@ -66,10 +66,6 @@ class PipelinesTest {
                 ReadinessCheckStep.class,
                 AssembleStep.class,
                 PopulateSeatsStep.class,
-                ApplyVelocityStep.class,
-                RotateBodyStep.class,
-                NameSubLevelStep.class,
-                RegisterFlyoverStep.class,
         };
         for (int i = 0; i < expectedTypes.length; i++) {
             assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
@@ -85,9 +81,6 @@ class PipelinesTest {
                 LoadTemplateStep.class,
                 ReadinessCheckStep.class,
                 AssembleStep.class,
-                PopulateSeatsStep.class,
-                ApplyVelocityStep.class,
-                NameSubLevelStep.class,
         };
         for (int i = 0; i < expectedTypes.length; i++) {
             assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
@@ -106,8 +99,6 @@ class PipelinesTest {
                 ReadinessCheckStep.class,
                 AssembleStep.class,
                 PopulateSeatsStep.class,
-                ApplyVelocityStep.class,
-                NameSubLevelStep.class,
         };
         for (int i = 0; i < expectedTypes.length; i++) {
             assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
