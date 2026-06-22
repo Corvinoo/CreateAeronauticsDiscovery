@@ -1,10 +1,16 @@
 package me.corvino.aeronauticsdiscovery.event;
 
+import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
@@ -14,21 +20,26 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.common.world.chunk.TicketController;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Predicate;
 
 public class FlyoverManager extends SavedData {
+    public static TicketController ticketController = new TicketController(
+            ResourceLocation.fromNamespaceAndPath(CreateAeronauticsDiscovery.MODID, "chunkticketmanager")
+    );
+
     private static final String DATA_NAME = CreateAeronauticsDiscovery.MODID + "_flyovers";
     private static final String TAG_KEY = "Flyovers";
 
-    private final Map<UUID, FlyoverData> flyovers = new LinkedHashMap<>();
+    final Map<UUID, FlyoverData> flyovers = new LinkedHashMap<>();
     private ServerLevel level;
+
+    private boolean observerRegistered = false;
 
     public FlyoverManager() {
         this(null);
@@ -43,6 +54,15 @@ public class FlyoverManager extends SavedData {
                 new Factory<>(FlyoverManager::new, (tag, provider) -> load(level, tag), null),
                 DATA_NAME);
         manager.level = level;
+
+        if (!manager.observerRegistered) {
+            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+            if (container != null) {
+                container.addObserver(new FlyoverSubLevelObserver(manager));
+                manager.observerRegistered = true;
+            }
+        }
+
         return manager;
     }
 
@@ -58,10 +78,13 @@ public class FlyoverManager extends SavedData {
     }
 
     @javax.annotation.Nullable
-    public SubLevel getSubLevel(UUID subLevelId) {
+    public ServerSubLevel getSubLevel(UUID subLevelId) {
         if (this.level == null) return null;
-        SubLevelContainer container = SubLevelContainer.getContainer(this.level);
-        return container.getSubLevel(subLevelId);
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(this.level);
+        if (container == null) return null;
+        var sublevelFound = container.getSubLevel(subLevelId);
+        if (!(sublevelFound instanceof ServerSubLevel)) return null;
+        return (ServerSubLevel) sublevelFound;
     }
 
     public Map<UUID, FlyoverData> getAllFlyovers() {
@@ -85,12 +108,6 @@ public class FlyoverManager extends SavedData {
         return false;
     }
 
-    private static void discardBoundEntities(ServerLevel level, SubLevel subLevel) {
-        AABB bb = subLevel.boundingBox().toMojang();
-        for (Entity entity : level.getEntities((Entity) null, bb, e -> !(e instanceof ServerPlayer))) {
-            entity.discard();
-        }
-    }
 
     public void tick() {
         if (this.flyovers.isEmpty()) return;
@@ -100,7 +117,7 @@ public class FlyoverManager extends SavedData {
 
         for (Map.Entry<UUID, FlyoverData> entry : this.flyovers.entrySet()) {
             FlyoverData data = entry.getValue();
-            SubLevel subLevel = this.getSubLevel(data.subLevelId());
+            var subLevel = this.getSubLevel(data.subLevelId());
 
             if (subLevel == null) {
                 if (data.lifeTicks() >= maxLifetime) {
@@ -132,10 +149,9 @@ public class FlyoverManager extends SavedData {
             entry.setValue(data);
 
             if (data.lifeTicks() >= maxLifetime) {
-                CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Despawning flyover {} (template '{}') after {} ticks",
-                        data.subLevelId(), data.templateId(), data.lifeTicks());
-                discardBoundEntities(this.level, subLevel);
-                subLevel.markRemoved();
+                removeAllEntitiesInSublevel(subLevel, true);
+                Objects.requireNonNull(SubLevelContainer.getContainer(level))
+                        .removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
                 toRemove.add(entry.getKey());
             }
         }
@@ -145,6 +161,66 @@ public class FlyoverManager extends SavedData {
                 this.flyovers.remove(id);
             }
             this.setDirty();
+        }
+    }
+
+
+
+    public static void removeAllEntitiesInSublevel(ServerSubLevel subLevel, Boolean forceLoadChunks) {
+        removeAllEntitiesInSublevel(subLevel, forceLoadChunks, null);
+    }
+
+    public static void removeAllEntitiesInSublevel(ServerSubLevel subLevel, Boolean forceLoadChunks, @Nullable Predicate<Entity> filter) {
+        var level = (ServerLevel) subLevel.getLevel();
+        var entitiesToRemove = new ArrayList<Entity>();
+
+        level.getAllEntities().forEach(entity -> {
+            if (entity instanceof ServerPlayer) return;
+            if (entity == null) return;
+            if (filter != null && !filter.test(entity)) return;
+            SubLevel containing = Sable.HELPER.getContaining(entity);
+            if (containing == null) return;
+            if (!containing.getUniqueId().equals(subLevel.getUniqueId())) return;
+
+            entity.getPassengers().forEach(passenger -> {
+                if (!(passenger instanceof ServerPlayer) && (filter == null || filter.test(passenger))) {
+                    passenger.stopRiding();
+                    entitiesToRemove.add(passenger);
+                }
+            });
+            entitiesToRemove.add(entity);
+        });
+
+        entitiesToRemove.forEach(e -> e.remove(Entity.RemovalReason.DISCARDED));
+        entitiesToRemove.clear();
+
+        AABB bb = subLevel.boundingBox().toMojang();
+        int minCX = SectionPos.blockToSectionCoord((int) bb.minX);
+        int minCZ = SectionPos.blockToSectionCoord((int) bb.minZ);
+        int maxCX = SectionPos.blockToSectionCoord((int) bb.maxX);
+        int maxCZ = SectionPos.blockToSectionCoord((int) bb.maxZ);
+
+        if (forceLoadChunks) {
+            for (int cx = minCX; cx <= maxCX; cx++)
+                for (int cz = minCZ; cz <= maxCZ; cz++)
+                    FlyoverManager.ticketController.forceChunk(level, subLevel.getUniqueId(), cx, cz, true, true);
+        }
+
+        level.getEntities((Entity) null, bb, e -> !(e instanceof ServerPlayer) && (filter == null || filter.test(e)))
+                .forEach(entity -> {
+                    entity.getPassengers().forEach(passenger -> {
+                        if (!(passenger instanceof ServerPlayer) && (filter == null || filter.test(passenger))) {
+                            passenger.stopRiding();
+                            passenger.remove(Entity.RemovalReason.DISCARDED);
+                        }
+                    });
+                    entity.remove(Entity.RemovalReason.DISCARDED);
+                });
+
+        if (forceLoadChunks) {
+            for (int cx = minCX; cx <= maxCX; cx++)
+                for (int cz = minCZ; cz <= maxCZ; cz++)
+                    FlyoverManager.ticketController.forceChunk(level, subLevel.getUniqueId(), cx, cz, false, true);
         }
     }
 
@@ -170,3 +246,4 @@ public class FlyoverManager extends SavedData {
         return manager;
     }
 }
+

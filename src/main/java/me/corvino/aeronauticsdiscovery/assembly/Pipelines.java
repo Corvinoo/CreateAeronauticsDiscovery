@@ -11,10 +11,13 @@ public final class Pipelines {
 
     public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", List.of(
             new LoadTemplateStep(),
+//            new LoadChunkStep(),
             new PlaceBlocksStep(),
+//            new UnloadChunkStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
+//            new CleanUpItemEntities(),
             new PopulateSeatsStep()
     )));
 
@@ -27,9 +30,12 @@ public final class Pipelines {
     public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", List.of(
             new LoadTemplateStep(),
             new PlaceBlocksStep(),
+//            new LoadChunkStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
+//            new UnloadChunkStep(),
+//            new CleanUpItemEntities(),
             new PopulateSeatsStep()
     )));
 

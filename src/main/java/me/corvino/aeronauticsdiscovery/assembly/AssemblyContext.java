@@ -19,7 +19,7 @@ public class AssemblyContext {
     public final AssemblySource source;
     public final TriggerType trigger;
 
-    @Nullable public final BlockPos anchor;
+    @Nullable public BlockPos anchor;
     @Nullable public final BlockPos templatePos;
     @Nullable public final Rotation rotationTemplate;
     @Nullable public BoundingBox bounds;
@@ -32,7 +32,6 @@ public class AssemblyContext {
     public boolean registerAsFlyover;
 
     @Nullable public StructureTemplate template;
-    @Nullable public BlockPos assemblerPos;
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
     public final List<BlockPos> worldSeatPositions = new ArrayList<>();
     public boolean seatsPopulated;
@@ -72,7 +71,6 @@ public class AssemblyContext {
         private BoundingBox bounds;
         private int activationDistance = 128;
         private int maxRetries = 60;
-        private BlockPos assemblerPos;
         private double yawRadians;
         private InitialVelocity velocityOverride;
         private String subLevelName;
@@ -92,7 +90,6 @@ public class AssemblyContext {
         public Builder bounds(BoundingBox bounds) { this.bounds = bounds; return this; }
         public Builder activationDistance(int activationDistance) { this.activationDistance = activationDistance; return this; }
         public Builder maxRetries(int maxRetries) { this.maxRetries = maxRetries; return this; }
-        public Builder assemblerPos(BlockPos assemblerPos) { this.assemblerPos = assemblerPos; return this; }
         public Builder setYaw(double yawRadians) { this.yawRadians = yawRadians; return this; }
         public Builder overrideVelocity(InitialVelocity velocity) { this.velocityOverride = velocity; return this; }
         public Builder setName(String name) { this.subLevelName = name; return this; }
@@ -101,7 +98,6 @@ public class AssemblyContext {
         public AssemblyContext build() {
             AssemblyContext ctx = new AssemblyContext(level, templateId, source, trigger, anchor, templatePos,
                     rotationTemplate, bounds, activationDistance, maxRetries);
-            ctx.assemblerPos = this.assemblerPos;
             ctx.yawRadians = this.yawRadians;
             ctx.velocityOverride = this.velocityOverride;
             ctx.subLevelName = this.subLevelName;

@@ -15,6 +15,7 @@ import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
@@ -27,6 +28,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -76,6 +78,8 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
 
+        modEventBus.addListener(this::onTicketControllerRegister);
+
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
 
@@ -84,6 +88,10 @@ public class CreateAeronauticsDiscovery {
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
+
+    void onTicketControllerRegister(RegisterTicketControllersEvent event) {
+        event.register(FlyoverManager.ticketController);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
