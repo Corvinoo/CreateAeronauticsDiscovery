@@ -133,51 +133,16 @@ public class AssemblyQueue extends SavedData {
     private static void runPostAssembly(ServerLevel level, AssemblyContext ctx) {
         if (ctx.assemblyResult == null
                 || !(ctx.assemblyResult.subLevel() instanceof ServerSubLevel subLevel)) return;
-
         RigidBodyHandle handle = RigidBodyHandle.of(subLevel);
         if (handle == null || !handle.isValid()) return;
 
-        if (ctx.yawRadians != 0.0 && ctx.bounds != null) {
-            Vector3d bodyPos = new Vector3d(
-                    ctx.bounds.minX() + (ctx.bounds.maxX() - ctx.bounds.minX() + 1) / 2.0,
-                    ctx.bounds.minY() + (ctx.bounds.maxY() - ctx.bounds.minY() + 1) / 2.0,
-                    ctx.bounds.minZ() + (ctx.bounds.maxZ() - ctx.bounds.minZ() + 1) / 2.0
-            );
-            handle.teleport(bodyPos, new Quaterniond().rotationY(ctx.yawRadians));
-        }
-
-        InitialVelocity vel = resolveVelocity(ctx);
-        if (vel != null && !vel.equals(InitialVelocity.NONE)) {
-            Vec3 linear = vel.linear();
-            Vec3 angular = vel.angular();
-            if (ctx.yawRadians != 0.0) {
-                linear = rotateVec3(linear, ctx.yawRadians);
-                angular = rotateVec3(angular, ctx.yawRadians);
-            }
-
-            CreateAeronauticsDiscovery.LOGGER.info("[PHYSICS] Applying velocity to '{}': linear={}, angular={}, impulse={}",
-                    ctx.templateId, linear, angular, vel.impulse());
-
-            if (vel.impulse()) {
-                handle.applyLinearAndAngularImpulse(
-                        new org.joml.Vector3d(linear.x, linear.y, linear.z),
-                        new org.joml.Vector3d(angular.x, angular.y, angular.z)
-                );
-            } else {
-                handle.addLinearAndAngularVelocity(
-                        new org.joml.Vector3d(linear.x, linear.y, linear.z),
-                        new org.joml.Vector3d(angular.x, angular.y, angular.z)
-                );
-            }
-        }
-
-        String name = ctx.subLevelName != null ? ctx.subLevelName : ctx.templateId.getPath();
-        subLevel.setName(name);
-
-        if (ctx.registerAsFlyover) {
-            FlyoverManager.get(level).addFlyover(subLevel, ctx.templateId);
-        }
+        PostAssembly.teleportBodyYaw(ctx, handle);
+        PostAssembly.applyVelocity(ctx, handle);
+        PostAssembly.nameSubLevel(ctx, subLevel);
+        PostAssembly.registerFlyover(level, ctx, subLevel);
     }
+
+    
 
     private static InitialVelocity resolveVelocity(AssemblyContext ctx) {
         if (ctx.velocityOverride != null && !ctx.velocityOverride.equals(InitialVelocity.NONE)) {
@@ -337,5 +302,55 @@ public class AssemblyQueue extends SavedData {
                 tag.getInt("MinX"), tag.getInt("MinY"), tag.getInt("MinZ"),
                 tag.getInt("MaxX"), tag.getInt("MaxY"), tag.getInt("MaxZ")
         );
+    }
+    
+    private static class PostAssembly{
+        private static void teleportBodyYaw(AssemblyContext ctx, RigidBodyHandle handle) {
+            if (ctx.yawRadians == 0.0 || ctx.bounds == null) return;
+            Vector3d bodyPos = new Vector3d(
+                    ctx.bounds.minX() + (ctx.bounds.maxX() - ctx.bounds.minX() + 1) / 2.0,
+                    ctx.bounds.minY() + (ctx.bounds.maxY() - ctx.bounds.minY() + 1) / 2.0,
+                    ctx.bounds.minZ() + (ctx.bounds.maxZ() - ctx.bounds.minZ() + 1) / 2.0
+            );
+            handle.teleport(bodyPos, new Quaterniond().rotationY(ctx.yawRadians));
+        }
+
+        private static void applyVelocity(AssemblyContext ctx, RigidBodyHandle handle) {
+            InitialVelocity vel = resolveVelocity(ctx);
+            if (vel == null || vel.equals(InitialVelocity.NONE)) return;
+
+            Vec3 linear = vel.linear();
+            Vec3 angular = vel.angular();
+            if (ctx.yawRadians != 0.0) {
+                linear = rotateVec3(linear, ctx.yawRadians);
+                angular = rotateVec3(angular, ctx.yawRadians);
+            }
+
+            CreateAeronauticsDiscovery.LOGGER.info("[PHYSICS] Applying velocity to '{}': linear={}, angular={}, impulse={}",
+                    ctx.templateId, linear, angular, vel.impulse());
+
+            if (vel.impulse()) {
+                handle.applyLinearAndAngularImpulse(
+                        new org.joml.Vector3d(linear.x, linear.y, linear.z),
+                        new org.joml.Vector3d(angular.x, angular.y, angular.z)
+                );
+            } else {
+                handle.addLinearAndAngularVelocity(
+                        new org.joml.Vector3d(linear.x, linear.y, linear.z),
+                        new org.joml.Vector3d(angular.x, angular.y, angular.z)
+                );
+            }
+        }
+
+        private static void nameSubLevel(AssemblyContext ctx, ServerSubLevel subLevel) {
+            String name = ctx.subLevelName != null ? ctx.subLevelName : ctx.templateId.getPath();
+            subLevel.setName(name);
+        }
+
+        private static void registerFlyover(ServerLevel level, AssemblyContext ctx, ServerSubLevel subLevel) {
+            if (ctx.registerAsFlyover) {
+                FlyoverManager.get(level).addFlyover(subLevel, ctx.templateId);
+            }
+        }
     }
 }
