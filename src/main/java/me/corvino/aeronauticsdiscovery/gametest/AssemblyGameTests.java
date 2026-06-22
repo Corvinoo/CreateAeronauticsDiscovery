@@ -178,7 +178,7 @@ public class AssemblyGameTests {
 
         AssemblyResult r3 = new FindAssemblyStartStep().run(ctx);
         if (r3 != AssemblyResult.SUCCESS) throw new GameTestAssertException("FindAssemblyStartStep failed: " + r3);
-        if (ctx.assemblerPos == null) throw new GameTestAssertException("Assembler position not found");
+        if (ctx.anchor == null) throw new GameTestAssertException("Anchor position not found");
 
         helper.succeed();
     }

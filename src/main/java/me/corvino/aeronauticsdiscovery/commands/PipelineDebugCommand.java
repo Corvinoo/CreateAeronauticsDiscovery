@@ -101,7 +101,7 @@ public class PipelineDebugCommand {
                             + "§r pipe=§e" + entry.pipeline().name()
                             + "§r trig=§e" + ctx.trigger.name().toLowerCase()
                             + "§r retry=§c" + entry.retryCount() + "/" + ctx.maxRetries
-                            + "§r" + (ctx.assemblerPos != null ? " §7pos=" + ctx.assemblerPos.toShortString() : "")
+                            + "§r" + (ctx.anchor != null ? " §7pos=" + ctx.anchor.toShortString() : "")
             ), false);
         }
 
