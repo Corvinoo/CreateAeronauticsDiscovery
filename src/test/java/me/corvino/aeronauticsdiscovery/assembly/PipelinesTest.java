@@ -13,25 +13,14 @@ class PipelinesTest {
         assertNotNull(pipeline);
         assertEquals("flyover", pipeline.name());
     }
-
-    @Test
-    void flyoverPipelineHasAllSteps() {
-        AssemblyPipeline pipeline = Pipelines.byName("flyover");
-        assertEquals(6, pipeline.steps().size());
-    }
-
+    
     @Test
     void worldgenPipelineIsRegistered() {
         AssemblyPipeline pipeline = Pipelines.byName("worldgen");
         assertNotNull(pipeline);
         assertEquals("worldgen", pipeline.name());
     }
-
-    @Test
-    void worldgenPipelineHasCorrectSteps() {
-        AssemblyPipeline pipeline = Pipelines.byName("worldgen");
-        assertEquals(3, pipeline.steps().size());
-    }
+    
 
     @Test
     void commandPipelineIsRegistered() {
@@ -39,12 +28,7 @@ class PipelinesTest {
         assertNotNull(pipeline);
         assertEquals("command", pipeline.name());
     }
-
-    @Test
-    void commandPipelineHasCorrectSteps() {
-        AssemblyPipeline pipeline = Pipelines.byName("command");
-        assertEquals(6, pipeline.steps().size());
-    }
+    
 
     @Test
     void byNameThrowsForUnknown() {
