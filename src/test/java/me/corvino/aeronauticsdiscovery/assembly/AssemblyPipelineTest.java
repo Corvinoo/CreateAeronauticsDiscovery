@@ -44,18 +44,6 @@ class AssemblyPipelineTest {
     }
 
     @Test
-    void executeStopsAtFirstDefer() {
-        int[] counter = {0};
-        AssemblyPipeline pipeline = new AssemblyPipeline("defer_at_mid", List.of(
-                ctx -> { counter[0]++; return AssemblyResult.SUCCESS; },
-                ctx -> { counter[0]++; return AssemblyResult.DEFER; },
-                ctx -> { counter[0]++; return AssemblyResult.SUCCESS; }
-        ));
-        assertEquals(AssemblyResult.DEFER, pipeline.execute(makeCtx()));
-        assertEquals(2, counter[0]);
-    }
-
-    @Test
     void executePassesContextThroughSteps() {
         int[] counter = {0};
         AssemblyPipeline pipeline = new AssemblyPipeline("count", List.of(

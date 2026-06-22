@@ -112,12 +112,7 @@ public class AssemblyQueue extends SavedData {
                     it.set(entry.withRetryCount(entry.retryCount + 1));
                     setDirty();
                 }
-                case DEFER -> {
-                    CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] DEFER: '{}' (src={}, attempt {}/{})",
-                            ctx.templateId, ctx.source, entry.retryCount + 1, ctx.maxRetries);
-                    it.set(entry.withRetryCount(entry.retryCount + 1));
-                    setDirty();
-                }
+
             }
         }
 

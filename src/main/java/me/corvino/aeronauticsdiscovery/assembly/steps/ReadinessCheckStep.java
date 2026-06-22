@@ -18,10 +18,10 @@ public class ReadinessCheckStep implements AssemblyStep {
     @Override
     public AssemblyResult run(AssemblyContext ctx) {
         if (ctx.bounds == null) {
-            return AssemblyResult.DEFER;
+            return AssemblyResult.FAIL;
         }
         if (firstFailing(ctx.level, ctx.bounds).isPresent()) {
-            return AssemblyResult.DEFER;
+            return AssemblyResult.FAIL;
         }
         return AssemblyResult.SUCCESS;
     }
