@@ -67,7 +67,6 @@ public final class PrefabCommands {
         try {
             AssemblyContext ctx = AssemblyContext.builder(level, finalId, AssemblySource.COMMAND)
                     .anchor(finalPos)
-                    .rotationTemplate(net.minecraft.world.level.block.Rotation.NONE)
                     .activationDistance(128)
                     .maxRetries(5)
                     .build();

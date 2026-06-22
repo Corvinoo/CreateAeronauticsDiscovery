@@ -1,7 +1,10 @@
 package me.corvino.aeronauticsdiscovery.event;
 
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
-import me.corvino.aeronauticsdiscovery.assembly.*;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
+import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -72,10 +75,12 @@ public final class FlyoverEventScheduler {
         AssemblyContext ctx = AssemblyContext.builder(level, config.template(), AssemblySource.FLYOVER)
                 .anchor(spawnPos)
                 .rotationTemplate(Rotation.NONE)
-                .yawRadians(yawRadians)
-                .velocityOverride(config.velocity())
+                .setYaw(yawRadians)
+                .overrideVelocity(config.velocity())
                 .activationDistance(128)
                 .maxRetries(20)
+                .setName("flyover")
+                .registerFlyover()
                 .build();
 
         AssemblyQueue.get(level).enqueue(Pipelines.FLYOVER, ctx);

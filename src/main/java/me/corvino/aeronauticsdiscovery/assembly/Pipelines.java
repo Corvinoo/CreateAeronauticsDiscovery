@@ -15,20 +15,13 @@ public final class Pipelines {
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
-            new PopulateSeatsStep(),
-            new ApplyVelocityStep(),
-            new RotateBodyStep(),
-            new NameSubLevelStep(),
-            new RegisterFlyoverStep()
+            new PopulateSeatsStep()
     )));
 
     public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", List.of(
             new LoadTemplateStep(),
             new ReadinessCheckStep(),
-            new AssembleStep(),
-//            new PopulateSeatsStep(),
-            new ApplyVelocityStep(),
-            new NameSubLevelStep()
+            new AssembleStep()
     )));
 
     public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", List.of(
@@ -37,9 +30,7 @@ public final class Pipelines {
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
-            new PopulateSeatsStep(),
-            new ApplyVelocityStep(),
-            new NameSubLevelStep()
+            new PopulateSeatsStep()
     )));
 
     private Pipelines() {}

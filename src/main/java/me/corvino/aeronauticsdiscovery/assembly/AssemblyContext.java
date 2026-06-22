@@ -1,7 +1,6 @@
 package me.corvino.aeronauticsdiscovery.assembly;
 
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
-import me.corvino.aeronauticsdiscovery.event.FlyoverEventConfig;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -15,8 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AssemblyContext {
-    // Inputs (set by caller) 
-    // Non-final for deserialization (level restored in process())
     @Nullable public ServerLevel level;
     public final ResourceLocation templateId;
     public final AssemblySource source;
@@ -26,24 +23,23 @@ public class AssemblyContext {
     @Nullable public final BlockPos templatePos;
     @Nullable public final Rotation rotationTemplate;
     @Nullable public BoundingBox bounds;
-    @Nullable public final InitialVelocity velocityOverride;
-    public final double yawRadians;
     public final int activationDistance;
     public final int maxRetries;
 
-    //  Accumulated results (populated by pipeline steps)
+    @Nullable public InitialVelocity velocityOverride;
+    public double yawRadians;
+    @Nullable public String subLevelName;
+    public boolean registerAsFlyover;
+
     @Nullable public StructureTemplate template;
     @Nullable public BlockPos assemblerPos;
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
     public final List<BlockPos> worldSeatPositions = new ArrayList<>();
     public boolean seatsPopulated;
 
-    // Builder 
-
     AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,
                     TriggerType trigger, BlockPos anchor, BlockPos templatePos,
                     Rotation rotationTemplate, BoundingBox bounds,
-                    InitialVelocity velocityOverride, double yawRadians,
                     int activationDistance, int maxRetries) {
         this.level = level;
         this.templateId = templateId;
@@ -53,8 +49,6 @@ public class AssemblyContext {
         this.templatePos = templatePos;
         this.rotationTemplate = rotationTemplate;
         this.bounds = bounds;
-        this.velocityOverride = velocityOverride;
-        this.yawRadians = yawRadians;
         this.activationDistance = activationDistance;
         this.maxRetries = maxRetries;
     }
@@ -76,11 +70,13 @@ public class AssemblyContext {
         private BlockPos templatePos;
         private Rotation rotationTemplate;
         private BoundingBox bounds;
-        private InitialVelocity velocityOverride;
-        private double yawRadians;
         private int activationDistance = 128;
         private int maxRetries = 60;
         private BlockPos assemblerPos;
+        private double yawRadians;
+        private InitialVelocity velocityOverride;
+        private String subLevelName;
+        private boolean registerAsFlyover;
 
         Builder(ServerLevel level, ResourceLocation templateId, AssemblySource source) {
             this.level = level;
@@ -94,17 +90,22 @@ public class AssemblyContext {
         public Builder templatePos(BlockPos templatePos) { this.templatePos = templatePos; return this; }
         public Builder rotationTemplate(Rotation rotation) { this.rotationTemplate = rotation; return this; }
         public Builder bounds(BoundingBox bounds) { this.bounds = bounds; return this; }
-        public Builder velocityOverride(InitialVelocity velocityOverride) { this.velocityOverride = velocityOverride; return this; }
-        public Builder yawRadians(double yawRadians) { this.yawRadians = yawRadians; return this; }
         public Builder activationDistance(int activationDistance) { this.activationDistance = activationDistance; return this; }
         public Builder maxRetries(int maxRetries) { this.maxRetries = maxRetries; return this; }
         public Builder assemblerPos(BlockPos assemblerPos) { this.assemblerPos = assemblerPos; return this; }
+        public Builder setYaw(double yawRadians) { this.yawRadians = yawRadians; return this; }
+        public Builder overrideVelocity(InitialVelocity velocity) { this.velocityOverride = velocity; return this; }
+        public Builder setName(String name) { this.subLevelName = name; return this; }
+        public Builder registerFlyover() { this.registerAsFlyover = true; return this; }
 
         public AssemblyContext build() {
             AssemblyContext ctx = new AssemblyContext(level, templateId, source, trigger, anchor, templatePos,
-                    rotationTemplate, bounds, velocityOverride, yawRadians,
-                    activationDistance, maxRetries);
+                    rotationTemplate, bounds, activationDistance, maxRetries);
             ctx.assemblerPos = this.assemblerPos;
+            ctx.yawRadians = this.yawRadians;
+            ctx.velocityOverride = this.velocityOverride;
+            ctx.subLevelName = this.subLevelName;
+            ctx.registerAsFlyover = this.registerAsFlyover;
             return ctx;
         }
     }
