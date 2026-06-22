@@ -176,6 +176,13 @@ dependencies {
         exclude group: "maven.modrinth", module: "all-the-mods"
     }
 
+    // Debug strange mod interactions
+//    implementation "maven.modrinth:tree-physics:neoforge-2.2"
+//    implementation "maven.modrinth:distanthorizons:3.1.1-b-1.21.1"
+//    implementation "maven.modrinth:c2me-neoforge:0.3.0+alpha.0.93+1.21.1"
+//    implementation "maven.modrinth:sable-ragdolls:0.7.0"
+//    implementation "maven.modrinth:ragdoll-reactions:0.7.0"
+
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
