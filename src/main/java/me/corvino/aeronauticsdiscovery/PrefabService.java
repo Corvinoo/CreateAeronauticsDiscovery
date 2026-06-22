@@ -1,9 +1,13 @@
 package me.corvino.aeronauticsdiscovery;
 
+import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
+import dev.ryanhcode.sable.companion.math.BoundingBox3i;
+import dev.ryanhcode.sable.companion.math.BoundingBox3ic;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
+import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
@@ -16,6 +20,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -27,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class PrefabService {
@@ -116,7 +122,15 @@ public final class PrefabService {
             );
         }
 
+        if (!(result.subLevel() instanceof ServerSubLevel)) {
+            throw new IllegalStateException("Tried assembly on the wrong logical side!");
+        }
+
         SeatPopulator.populateSeats(result.subLevel(), worldSeatPositions, result.offset());
+
+
+        //TODO: (REMOVE WHEN UPSTREAM UPDATES) -> TEMPORARY FIX FOR SABLE DUPLICATION GLITCH ON ASSEMBLY
+        FlyoverManager.removeAllEntitiesInSublevel((ServerSubLevel)result.subLevel(), true, entity -> entity instanceof ItemEntity);
 
         if (applyInitialVelocity) {
             applyInitialVelocity(level, result, templateId);

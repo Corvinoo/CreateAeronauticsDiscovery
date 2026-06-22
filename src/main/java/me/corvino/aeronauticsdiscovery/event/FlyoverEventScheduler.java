@@ -1,11 +1,14 @@
 package me.corvino.aeronauticsdiscovery.event;
 
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.PrefabService;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import java.util.Random;
@@ -54,7 +57,6 @@ public final class FlyoverEventScheduler {
         int offset = Math.max(48, maxDist - 24 + random.nextInt(17) - 8);
 
         double angle = random.nextDouble() * 2 * Math.PI;
-
         int dx = (int) (Math.cos(angle) * offset);
         int dz = (int) (Math.sin(angle) * offset);
 
@@ -67,13 +69,36 @@ public final class FlyoverEventScheduler {
         double theta = Math.atan2(centerPos.getZ() - spawnPos.getZ(), centerPos.getX() - spawnPos.getX());
         double yawRadians = -theta - Math.PI / 2;
 
-        return FlyoverSpawner.spawn(level, config, spawnPos, yawRadians);
+
+        StructureTemplate template = PrefabService.loadPrefab(level, config.template());
+
+        Vec3i size = template.getSize();
+        int radiusBlocks = Math.max(size.getX(), size.getZ()) / 2 + 16;
+        int minCX = SectionPos.blockToSectionCoord(spawnPos.getX() - radiusBlocks);
+        int minCZ = SectionPos.blockToSectionCoord(spawnPos.getZ() - radiusBlocks);
+        int maxCX = SectionPos.blockToSectionCoord(spawnPos.getX() + radiusBlocks);
+        int maxCZ = SectionPos.blockToSectionCoord(spawnPos.getZ() + radiusBlocks);
+
+        for (int cx = minCX; cx <= maxCX; cx++) {
+            for (int cz = minCZ; cz <= maxCZ; cz++) {
+                FlyoverManager.ticketController.forceChunk(level, spawnPos, cx, cz, true, true);
+            }
+        }
+
+        SimAssemblyHelper.AssemblyResult result = FlyoverSpawner.spawn(level, config, spawnPos, yawRadians);
+
+        for (int cx = minCX; cx <= maxCX; cx++) {
+            for (int cz = minCZ; cz <= maxCZ; cz++) {
+                FlyoverManager.ticketController.forceChunk(level, spawnPos, cx, cz, false, true);
+            }
+        }
+
+        return result;
     }
 
     static boolean isFlatWorld(ServerLevel level) {
         var generator = level.getChunkSource().getGenerator();
         if (generator instanceof FlatLevelSource) return true;
-        if (generator.getClass().getName().equals(FlatLevelSource.class.getName())) return true;
-        return false;
+        return generator.getClass().getName().equals(FlatLevelSource.class.getName());
     }
 }
