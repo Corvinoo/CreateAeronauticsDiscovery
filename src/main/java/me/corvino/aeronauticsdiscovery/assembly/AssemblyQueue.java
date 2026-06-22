@@ -1,7 +1,13 @@
 package me.corvino.aeronauticsdiscovery.assembly;
 
+import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.benchmark.PrefabBenchmark;
+import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
+import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
+import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.SectionPos;
@@ -13,7 +19,10 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import org.joml.Quaterniond;
+import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +102,7 @@ public class AssemblyQueue extends SavedData {
                 case SUCCESS -> {
                     CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] SUCCESS: '{}' (src={})",
                             ctx.templateId, ctx.source);
+                    runPostAssembly(level, ctx);
                     it.remove();
                     setDirty();
                 }
@@ -118,6 +128,75 @@ public class AssemblyQueue extends SavedData {
                     entries.size()
             );
         }
+    }
+
+    private static void runPostAssembly(ServerLevel level, AssemblyContext ctx) {
+        if (ctx.assemblyResult == null
+                || !(ctx.assemblyResult.subLevel() instanceof ServerSubLevel subLevel)) return;
+
+        RigidBodyHandle handle = RigidBodyHandle.of(subLevel);
+        if (handle == null || !handle.isValid()) return;
+
+        if (ctx.yawRadians != 0.0 && ctx.bounds != null) {
+            Vector3d bodyPos = new Vector3d(
+                    ctx.bounds.minX() + (ctx.bounds.maxX() - ctx.bounds.minX() + 1) / 2.0,
+                    ctx.bounds.minY() + (ctx.bounds.maxY() - ctx.bounds.minY() + 1) / 2.0,
+                    ctx.bounds.minZ() + (ctx.bounds.maxZ() - ctx.bounds.minZ() + 1) / 2.0
+            );
+            handle.teleport(bodyPos, new Quaterniond().rotationY(ctx.yawRadians));
+        }
+
+        InitialVelocity vel = resolveVelocity(ctx);
+        if (vel != null && !vel.equals(InitialVelocity.NONE)) {
+            Vec3 linear = vel.linear();
+            Vec3 angular = vel.angular();
+            if (ctx.yawRadians != 0.0) {
+                linear = rotateVec3(linear, ctx.yawRadians);
+                angular = rotateVec3(angular, ctx.yawRadians);
+            }
+
+            CreateAeronauticsDiscovery.LOGGER.info("[PHYSICS] Applying velocity to '{}': linear={}, angular={}, impulse={}",
+                    ctx.templateId, linear, angular, vel.impulse());
+
+            if (vel.impulse()) {
+                handle.applyLinearAndAngularImpulse(
+                        new org.joml.Vector3d(linear.x, linear.y, linear.z),
+                        new org.joml.Vector3d(angular.x, angular.y, angular.z)
+                );
+            } else {
+                handle.addLinearAndAngularVelocity(
+                        new org.joml.Vector3d(linear.x, linear.y, linear.z),
+                        new org.joml.Vector3d(angular.x, angular.y, angular.z)
+                );
+            }
+        }
+
+        String name = ctx.subLevelName != null ? ctx.subLevelName : ctx.templateId.getPath();
+        subLevel.setName(name);
+
+        if (ctx.registerAsFlyover) {
+            FlyoverManager.get(level).addFlyover(subLevel, ctx.templateId);
+        }
+    }
+
+    private static InitialVelocity resolveVelocity(AssemblyContext ctx) {
+        if (ctx.velocityOverride != null && !ctx.velocityOverride.equals(InitialVelocity.NONE)) {
+            return ctx.velocityOverride;
+        }
+        return PrefabPhysicsRegistry.getInstance().get(ctx.templateId)
+                .map(PrefabPhysicsConfig::initialVelocity)
+                .orElse(InitialVelocity.NONE);
+    }
+
+    private static Vec3 rotateVec3(Vec3 vec, double yawRadians) {
+        if (yawRadians == 0.0) return vec;
+        double cos = Math.cos(yawRadians);
+        double sin = Math.sin(yawRadians);
+        return new Vec3(
+                vec.x * cos + vec.z * sin,
+                vec.y,
+                -vec.x * sin + vec.z * cos
+        );
     }
 
     private static boolean isNearPlayer(ServerLevel level, AssemblyContext ctx) {
@@ -184,10 +263,14 @@ public class AssemblyQueue extends SavedData {
             tag.putString("Rotation", entry.context.rotationTemplate.name());
         }
         writeBounds(tag, entry.context.bounds);
-        tag.putDouble("YawRadians", entry.context.yawRadians);
         tag.putInt("ActivationDistance", entry.context.activationDistance);
         tag.putInt("MaxRetries", entry.context.maxRetries);
         writeOptPos(tag, "AssemblerPos", entry.context.assemblerPos);
+        tag.putDouble("YawRadians", entry.context.yawRadians);
+        if (entry.context.subLevelName != null) {
+            tag.putString("SubLevelName", entry.context.subLevelName);
+        }
+        tag.putBoolean("RegisterAsFlyover", entry.context.registerAsFlyover);
         return tag;
     }
 
@@ -204,12 +287,15 @@ public class AssemblyQueue extends SavedData {
                     readOptPos(tag, "TemplatePos"),
                     tag.contains("Rotation") ? Rotation.valueOf(tag.getString("Rotation")) : null,
                     readBounds(tag),
-                    null,
-                    tag.getDouble("YawRadians"),
                     tag.getInt("ActivationDistance"),
                     tag.getInt("MaxRetries")
             );
             ctx.assemblerPos = readOptPos(tag, "AssemblerPos");
+            ctx.yawRadians = tag.getDouble("YawRadians");
+            if (tag.contains("SubLevelName")) {
+                ctx.subLevelName = tag.getString("SubLevelName");
+            }
+            ctx.registerAsFlyover = tag.getBoolean("RegisterAsFlyover");
 
             int retryCount = tag.getInt("RetryCount");
 
