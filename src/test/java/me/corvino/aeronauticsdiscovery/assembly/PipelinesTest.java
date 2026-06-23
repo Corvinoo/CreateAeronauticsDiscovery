@@ -45,11 +45,14 @@ class PipelinesTest {
         AssemblyPipeline pipeline = Pipelines.byName("flyover");
         Class<?>[] expectedTypes = {
                 LoadTemplateStep.class,
+                LoadChunkStep.class,
                 PlaceBlocksStep.class,
                 FindAssemblyStartStep.class,
                 ReadinessCheckStep.class,
                 AssembleStep.class,
+                CleanUpItemEntities.class,
                 PopulateSeatsStep.class,
+                UnloadChunkStep.class,
         };
         for (int i = 0; i < expectedTypes.length; i++) {
             assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
@@ -78,11 +81,14 @@ class PipelinesTest {
         AssemblyPipeline pipeline = Pipelines.byName("command");
         Class<?>[] expectedTypes = {
                 LoadTemplateStep.class,
+                LoadChunkStep.class,
                 PlaceBlocksStep.class,
                 FindAssemblyStartStep.class,
                 ReadinessCheckStep.class,
                 AssembleStep.class,
+                CleanUpItemEntities.class,
                 PopulateSeatsStep.class,
+                UnloadChunkStep.class,
         };
         for (int i = 0; i < expectedTypes.length; i++) {
             assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
