@@ -20,7 +20,6 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
         if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
         UUID id = subLevel.getUniqueId();
         if (!manager.flyovers.containsKey(id)) return;
-        if(reason.equals(SubLevelRemovalReason.UNLOADED)) return;
 
         FlyoverManager.removeAllEntitiesInSublevel(serverSubLevel, true);
         manager.flyovers.remove(id);
