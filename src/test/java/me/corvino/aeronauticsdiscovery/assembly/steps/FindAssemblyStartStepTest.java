@@ -16,7 +16,7 @@ class FindAssemblyStartStepTest {
     @Test
     void skipsWhenAssemblerPosAlreadySet() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN)
-                .assemblerPos(new BlockPos(0, 150, 0))
+                .anchor(new BlockPos(0, 150, 0))
                 .bounds(new net.minecraft.world.level.levelgen.structure.BoundingBox(0, 140, 0, 10, 160, 10))
                 .build();
 
