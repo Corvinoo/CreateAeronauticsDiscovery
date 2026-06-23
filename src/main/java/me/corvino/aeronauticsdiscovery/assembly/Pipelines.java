@@ -13,12 +13,12 @@ public final class Pipelines {
             new LoadTemplateStep(),
             new LoadChunkStep(),
             new PlaceBlocksStep(),
-            new UnloadChunkStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
             new CleanUpItemEntities(),
-            new PopulateSeatsStep()
+            new PopulateSeatsStep(),
+            new UnloadChunkStep()
     )));
 
     public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", List.of(
@@ -31,12 +31,12 @@ public final class Pipelines {
             new LoadTemplateStep(),
             new LoadChunkStep(),
             new PlaceBlocksStep(),
-            new UnloadChunkStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
             new CleanUpItemEntities(),
-            new PopulateSeatsStep()
+            new PopulateSeatsStep(),
+            new UnloadChunkStep()
     )));
 
     private Pipelines() {}
