@@ -51,6 +51,7 @@ class AssemblyContextTest {
                 .bounds(bounds)
                 .activationDistance(200)
                 .maxRetries(99)
+                .assemblerPos(anchor)
                 .build();
 
         assertEquals(anchor, ctx.anchor);
@@ -59,6 +60,7 @@ class AssemblyContextTest {
         assertEquals(bounds, ctx.bounds);
         assertEquals(200, ctx.activationDistance);
         assertEquals(99, ctx.maxRetries);
+        assertEquals(anchor, ctx.assemblerPos);
     }
 
     @Test
@@ -66,6 +68,7 @@ class AssemblyContextTest {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.FLYOVER).build();
 
         assertNull(ctx.anchor);
+        assertNull(ctx.assemblerPos);
         assertNull(ctx.templatePos);
         assertNull(ctx.rotationTemplate);
         assertNull(ctx.bounds);
