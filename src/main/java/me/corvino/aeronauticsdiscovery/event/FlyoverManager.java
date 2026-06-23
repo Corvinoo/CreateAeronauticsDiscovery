@@ -3,7 +3,6 @@ package me.corvino.aeronauticsdiscovery.event;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
@@ -121,7 +120,6 @@ public class FlyoverManager extends SavedData {
 
             if (subLevel == null) {
                 if (data.lifeTicks() >= maxLifetime) {
-                    // Already expired in unloaded chunks; wait until chunks load
                     continue;
                 }
                 data = data.tick();
@@ -149,9 +147,30 @@ public class FlyoverManager extends SavedData {
             entry.setValue(data);
 
             if (data.lifeTicks() >= maxLifetime) {
-                removeAllEntitiesInSublevel(subLevel, true);
+
+                //Chunk loading here is required since it can remove items with bounding box, but for removing sublevel entities the sublevel itself must be chunkloaded prior or the entities themselves will not be loaded
+
+                AABB bb = subLevel.boundingBox().toMojang();
+                int minCX = SectionPos.blockToSectionCoord((int) bb.minX);
+                int minCZ = SectionPos.blockToSectionCoord((int) bb.minZ);
+                int maxCX = SectionPos.blockToSectionCoord((int) bb.maxX);
+                int maxCZ = SectionPos.blockToSectionCoord((int) bb.maxZ);
+
+                for (int cx = minCX; cx <= maxCX; cx++)
+                    for (int cz = minCZ; cz <= maxCZ; cz++)
+                        FlyoverManager.ticketController.forceChunk(level, entry.getKey(), cx, cz, true, true);
+
+
+                //Since we're already loading the chunks we will not load them from the entity removal helper.
+                removeAllEntitiesInSublevel(subLevel, false);
                 Objects.requireNonNull(SubLevelContainer.getContainer(level))
                         .removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
+
+
+                for (int cx = minCX; cx <= maxCX; cx++)
+                    for (int cz = minCZ; cz <= maxCZ; cz++)
+                        FlyoverManager.ticketController.forceChunk(level, entry.getKey(), cx, cz, false, true);
+
                 toRemove.add(entry.getKey());
             }
         }
@@ -165,14 +184,25 @@ public class FlyoverManager extends SavedData {
     }
 
 
-
     public static void removeAllEntitiesInSublevel(ServerSubLevel subLevel, Boolean forceLoadChunks) {
         removeAllEntitiesInSublevel(subLevel, forceLoadChunks, null);
     }
 
     public static void removeAllEntitiesInSublevel(ServerSubLevel subLevel, Boolean forceLoadChunks, @Nullable Predicate<Entity> filter) {
-        var level = (ServerLevel) subLevel.getLevel();
+        var level = subLevel.getLevel();
         var entitiesToRemove = new ArrayList<Entity>();
+
+        AABB bb = subLevel.boundingBox().toMojang();
+        int minCX = SectionPos.blockToSectionCoord((int) bb.minX);
+        int minCZ = SectionPos.blockToSectionCoord((int) bb.minZ);
+        int maxCX = SectionPos.blockToSectionCoord((int) bb.maxX);
+        int maxCZ = SectionPos.blockToSectionCoord((int) bb.maxZ);
+
+        if (forceLoadChunks) {
+            for (int cx = minCX; cx <= maxCX; cx++)
+                for (int cz = minCZ; cz <= maxCZ; cz++)
+                    FlyoverManager.ticketController.forceChunk(level, subLevel.getUniqueId(), cx, cz, true, true);
+        }
 
         level.getAllEntities().forEach(entity -> {
             if (entity instanceof ServerPlayer) return;
@@ -194,17 +224,6 @@ public class FlyoverManager extends SavedData {
         entitiesToRemove.forEach(e -> e.remove(Entity.RemovalReason.DISCARDED));
         entitiesToRemove.clear();
 
-        AABB bb = subLevel.boundingBox().toMojang();
-        int minCX = SectionPos.blockToSectionCoord((int) bb.minX);
-        int minCZ = SectionPos.blockToSectionCoord((int) bb.minZ);
-        int maxCX = SectionPos.blockToSectionCoord((int) bb.maxX);
-        int maxCZ = SectionPos.blockToSectionCoord((int) bb.maxZ);
-
-        if (forceLoadChunks) {
-            for (int cx = minCX; cx <= maxCX; cx++)
-                for (int cz = minCZ; cz <= maxCZ; cz++)
-                    FlyoverManager.ticketController.forceChunk(level, subLevel.getUniqueId(), cx, cz, true, true);
-        }
 
         level.getEntities((Entity) null, bb, e -> !(e instanceof ServerPlayer) && (filter == null || filter.test(e)))
                 .forEach(entity -> {
