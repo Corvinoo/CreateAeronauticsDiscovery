@@ -51,7 +51,6 @@ class AssemblyContextTest {
                 .bounds(bounds)
                 .activationDistance(200)
                 .maxRetries(99)
-                .assemblerPos(anchor)
                 .build();
 
         assertEquals(anchor, ctx.anchor);
@@ -60,7 +59,6 @@ class AssemblyContextTest {
         assertEquals(bounds, ctx.bounds);
         assertEquals(200, ctx.activationDistance);
         assertEquals(99, ctx.maxRetries);
-        assertEquals(anchor, ctx.assemblerPos);
     }
 
     @Test
@@ -73,7 +71,6 @@ class AssemblyContextTest {
         assertNull(ctx.bounds);
         assertEquals(128, ctx.activationDistance);
         assertEquals(60, ctx.maxRetries);
-        assertNull(ctx.assemblerPos);
         assertNull(ctx.template);
         assertNull(ctx.assemblyResult);
         assertTrue(ctx.worldSeatPositions.isEmpty());

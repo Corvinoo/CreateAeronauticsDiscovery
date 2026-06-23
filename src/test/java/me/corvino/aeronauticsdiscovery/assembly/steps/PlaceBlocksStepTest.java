@@ -16,7 +16,7 @@ class PlaceBlocksStepTest {
     @Test
     void skipsWhenAssemblerPosAlreadySet() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN)
-                .assemblerPos(new BlockPos(0, 150, 0))
+                .anchor(new BlockPos(0, 150, 0))
                 .build();
 
         assertEquals(AssemblyResult.SUCCESS, new PlaceBlocksStep().run(ctx));
