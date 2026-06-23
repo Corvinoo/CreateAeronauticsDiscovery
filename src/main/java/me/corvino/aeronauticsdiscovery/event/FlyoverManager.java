@@ -115,7 +115,7 @@ public class FlyoverManager extends SavedData {
         int maxLifetime = Config.flyoverMaxLifetimeTicks;
         List<UUID> toRemove = new ArrayList<>();
 
-        for (Map.Entry<UUID, FlyoverData> entry : this.flyovers.entrySet()) {
+        for (Map.Entry<UUID, FlyoverData> entry : List.copyOf(this.flyovers.entrySet())) {
             FlyoverData data = entry.getValue();
             var subLevel = this.getSubLevel(data.subLevelId());
 
