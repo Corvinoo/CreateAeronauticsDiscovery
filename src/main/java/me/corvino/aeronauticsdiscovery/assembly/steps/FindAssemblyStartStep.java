@@ -10,6 +10,9 @@ import net.minecraft.core.Direction;
 public class FindAssemblyStartStep implements AssemblyStep {
     @Override
     public AssemblyResult run(AssemblyContext ctx) {
+        if (ctx.assemblerPos != null) {
+            return AssemblyResult.SUCCESS;
+        }
         if (ctx.bounds == null) {
             return AssemblyResult.FAIL;
         }
@@ -41,9 +44,9 @@ public class FindAssemblyStartStep implements AssemblyStep {
         }
 
         if (found != null) {
-            ctx.anchor = found;
+            ctx.assemblerPos = found;
         } else if (firstNonAir != null) {
-            ctx.anchor = firstNonAir;
+            ctx.assemblerPos = firstNonAir;
         } else {
             return AssemblyResult.FAIL;
         }
