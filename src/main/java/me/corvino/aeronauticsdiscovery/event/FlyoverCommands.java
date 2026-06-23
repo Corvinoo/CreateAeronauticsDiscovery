@@ -255,7 +255,7 @@ public final class FlyoverCommands {
             int remaining = Config.flyoverMaxLifetimeTicks - data.lifeTicks();
             String status = alive
                     ? ChatFormatting.GREEN + "ALIVE" + ChatFormatting.RESET + " (" + remaining + " ticks left)"
-                    : ChatFormatting.RED + "DESPAWNED" + ChatFormatting.RESET;
+                    : ChatFormatting.RED + "REMOVED" + ChatFormatting.RESET;
             source.sendSuccess(() -> Component.literal(
                     "  " + data.templateId().getPath() + " | " + id + " | " + status
             ), false);
@@ -355,7 +355,7 @@ public final class FlyoverCommands {
             } else if (unloaded) {
                 status = (expired ? ChatFormatting.RED : ChatFormatting.YELLOW) + "UNLOADED" + ChatFormatting.RESET;
             } else {
-                status = ChatFormatting.RED + "DESPAWNED" + ChatFormatting.RESET;
+                status = ChatFormatting.RED + "REMOVED" + ChatFormatting.RESET;
             }
 
             String lifeInfo;
