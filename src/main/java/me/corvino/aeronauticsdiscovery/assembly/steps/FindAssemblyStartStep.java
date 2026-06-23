@@ -13,6 +13,7 @@ public class FindAssemblyStartStep implements AssemblyStep {
         if (ctx.assemblerPos != null) {
             return AssemblyResult.SUCCESS;
         }
+        assert ctx.level != null;
         if (ctx.bounds == null) {
             return AssemblyResult.FAIL;
         }
