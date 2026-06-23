@@ -11,9 +11,9 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 public class PlaceBlocksStep implements AssemblyStep {
     @Override
     public AssemblyResult run(AssemblyContext ctx) {
-//        if (ctx.anchor != null) {
-//            return AssemblyResult.SUCCESS;
-//        }
+        if (ctx.assemblerPos != null) {
+            return AssemblyResult.SUCCESS;
+        }
 
         Rotation rot = ctx.rotationTemplate != null ? ctx.rotationTemplate : Rotation.NONE;
         StructurePlaceSettings settings = new StructurePlaceSettings()

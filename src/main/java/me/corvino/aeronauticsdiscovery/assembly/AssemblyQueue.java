@@ -218,6 +218,7 @@ public class AssemblyQueue extends SavedData {
         tag.putString("Source", entry.context.source.name());
         tag.putString("Trigger", entry.context.trigger.name());
         writeOptPos(tag, "Anchor", entry.context.anchor);
+        writeOptPos(tag, "AssemblerPos", entry.context.assemblerPos);
         writeOptPos(tag, "TemplatePos", entry.context.templatePos);
         if (entry.context.rotationTemplate != null) {
             tag.putString("Rotation", entry.context.rotationTemplate.name());
@@ -250,6 +251,9 @@ public class AssemblyQueue extends SavedData {
                     tag.getInt("MaxRetries")
             );
             ctx.yawRadians = tag.getDouble("YawRadians");
+            if (tag.contains("AssemblerPos")) {
+                ctx.assemblerPos = readOptPos(tag, "AssemblerPos");
+            }
             if (tag.contains("SubLevelName")) {
                 ctx.subLevelName = tag.getString("SubLevelName");
             }

@@ -13,11 +13,11 @@ import net.minecraft.core.Direction;
 public class AssembleStep implements AssemblyStep {
     @Override
     public AssemblyResult run(AssemblyContext ctx) {
-        if (ctx.anchor == null) {
+        if (ctx.assemblerPos == null) {
             return AssemblyResult.FAIL;
         }
 
-        BlockPos pos = ctx.anchor;
+        BlockPos pos = ctx.assemblerPos;
         var state = ctx.level.getBlockState(pos);
         BlockPos toAssemble = pos;
 
