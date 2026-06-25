@@ -72,6 +72,7 @@ public class AssemblyQueue extends SavedData {
 
         long startNanos = System.nanoTime();
         int beforeCount = entries.size();
+        long currentTick = level.getGameTime();
 
         ListIterator<Entry> it = entries.listIterator();
         while (it.hasNext()) {
@@ -80,12 +81,8 @@ public class AssemblyQueue extends SavedData {
             ctx.injectLevel(level);
 
             if (ctx.trigger == TriggerType.PROXIMITY) {
-                if (!isNearPlayer(level, ctx)) {
-                    continue;
-                }
-                if (!isLoaded(level, ctx)) {
-                    continue;
-                }
+                if (!isNearPlayer(level, ctx)) continue;
+                if (!isLoaded(level, ctx)) continue;
             }
 
             if (entry.retryCount >= ctx.maxRetries) {
@@ -96,7 +93,7 @@ public class AssemblyQueue extends SavedData {
                 continue;
             }
 
-            AssemblyResult result = entry.pipeline.execute(ctx);
+            AssemblyResult result = entry.pipeline.execute(ctx, currentTick);
 
             switch (result) {
                 case SUCCESS -> {
@@ -109,19 +106,18 @@ public class AssemblyQueue extends SavedData {
                 case FAIL -> {
                     CreateAeronauticsDiscovery.LOGGER.warn("[QUEUE] FAIL: '{}' (src={}, attempt {}/{})",
                             ctx.templateId, ctx.source, entry.retryCount + 1, ctx.maxRetries);
+                    ctx.currentStepIndex = 0;
+                    ctx.nextStepTick = 0L;
                     it.set(entry.withRetryCount(entry.retryCount + 1));
                     setDirty();
                 }
-
+                case WAITING -> {
+                }
             }
         }
 
         if (PrefabBenchmark.isActive()) {
-            PrefabBenchmark.recordTick(
-                    System.nanoTime() - startNanos,
-                    beforeCount,
-                    entries.size()
-            );
+            PrefabBenchmark.recordTick(System.nanoTime() - startNanos, beforeCount, entries.size());
         }
     }
 
@@ -231,6 +227,8 @@ public class AssemblyQueue extends SavedData {
             tag.putString("SubLevelName", entry.context.subLevelName);
         }
         tag.putBoolean("RegisterAsFlyover", entry.context.registerAsFlyover);
+        tag.putInt("CurrentStepIndex", entry.context.currentStepIndex);
+        tag.putLong("NextStepTick", entry.context.nextStepTick);
         return tag;
     }
 
@@ -260,6 +258,8 @@ public class AssemblyQueue extends SavedData {
             ctx.registerAsFlyover = tag.getBoolean("RegisterAsFlyover");
 
             int retryCount = tag.getInt("RetryCount");
+            ctx.currentStepIndex = tag.getInt("CurrentStepIndex");
+            ctx.nextStepTick = tag.getLong("NextStepTick");
 
             return java.util.Optional.of(new Entry(templateId, pipeline, ctx, retryCount));
         } catch (Exception e) {

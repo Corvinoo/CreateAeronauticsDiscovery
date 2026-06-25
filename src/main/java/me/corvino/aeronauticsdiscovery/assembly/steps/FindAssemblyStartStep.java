@@ -3,7 +3,6 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 

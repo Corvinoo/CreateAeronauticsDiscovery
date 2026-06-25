@@ -36,6 +36,9 @@ public class AssemblyContext {
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
     public boolean seatsPopulated;
 
+    public int currentStepIndex = 0;
+    public long nextStepTick = 0;
+
     AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,
                     TriggerType trigger, BlockPos anchor, BlockPos templatePos,
                     Rotation rotationTemplate, BoundingBox bounds,

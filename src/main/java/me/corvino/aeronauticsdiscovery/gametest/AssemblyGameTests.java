@@ -28,6 +28,7 @@ public class AssemblyGameTests {
         BlockPos a = helper.absolutePos(rA);
         BlockPos b = helper.absolutePos(rB);
         BlockPos c = helper.absolutePos(rC);
+        var currentTick = level.getGameTime();
 
         AssemblyPipeline p = new AssemblyPipeline("all_ok", List.of(
                 ctx -> { level.setBlockAndUpdate(a, Blocks.REDSTONE_BLOCK.defaultBlockState()); return AssemblyResult.SUCCESS; },
@@ -35,7 +36,7 @@ public class AssemblyGameTests {
                 ctx -> { level.setBlockAndUpdate(c, Blocks.EMERALD_BLOCK.defaultBlockState());   return AssemblyResult.SUCCESS; }
         ));
 
-        AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build());
+        AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build(), currentTick);
         if (result != AssemblyResult.SUCCESS) {
             throw new GameTestAssertException("Expected SUCCESS but got " + result);
         }
@@ -54,6 +55,7 @@ public class AssemblyGameTests {
         BlockPos a = helper.absolutePos(rA);
         BlockPos b = helper.absolutePos(rB);
         BlockPos c = helper.absolutePos(rC);
+        var currentTick = level.getGameTime();
 
         AssemblyPipeline p = new AssemblyPipeline("fail_mid", List.of(
                 ctx -> { level.setBlockAndUpdate(a, Blocks.REDSTONE_BLOCK.defaultBlockState()); return AssemblyResult.SUCCESS; },
@@ -61,7 +63,7 @@ public class AssemblyGameTests {
                 ctx -> { level.setBlockAndUpdate(c, Blocks.EMERALD_BLOCK.defaultBlockState());   return AssemblyResult.SUCCESS; }
         ));
 
-        AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build());
+        AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build(), currentTick);
         if (result != AssemblyResult.FAIL) {
             throw new GameTestAssertException("Expected FAIL but got " + result);
         }

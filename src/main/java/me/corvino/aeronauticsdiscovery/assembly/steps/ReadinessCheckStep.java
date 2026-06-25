@@ -2,7 +2,6 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
