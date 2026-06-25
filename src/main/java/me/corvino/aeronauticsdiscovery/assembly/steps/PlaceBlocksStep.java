@@ -45,9 +45,6 @@ public class PlaceBlocksStep implements AssemblyStep {
 
 //        debugEntitiesInArea(ctx.level, AABB.of(ctx.bounds));
 
-        ctx.worldSeatPositions.clear();
-        ctx.worldSeatPositions.addAll(SeatPopulator.findSeatPositions(ctx.level, ctx.bounds));
-
         return AssemblyResult.SUCCESS;
     }
 
