@@ -3,8 +3,6 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
-import me.corvino.aeronauticsdiscovery.entities.SoaringTrader;
 import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.seat.SeatPopulator;
 import net.minecraft.world.entity.Mob;

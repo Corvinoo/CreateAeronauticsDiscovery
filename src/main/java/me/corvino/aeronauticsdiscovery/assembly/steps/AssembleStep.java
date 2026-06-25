@@ -11,7 +11,6 @@ import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
 import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

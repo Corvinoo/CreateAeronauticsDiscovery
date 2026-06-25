@@ -1,7 +1,10 @@
 package me.corvino.aeronauticsdiscovery.gametest;
 
 import me.corvino.aeronauticsdiscovery.assembly.*;
-import me.corvino.aeronauticsdiscovery.assembly.steps.*;
+import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
+import me.corvino.aeronauticsdiscovery.assembly.steps.FindAssemblyStartStep;
+import me.corvino.aeronauticsdiscovery.assembly.steps.LoadTemplateStep;
+import me.corvino.aeronauticsdiscovery.assembly.steps.PlaceBlocksStep;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -30,10 +33,49 @@ public class AssemblyGameTests {
         BlockPos c = helper.absolutePos(rC);
         var currentTick = level.getGameTime();
 
+        var assemblyStep1 = new AssemblyStep() {
+            @Override
+            public AssemblyResult run(AssemblyContext ctx) {
+                level.setBlockAndUpdate(a, Blocks.REDSTONE_BLOCK.defaultBlockState());
+                return AssemblyResult.SUCCESS;
+            }
+
+            @Override
+            public void cleanup(AssemblyContext ctx) {
+                AssemblyStep.super.cleanup(ctx);
+            }
+        };
+
+        var assemblyStep2 = new AssemblyStep() {
+            @Override
+            public AssemblyResult run(AssemblyContext ctx) {
+                level.setBlockAndUpdate(b, Blocks.REDSTONE_BLOCK.defaultBlockState());
+                return AssemblyResult.SUCCESS;
+            }
+
+            @Override
+            public void cleanup(AssemblyContext ctx) {
+                AssemblyStep.super.cleanup(ctx);
+            }
+        };
+
+        var assemblyStep3 = new AssemblyStep() {
+            @Override
+            public AssemblyResult run(AssemblyContext ctx) {
+                level.setBlockAndUpdate(c, Blocks.REDSTONE_BLOCK.defaultBlockState());
+                return AssemblyResult.SUCCESS;
+            }
+
+            @Override
+            public void cleanup(AssemblyContext ctx) {
+                AssemblyStep.super.cleanup(ctx);
+            }
+        };
+
         AssemblyPipeline p = new AssemblyPipeline("all_ok", List.of(
-                ctx -> { level.setBlockAndUpdate(a, Blocks.REDSTONE_BLOCK.defaultBlockState()); return AssemblyResult.SUCCESS; },
-                ctx -> { level.setBlockAndUpdate(b, Blocks.DIAMOND_BLOCK.defaultBlockState());   return AssemblyResult.SUCCESS; },
-                ctx -> { level.setBlockAndUpdate(c, Blocks.EMERALD_BLOCK.defaultBlockState());   return AssemblyResult.SUCCESS; }
+                Pipelines.step(() -> assemblyStep1),
+                Pipelines.step(() -> assemblyStep2),
+                Pipelines.step(() -> assemblyStep3)
         ));
 
         AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build(), currentTick);
@@ -57,10 +99,49 @@ public class AssemblyGameTests {
         BlockPos c = helper.absolutePos(rC);
         var currentTick = level.getGameTime();
 
+        var assemblyStep1 = new AssemblyStep() {
+            @Override
+            public AssemblyResult run(AssemblyContext ctx) {
+                level.setBlockAndUpdate(a, Blocks.REDSTONE_BLOCK.defaultBlockState());
+                return AssemblyResult.SUCCESS;
+            }
+
+            @Override
+            public void cleanup(AssemblyContext ctx) {
+                AssemblyStep.super.cleanup(ctx);
+            }
+        };
+
+        var assemblyStep2 = new AssemblyStep() {
+            @Override
+            public AssemblyResult run(AssemblyContext ctx) {
+                level.setBlockAndUpdate(b, Blocks.DIAMOND_BLOCK.defaultBlockState());
+                return AssemblyResult.FAIL;
+            }
+
+            @Override
+            public void cleanup(AssemblyContext ctx) {
+                AssemblyStep.super.cleanup(ctx);
+            }
+        };
+
+        var assemblyStep3 = new AssemblyStep() {
+            @Override
+            public AssemblyResult run(AssemblyContext ctx) {
+                level.setBlockAndUpdate(c, Blocks.EMERALD_BLOCK.defaultBlockState());
+                return AssemblyResult.SUCCESS;
+            }
+
+            @Override
+            public void cleanup(AssemblyContext ctx) {
+                AssemblyStep.super.cleanup(ctx);
+            }
+        };
+
         AssemblyPipeline p = new AssemblyPipeline("fail_mid", List.of(
-                ctx -> { level.setBlockAndUpdate(a, Blocks.REDSTONE_BLOCK.defaultBlockState()); return AssemblyResult.SUCCESS; },
-                ctx -> { level.setBlockAndUpdate(b, Blocks.DIAMOND_BLOCK.defaultBlockState());   return AssemblyResult.FAIL;    },
-                ctx -> { level.setBlockAndUpdate(c, Blocks.EMERALD_BLOCK.defaultBlockState());   return AssemblyResult.SUCCESS; }
+                Pipelines.step(() -> assemblyStep1),
+                Pipelines.step(() -> assemblyStep2),
+                Pipelines.step(() -> assemblyStep3)
         ));
 
         AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build(), currentTick);
@@ -83,8 +164,21 @@ public class AssemblyGameTests {
         BlockPos rMarker = new BlockPos(5, 2, 5);
         BlockPos absMarker = helper.absolutePos(rMarker);
 
+        var assemblyStep1 = new AssemblyStep() {
+            @Override
+            public AssemblyResult run(AssemblyContext ctx) {
+                level.setBlockAndUpdate(absMarker, Blocks.REDSTONE_BLOCK.defaultBlockState());
+                return AssemblyResult.SUCCESS;
+            }
+
+            @Override
+            public void cleanup(AssemblyContext ctx) {
+                AssemblyStep.super.cleanup(ctx);
+            }
+        };
+
         AssemblyPipeline markerPipeline = new AssemblyPipeline("marker", List.of(
-                ctx -> { level.setBlockAndUpdate(absMarker, Blocks.REDSTONE_BLOCK.defaultBlockState()); return AssemblyResult.SUCCESS; }
+                Pipelines.step(() -> assemblyStep1)
         ));
 
         AssemblyContext ctx = AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND)
@@ -116,17 +210,28 @@ public class AssemblyGameTests {
         BlockPos a3 = helper.absolutePos(r3);
 
         int[] callCount = {0};
-        AssemblyPipeline failPipeline = new AssemblyPipeline("fail", List.of(ctx -> {
-            callCount[0]++;
-            BlockPos p = switch (callCount[0]) {
-                case 1 -> a1;
-                case 2 -> a2;
-                case 3 -> a3;
-                default -> null;
-            };
-            if (p != null) level.setBlockAndUpdate(p, Blocks.REDSTONE_BLOCK.defaultBlockState());
-            return AssemblyResult.FAIL;
-        }));
+
+        AssemblyPipeline failPipeline = new AssemblyPipeline("fail", List.of(Pipelines.step(() ->
+                new AssemblyStep() {
+                    @Override
+                    public AssemblyResult run(AssemblyContext ctx) {
+                        callCount[0]++;
+                        BlockPos p = switch (callCount[0]) {
+                            case 1 -> a1;
+                            case 2 -> a2;
+                            case 3 -> a3;
+                            default -> null;
+                        };
+                        if (p != null) level.setBlockAndUpdate(p, Blocks.REDSTONE_BLOCK.defaultBlockState());
+                        return AssemblyResult.FAIL;
+                    }
+
+                    @Override
+                    public void cleanup(AssemblyContext ctx) {
+                        AssemblyStep.super.cleanup(ctx);
+                    }
+                }
+        )));
 
         AssemblyQueue.get(level).enqueue(failPipeline, AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND)
                 .trigger(TriggerType.IMMEDIATE)
@@ -134,9 +239,12 @@ public class AssemblyGameTests {
                 .build());
 
         helper.succeedWhen(() -> {
-            if (!level.getBlockState(a1).is(Blocks.REDSTONE_BLOCK)) throw new GameTestAssertException("Attempt 0 not made");
-            if (!level.getBlockState(a2).is(Blocks.REDSTONE_BLOCK)) throw new GameTestAssertException("Attempt 1 not made");
-            if (!level.getBlockState(a3).is(Blocks.AIR))           throw new GameTestAssertException("Attempt 2 should have been discarded");
+            if (!level.getBlockState(a1).is(Blocks.REDSTONE_BLOCK))
+                throw new GameTestAssertException("Attempt 0 not made");
+            if (!level.getBlockState(a2).is(Blocks.REDSTONE_BLOCK))
+                throw new GameTestAssertException("Attempt 1 not made");
+            if (!level.getBlockState(a3).is(Blocks.AIR))
+                throw new GameTestAssertException("Attempt 2 should have been discarded");
         });
     }
 
