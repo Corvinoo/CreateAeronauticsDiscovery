@@ -76,7 +76,6 @@ class AssemblyContextTest {
         assertEquals(60, ctx.maxRetries);
         assertNull(ctx.template);
         assertNull(ctx.assemblyResult);
-        assertTrue(ctx.worldSeatPositions.isEmpty());
     }
 
     @Test
@@ -91,17 +90,7 @@ class AssemblyContextTest {
                 .build();
         assertEquals(TriggerType.PROXIMITY, ctx.trigger);
     }
-
-    @Test
-    void worldSeatPositionsMutable() {
-        AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
-        assertTrue(ctx.worldSeatPositions.isEmpty());
-
-        ctx.worldSeatPositions.add(new BlockPos(1, 2, 3));
-        assertEquals(1, ctx.worldSeatPositions.size());
-        assertEquals(new BlockPos(1, 2, 3), ctx.worldSeatPositions.getFirst());
-    }
-
+    
     @Test
     void builderAllowsNullLevel() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
