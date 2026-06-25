@@ -32,7 +32,8 @@ public class AssemblyQueue extends SavedData {
     private static final String DATA_NAME = CreateAeronauticsDiscovery.MODID + "_assembly_queue";
 
     private final List<Entry> entries = new ArrayList<>();
-
+    private final List<Entry> pendingAdd = new ArrayList<>();
+    private boolean processing = false;
     public record Entry(
             ResourceLocation templateId,
             AssemblyPipeline pipeline,
@@ -63,56 +64,68 @@ public class AssemblyQueue extends SavedData {
     }
 
     public void enqueue(AssemblyPipeline pipeline, AssemblyContext ctx) {
-        entries.add(new Entry(ctx.templateId, pipeline, ctx, 0));
+        Entry entry = new Entry(ctx.templateId, pipeline, ctx, 0);
+        if (processing) {
+            pendingAdd.add(entry);
+        } else {
+            entries.add(entry);
+        }
         setDirty();
     }
 
     private void process(ServerLevel level) {
-        if (entries.isEmpty()) return;
+        if (entries.isEmpty() && pendingAdd.isEmpty()) return;
 
         long startNanos = System.nanoTime();
         int beforeCount = entries.size();
 
-        ListIterator<Entry> it = entries.listIterator();
-        while (it.hasNext()) {
-            Entry entry = it.next();
-            AssemblyContext ctx = entry.context;
-            ctx.injectLevel(level);
+        processing = true;
+        try {
+            ListIterator<Entry> it = entries.listIterator();
+            while (it.hasNext()) {
+                Entry entry = it.next();
+                AssemblyContext ctx = entry.context;
+                ctx.injectLevel(level);
 
-            if (ctx.trigger == TriggerType.PROXIMITY) {
-                if (!isNearPlayer(level, ctx)) {
-                    continue;
+                if (ctx.trigger == TriggerType.PROXIMITY) {
+                    if (!isNearPlayer(level, ctx)) continue;
+                    if (!isLoaded(level, ctx))     continue;
                 }
-                if (!isLoaded(level, ctx)) {
-                    continue;
-                }
-            }
 
-            if (entry.retryCount >= ctx.maxRetries) {
-                CreateAeronauticsDiscovery.LOGGER.warn("[QUEUE] Discarding '{}' (src={}) after {} failed attempts",
-                        ctx.templateId, ctx.source, entry.retryCount);
-                it.remove();
-                setDirty();
-                continue;
-            }
-
-            AssemblyResult result = entry.pipeline.execute(ctx);
-
-            switch (result) {
-                case SUCCESS -> {
-                    CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] SUCCESS: '{}' (src={})",
-                            ctx.templateId, ctx.source);
-                    runPostAssembly(level, ctx);
+                if (entry.retryCount >= ctx.maxRetries) {
+                    CreateAeronauticsDiscovery.LOGGER.warn(
+                            "[QUEUE] Discarding '{}' (src={}) after {} failed attempts",
+                            ctx.templateId, ctx.source, entry.retryCount);
                     it.remove();
                     setDirty();
-                }
-                case FAIL -> {
-                    CreateAeronauticsDiscovery.LOGGER.warn("[QUEUE] FAIL: '{}' (src={}, attempt {}/{})",
-                            ctx.templateId, ctx.source, entry.retryCount + 1, ctx.maxRetries);
-                    it.set(entry.withRetryCount(entry.retryCount + 1));
-                    setDirty();
+                    continue;
                 }
 
+                AssemblyResult result = entry.pipeline.execute(ctx);
+
+                switch (result) {
+                    case SUCCESS -> {
+                        CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] SUCCESS: '{}' (src={})",
+                                ctx.templateId, ctx.source);
+                        it.remove();
+                        setDirty();
+                        runPostAssembly(level, ctx);
+                    }
+                    case FAIL -> {
+                        CreateAeronauticsDiscovery.LOGGER.warn(
+                                "[QUEUE] FAIL: '{}' (src={}, attempt {}/{})",
+                                ctx.templateId, ctx.source, entry.retryCount + 1, ctx.maxRetries);
+                        it.set(entry.withRetryCount(entry.retryCount + 1));
+                        setDirty();
+                    }
+                }
+            }
+        } finally {
+            processing = false;
+            if (!pendingAdd.isEmpty()) {
+                entries.addAll(pendingAdd);
+                pendingAdd.clear();
+                setDirty();
             }
         }
 
@@ -124,7 +137,6 @@ public class AssemblyQueue extends SavedData {
             );
         }
     }
-
     private static void runPostAssembly(ServerLevel level, AssemblyContext ctx) {
         if (ctx.assemblyResult == null
                 || !(ctx.assemblyResult.subLevel() instanceof ServerSubLevel subLevel)) return;
