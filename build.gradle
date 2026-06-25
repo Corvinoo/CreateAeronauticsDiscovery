@@ -20,12 +20,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     gradlePluginPortal()
-    
-    // CC: Tweaked Maven Repository
-    maven {
-        name = "SquidDev Maven"
-        url = uri("https://maven.squiddev.cc")
-    }
+
 
     // NeoForge & Sponge
     maven { url = uri("https://maven.neoforged.net/releases") }
@@ -158,30 +153,33 @@ dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
     
     implementation "maven.modrinth:create:6.0.10+mc1.21.1"
-    implementation "maven.modrinth:sable:2.0.3+mc1.21.1"
+    implementation ("maven.modrinth:sable:2.0.3+mc1.21.1") {
+        exclude group: "cc.tweaked", module: "cc-tweaked-1.21.1-forge"
+    }
 
-    implementation "maven.modrinth:create-aeronautics:1.3.0+mc1.21.1"
+    implementation ("maven.modrinth:create-aeronautics:1.3.0+mc1.21.1") {
+        exclude group: "cc.tweaked", module: "cc-tweaked-1.21.1-forge"
+    }
 
     implementation("dev.eriksonn.aeronautics:aeronautics-neoforge-1.21.1:1.3.0") {
         exclude group: "foundry.veil", module: "veil"
         exclude group: "com.tterrag.registrate", module: "Registrate"
-        exclude group: "cc.tweaked", module: "cc-tweaked"
+        exclude group: "cc.tweaked", module: "cc-tweaked-1.21.1-forge"
         exclude group: "maven.modrinth", module: "all-the-mods"
     }
 
     implementation("dev.simulated_team.simulated:simulated-neoforge-1.21.1:1.3.0") {
         exclude group: "foundry.veil", module: "veil"
         exclude group: "com.tterrag.registrate", module: "Registrate"
-        exclude group: "cc.tweaked", module: "cc-tweaked"
+        exclude group: "cc.tweaked", module: "cc-tweaked-1.21.1-forge"
         exclude group: "maven.modrinth", module: "all-the-mods"
     }
 
     // Debug strange mod interactions
-//    implementation "maven.modrinth:tree-physics:neoforge-2.2"
-//    implementation "maven.modrinth:distanthorizons:3.1.1-b-1.21.1"
-//    implementation "maven.modrinth:c2me-neoforge:0.3.0+alpha.0.93+1.21.1"
-//    implementation "maven.modrinth:sable-ragdolls:0.7.0"
-//    implementation "maven.modrinth:ragdoll-reactions:0.7.0"
+    implementation "maven.modrinth:tree-physics:neoforge-2.2"
+    implementation "maven.modrinth:distanthorizons:3.1.1-b-1.21.1"
+    implementation "maven.modrinth:sable-ragdolls:0.7.0"
+    implementation "maven.modrinth:ragdoll-reactions:0.7.0"
 
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
