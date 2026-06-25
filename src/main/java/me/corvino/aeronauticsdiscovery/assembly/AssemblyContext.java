@@ -34,7 +34,6 @@ public class AssemblyContext {
 
     @Nullable public StructureTemplate template;
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
-    public final List<BlockPos> worldSeatPositions = new ArrayList<>();
     public boolean seatsPopulated;
 
     AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,

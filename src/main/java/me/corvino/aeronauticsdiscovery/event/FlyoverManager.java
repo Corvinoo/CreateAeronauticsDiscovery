@@ -36,6 +36,9 @@ public class FlyoverManager extends SavedData {
     private static final String TAG_KEY = "Flyovers";
 
     final Map<UUID, FlyoverData> flyovers = new LinkedHashMap<>();
+
+    private Queue<UUID> removalRequestQueue = new LinkedList<>();
+
     private ServerLevel level;
 
     private boolean observerRegistered = false;
@@ -107,6 +110,13 @@ public class FlyoverManager extends SavedData {
         return false;
     }
 
+    /**
+     * Enqueue entry removal from external events and not directly tied to the manager lifecycle.
+     * @param id
+     */
+    public void enqueueExternalRemoval(UUID id) {
+        this.removalRequestQueue.add(id);
+    }
 
     public void tick() {
         if (this.flyovers.isEmpty()) return;
@@ -172,6 +182,15 @@ public class FlyoverManager extends SavedData {
                         FlyoverManager.ticketController.forceChunk(level, entry.getKey(), cx, cz, false, true);
 
                 toRemove.add(entry.getKey());
+            }
+        }
+
+        // Remove externally enqueued tracked flyovers (for example after a command removal)
+        if (!this.removalRequestQueue.isEmpty()) {
+            UUID id;
+            while ((id = this.removalRequestQueue.poll()) != null) {
+                if (!toRemove.contains(id) && this.flyovers.containsKey(id))
+                    toRemove.add(id);
             }
         }
 
