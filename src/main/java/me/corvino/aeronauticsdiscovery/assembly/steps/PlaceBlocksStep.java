@@ -3,20 +3,15 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
-import me.corvino.aeronauticsdiscovery.seat.SeatPopulator;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.phys.AABB;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class PlaceBlocksStep implements AssemblyStep {
+
     @Override
     public AssemblyResult run(AssemblyContext ctx) {
         if (ctx.assemblerPos != null) {
