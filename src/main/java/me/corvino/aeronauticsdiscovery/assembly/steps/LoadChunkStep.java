@@ -3,13 +3,10 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
 import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
-import net.minecraft.core.Vec3i;
+import me.corvino.aeronauticsdiscovery.assembly.ChunkLoadingHelper;
 
-public class LoadChunkStep implements AssemblyStep{
+public class LoadChunkStep implements AssemblyStep {
 
     @Override
     public AssemblyResult run(AssemblyContext ctx) {

@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.assembly;
 
+import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
 import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 

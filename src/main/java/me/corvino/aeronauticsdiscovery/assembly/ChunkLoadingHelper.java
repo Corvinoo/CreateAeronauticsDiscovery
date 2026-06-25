@@ -1,6 +1,5 @@
-package me.corvino.aeronauticsdiscovery.assembly.steps;
+package me.corvino.aeronauticsdiscovery.assembly;
 
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
