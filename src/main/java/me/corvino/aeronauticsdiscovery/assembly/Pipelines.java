@@ -10,11 +10,12 @@ import java.util.function.Supplier;
 public final class Pipelines {
     private static final Map<String, AssemblyPipeline> REGISTRY = new HashMap<>();
 
+    //TODO: replace static delays with contextual ones from steps themselves
     public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", List.of(
             step(LoadTemplateStep::new, 2),
             step(LoadChunkStep::new, 2),
-            step(PlaceBlocksStep::new, 2),
-            step(FindAssemblyStartStep::new, 2),
+            step(PlaceBlocksStep::new, 20),
+            step(FindAssemblyStartStep::new, 10),
             step(ReadinessCheckStep::new, 2),
             step(AssembleStep::new, 2),
             step(CleanUpItemEntities::new, 2),
@@ -31,8 +32,8 @@ public final class Pipelines {
     public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", List.of(
             step(LoadTemplateStep::new, 2),
             step(LoadChunkStep::new, 2),
-            step(PlaceBlocksStep::new, 2),
-            step(FindAssemblyStartStep::new, 2),
+            step(PlaceBlocksStep::new, 20),
+            step(FindAssemblyStartStep::new, 10),
             step(ReadinessCheckStep::new, 2),
             step(AssembleStep::new, 2),
             step(CleanUpItemEntities::new, 2),
@@ -61,12 +62,12 @@ public final class Pipelines {
         return Map.copyOf(REGISTRY);
     }
 
-    private static AssemblyPipelineEntry step(Supplier<AssemblyStep> stepFactory) {
+    public static AssemblyPipelineEntry step(Supplier<AssemblyStep> stepFactory) {
         var step = stepFactory.get();
         return new AssemblyPipelineEntry(step, 0);
     }
 
-    private static AssemblyPipelineEntry step(Supplier<AssemblyStep> stepFactory, long withDelay) {
+    public static AssemblyPipelineEntry step(Supplier<AssemblyStep> stepFactory, long withDelay) {
         var step = stepFactory.get();
         return new AssemblyPipelineEntry(step, withDelay);
     }
