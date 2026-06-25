@@ -109,7 +109,7 @@ public final class MacroChunkTracker {
         if (spawned) {
             // Arm the chunk rate-limiter so the next eligible player in this area
             // waits rather than spawning a second plane on the same tick or shortly after.
-            chunkCDs.put(chunkKey, Config.flyoverCooldownTicks/2);
+            chunkCDs.put(chunkKey, Config.flyoverCooldownTicks);
         }
 
         // Always advance the player's personal cooldown after an eligible attempt
