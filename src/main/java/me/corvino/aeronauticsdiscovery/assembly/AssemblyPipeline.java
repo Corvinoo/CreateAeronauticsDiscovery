@@ -6,7 +6,6 @@ import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
 import java.util.List;
 
 public record AssemblyPipeline(String name, List<AssemblyPipelineEntry> steps) {
-
     public AssemblyResult execute(AssemblyContext ctx, long currentTick) {
         if (currentTick < ctx.nextStepTick) {
             return AssemblyResult.WAITING;
@@ -16,10 +15,10 @@ public record AssemblyPipeline(String name, List<AssemblyPipelineEntry> steps) {
             var holder = steps.get(ctx.currentStepIndex);
             AssemblyStep step = holder.step();
             AssemblyResult result = step.run(ctx);
-
             if (result != AssemblyResult.SUCCESS) {
-                CreateAeronauticsDiscovery.LOGGER.debug("[PIPELINE:{}] Step '{}' returned {} for '{}'",
+                CreateAeronauticsDiscovery.LOGGER.debug("[PIPELINE:{}] Step '{}' returned {} for '{}', cleaning up",
                         name, step.getClass().getSimpleName(), result, ctx.templateId);
+                cleanup(ctx, ctx.currentStepIndex);
                 return result;
             }
 
@@ -36,6 +35,19 @@ public record AssemblyPipeline(String name, List<AssemblyPipelineEntry> steps) {
 
         return AssemblyResult.SUCCESS;
     }
+
+
+    private void cleanup(AssemblyContext ctx, int upToIndex) {
+        for (int i = upToIndex; i >= 0; i--) {
+            try {
+                steps.get(i).cleanup(ctx);
+            } catch (Exception e) {
+                CreateAeronauticsDiscovery.LOGGER.error("[PIPELINE:{}] Cleanup failed for step '{}'",
+                        name, steps.get(i).getClass().getSimpleName(), e);
+            }
+        }
+    }
+
 }
 
 
