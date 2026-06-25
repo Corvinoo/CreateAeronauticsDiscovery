@@ -36,6 +36,26 @@ public class LoadChunkStep implements AssemblyStep {
 
         return AssemblyResult.SUCCESS;
     }
+
+    @Override
+    public void cleanup(AssemblyContext ctx) {
+        if (ctx.template == null || ctx.level == null || ctx.anchor == null) return;
+        ChunkLoadingHelper.ChunkBounds bounds = ChunkLoadingHelper.calculateChunkBounds(ctx);
+        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
+            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
+                FlyoverManager.ticketController.forceChunk(
+                        ctx.level,
+                        ctx.anchor,
+                        cx,
+                        cz,
+                        false,
+                        true
+                );
+            }
+        }
+    }
+
+
 }
 
 
