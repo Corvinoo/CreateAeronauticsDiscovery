@@ -5,9 +5,11 @@ import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
 import me.corvino.aeronauticsdiscovery.seat.SeatPopulator;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
@@ -70,4 +72,17 @@ public class PlaceBlocksStep implements AssemblyStep {
 
         CreateAeronauticsDiscovery.LOGGER.info("Flyover entity check stop");
     }
+
+    @Override
+    public void cleanup(AssemblyContext ctx) {
+        if (ctx.bounds == null || ctx.level == null) return;
+        for (BlockPos pos : BlockPos.betweenClosed(
+                ctx.bounds.minX(), ctx.bounds.minY(), ctx.bounds.minZ(),
+                ctx.bounds.maxX(), ctx.bounds.maxY(), ctx.bounds.maxZ())) {
+            ctx.level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+        }
+//        ctx.worldSeatPositions.clear();
+    }
+
+
 }
