@@ -7,13 +7,20 @@
       "entries": [
         {
           "type": "minecraft:item",
+          "name": "minecraft:emerald",
+          "weight": 2,
+          "quality": 1
+        },
+        {
+          "type": "minecraft:item",
           "name": "create:white_sail",
-          "weight": 4
+          "weight": 4,
+          "quality": 0
         },
         {
           "type": "minecraft:item",
           "name": "minecraft:bread",
-          "weight": 3
+          "weight": 4
         },
         {
           "type": "minecraft:item",
@@ -26,7 +33,7 @@
           "type": "minecraft:item",
           "name": "minecraft:emerald_block",
           "weight": 1,
-          "quality": 2
+          "quality": 1
         }
       ]
     },
