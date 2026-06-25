@@ -13,14 +13,14 @@ public final class Pipelines {
     //TODO: replace static delays with contextual ones from steps themselves
     public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", List.of(
             step(LoadTemplateStep::new, 2),
-            step(LoadChunkStep::new, 2),
-            step(PlaceBlocksStep::new, 20),
-            step(FindAssemblyStartStep::new, 10),
-            step(ReadinessCheckStep::new, 2),
-            step(AssembleStep::new, 2),
-            step(CleanUpItemEntities::new, 2),
-            step(PopulateSeatsStep::new, 2),
-            step(UnloadChunkStep::new, 2)
+            step(LoadChunkStep::new, 200),
+            step(PlaceBlocksStep::new, 0),
+            step(FindAssemblyStartStep::new, 0),
+            step(ReadinessCheckStep::new, 0),
+            step(AssembleStep::new, 0),
+            step(CleanUpItemEntities::new, 0),
+            step(PopulateSeatsStep::new, 0),
+            step(UnloadChunkStep::new, 0)
     )));
 
     public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", List.of(
@@ -31,14 +31,14 @@ public final class Pipelines {
 
     public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", List.of(
             step(LoadTemplateStep::new, 2),
-            step(LoadChunkStep::new, 2),
-            step(PlaceBlocksStep::new, 20),
-            step(FindAssemblyStartStep::new, 10),
-            step(ReadinessCheckStep::new, 2),
-            step(AssembleStep::new, 2),
-            step(CleanUpItemEntities::new, 2),
-            step(PopulateSeatsStep::new, 2),
-            step(UnloadChunkStep::new, 2)
+            step(LoadChunkStep::new, 200),
+            step(PlaceBlocksStep::new, 0),
+            step(FindAssemblyStartStep::new, 0),
+            step(ReadinessCheckStep::new, 0),
+            step(AssembleStep::new, 1),
+            step(CleanUpItemEntities::new, 1),
+            step(PopulateSeatsStep::new, 1),
+            step(UnloadChunkStep::new, 1)
     )));
 
     private Pipelines() {}
