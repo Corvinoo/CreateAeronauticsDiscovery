@@ -2,14 +2,17 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 
 import com.simibubi.create.content.contraptions.AssemblyException;
 import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyStep;
+import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -101,4 +104,21 @@ public class AssembleStep implements AssemblyStep {
             );
         }
     }
+
+    @Override
+    public void cleanup(AssemblyContext ctx) {
+        if (ctx.assemblyResult == null) return;
+        SubLevel subLevel = ctx.assemblyResult.subLevel();
+        if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
+
+        FlyoverManager.removeAllEntitiesInSublevel(serverSubLevel, false);
+        SubLevelContainer container = SubLevelContainer.getContainer(ctx.level);
+        if (container != null) {
+            container.removeSubLevel(serverSubLevel, SubLevelRemovalReason.REMOVED);
+        }
+        ctx.assemblyResult = null;
+    }
+
+
+
 }
