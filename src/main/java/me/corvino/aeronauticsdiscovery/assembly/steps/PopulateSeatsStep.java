@@ -25,7 +25,7 @@ public class PopulateSeatsStep implements AssemblyStep {
         if (ctx.assemblyResult == null) return;
         if (!(ctx.assemblyResult.subLevel() instanceof ServerSubLevel serverSubLevel)) return;
         FlyoverManager.removeAllEntitiesInSublevel(serverSubLevel, false,
-                e -> e instanceof Mob);
+                e -> e instanceof Mob, true);
         ctx.seatsPopulated = false;
     }
 
