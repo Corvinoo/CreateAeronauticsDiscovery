@@ -3,6 +3,7 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
@@ -16,10 +17,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Unit;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
+
+import static me.corvino.aeronauticsdiscovery.event.FlyoverManager.FLYOVER_ID_TAG;
 
 public class AssembleStep implements AssemblyStep {
     @Override
@@ -56,6 +60,14 @@ public class AssembleStep implements AssemblyStep {
                     ctx.templateId, toAssemble, ctx.level.getBlockState(toAssemble).getBlock());
             return AssemblyResult.FAIL;
         }
+
+
+        // Marker for entities (so they can be filtered by flyover/sublevel id)
+        var plotAABB = result.subLevel().getPlot().getBoundingBox().toAABB();
+        ctx.level.getEntities((Entity) null, plotAABB, entity -> !(entity instanceof ServerPlayer))
+                .forEach(entity -> {
+                    entity.getPersistentData().putUUID(FLYOVER_ID_TAG, result.subLevel().getUniqueId());
+                });
 
         ctx.assemblyResult = result;
         return AssemblyResult.SUCCESS;

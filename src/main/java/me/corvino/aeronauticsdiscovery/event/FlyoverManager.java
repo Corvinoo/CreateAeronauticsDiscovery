@@ -3,6 +3,7 @@ package me.corvino.aeronauticsdiscovery.event;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
@@ -16,6 +17,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Unit;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
@@ -28,6 +30,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class FlyoverManager extends SavedData {
+    public static final String FLYOVER_ID_TAG = "flyover_sublevel_id";
     public static TicketController ticketController = new TicketController(
             ResourceLocation.fromNamespaceAndPath(CreateAeronauticsDiscovery.MODID, "chunkticketmanager")
     );
@@ -157,30 +160,12 @@ public class FlyoverManager extends SavedData {
             entry.setValue(data);
 
             if (data.lifeTicks() >= maxLifetime) {
-
-                //Chunk loading here is required since it can remove items with bounding box, but for removing sublevel entities the sublevel itself must be chunkloaded prior or the entities themselves will not be loaded
-
-                AABB bb = subLevel.boundingBox().toMojang();
-                int minCX = SectionPos.blockToSectionCoord((int) bb.minX);
-                int minCZ = SectionPos.blockToSectionCoord((int) bb.minZ);
-                int maxCX = SectionPos.blockToSectionCoord((int) bb.maxX);
-                int maxCZ = SectionPos.blockToSectionCoord((int) bb.maxZ);
-
-                for (int cx = minCX; cx <= maxCX; cx++)
-                    for (int cz = minCZ; cz <= maxCZ; cz++)
-                        FlyoverManager.ticketController.forceChunk(level, entry.getKey(), cx, cz, true, true);
-
-
-                //Since we're already loading the chunks we will not load them from the entity removal helper.
-                removeAllEntitiesInSublevel(subLevel, false);
-                Objects.requireNonNull(SubLevelContainer.getContainer(level))
-                        .removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
-
-
-                for (int cx = minCX; cx <= maxCX; cx++)
-                    for (int cz = minCZ; cz <= maxCZ; cz++)
-                        FlyoverManager.ticketController.forceChunk(level, entry.getKey(), cx, cz, false, true);
-
+                var container = SubLevelContainer.getContainer(level);
+                if (container == null) {
+                    CreateAeronauticsDiscovery.LOGGER.info("COULD NOT RELEASE FLYOVER!");
+                    continue;
+                }
+                container.removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
                 toRemove.add(entry.getKey());
             }
         }
@@ -203,13 +188,26 @@ public class FlyoverManager extends SavedData {
     }
 
 
+    //TODO This MUST be moved away from the manager, and instead be put in some helper
     public static void removeAllEntitiesInSublevel(ServerSubLevel subLevel, Boolean forceLoadChunks) {
-        removeAllEntitiesInSublevel(subLevel, forceLoadChunks, null);
+        removeAllEntitiesInSublevel(subLevel, forceLoadChunks, null, true);
     }
 
-    public static void removeAllEntitiesInSublevel(ServerSubLevel subLevel, Boolean forceLoadChunks, @Nullable Predicate<Entity> filter) {
+    public static void removeAllEntitiesInSublevel(ServerSubLevel subLevel, Boolean forceLoadChunks, @Nullable Predicate<Entity> filter, boolean onlyOwnedBySubLevel) {
         var level = subLevel.getLevel();
         var entitiesToRemove = new ArrayList<Entity>();
+        UUID subLevelId = subLevel.getUniqueId();
+
+        Predicate<Entity> effectiveFilter = entity -> {
+            if (entity instanceof ServerPlayer) return false;
+            if (filter != null && !filter.test(entity)) return false;
+            if (onlyOwnedBySubLevel) {
+                CompoundTag data = entity.getPersistentData();
+                return data.hasUUID(FLYOVER_ID_TAG)
+                        && data.getUUID(FLYOVER_ID_TAG).equals(subLevelId);
+            }
+            return true;
+        };
 
         AABB bb = subLevel.boundingBox().toMojang();
         int minCX = SectionPos.blockToSectionCoord((int) bb.minX);
@@ -224,15 +222,15 @@ public class FlyoverManager extends SavedData {
         }
 
         level.getAllEntities().forEach(entity -> {
-            if (entity instanceof ServerPlayer) return;
             if (entity == null) return;
-            if (filter != null && !filter.test(entity)) return;
+            if (!effectiveFilter.test(entity)) return;
+
             SubLevel containing = Sable.HELPER.getContaining(entity);
             if (containing == null) return;
-            if (!containing.getUniqueId().equals(subLevel.getUniqueId())) return;
+            if (!containing.getUniqueId().equals(subLevelId)) return;
 
             entity.getPassengers().forEach(passenger -> {
-                if (!(passenger instanceof ServerPlayer) && (filter == null || filter.test(passenger))) {
+                if (effectiveFilter.test(passenger)) {
                     passenger.stopRiding();
                     entitiesToRemove.add(passenger);
                 }
@@ -243,11 +241,10 @@ public class FlyoverManager extends SavedData {
         entitiesToRemove.forEach(e -> e.remove(Entity.RemovalReason.DISCARDED));
         entitiesToRemove.clear();
 
-
-        level.getEntities((Entity) null, bb, e -> !(e instanceof ServerPlayer) && (filter == null || filter.test(e)))
+        level.getEntities((Entity) null, bb, effectiveFilter)
                 .forEach(entity -> {
                     entity.getPassengers().forEach(passenger -> {
-                        if (!(passenger instanceof ServerPlayer) && (filter == null || filter.test(passenger))) {
+                        if (effectiveFilter.test(passenger)) {
                             passenger.stopRiding();
                             passenger.remove(Entity.RemovalReason.DISCARDED);
                         }
