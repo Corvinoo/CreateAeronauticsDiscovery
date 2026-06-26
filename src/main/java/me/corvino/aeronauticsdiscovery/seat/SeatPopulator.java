@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static me.corvino.aeronauticsdiscovery.entities.EntityRegistry.SOARING_TRADER;
+import static me.corvino.aeronauticsdiscovery.event.FlyoverManager.FLYOVER_ID_TAG;
 
 public final class SeatPopulator {
     private SeatPopulator() {}
@@ -46,6 +47,9 @@ public final class SeatPopulator {
             trader.setPos(positionProjectedOut.x() + 0.5, positionProjectedOut.y(), positionProjectedOut.z() + 0.5);
             level.addFreshEntity(trader);
             SeatBlock.sitDown(level, seatPos, trader);
+
+            //Per sublevel tracking, this would avoid unwanted near-removals
+            trader.getPersistentData().putUUID(FLYOVER_ID_TAG, subLevel.getUniqueId());
         }
     }
 }
