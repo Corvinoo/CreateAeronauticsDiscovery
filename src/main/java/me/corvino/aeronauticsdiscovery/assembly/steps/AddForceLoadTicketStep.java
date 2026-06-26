@@ -19,4 +19,13 @@ public class AddForceLoadTicketStep implements AssemblyStep {
         container.addForceLoadTicket((ServerSubLevel) ctx.assemblyResult.subLevel(), SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
         return AssemblyResult.SUCCESS;
     }
+
+    @Override
+    public void cleanup(AssemblyContext ctx) {
+        if (ctx.assemblyResult == null) return;
+        if (!(ctx.assemblyResult.subLevel() instanceof ServerSubLevel serverSubLevel)) return;
+        var container = SubLevelContainer.getContainer(ctx.level);
+        if (container == null) return;
+        container.removeForceLoadTicket(serverSubLevel, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+    }
 }
