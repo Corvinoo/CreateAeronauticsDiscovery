@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Rotation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.slf4j.Logger;
 
 /**
@@ -42,6 +43,7 @@ import org.slf4j.Logger;
  * Future expansion: add verify/analysis steps after the "Terminal" log line.
  */
 @GameTestHolder(CreateAeronauticsDiscovery.MODID)
+@PrefixGameTestTemplate(false)
 public class FlyoverGameTests {
 
     private static final Logger LOG = CreateAeronauticsDiscovery.LOGGER;
@@ -58,7 +60,7 @@ public class FlyoverGameTests {
     private static final int TIMEOUT_TICKS    = 800;
 
     // Tier 1 – Inside both render AND simulation distance
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT_TICKS)
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS)
     public void tier1_insideBoth(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
@@ -71,7 +73,7 @@ public class FlyoverGameTests {
     }
 
     // Tier 2 – Outside render distance, INSIDE simulation distance
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT_TICKS)
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS)
     public void tier2_outsideRenderInsideSim(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
@@ -93,7 +95,7 @@ public class FlyoverGameTests {
     }
 
     // Tier 3 – INSIDE render distance, Outside simulation distance
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT_TICKS)
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS)
     public void tier3_insideRenderOutsideSim(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
@@ -115,7 +117,7 @@ public class FlyoverGameTests {
     }
 
     // Tier 4 – Outside BOTH render AND simulation distance
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT_TICKS)
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS)
     public void tier4_outsideBoth(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));

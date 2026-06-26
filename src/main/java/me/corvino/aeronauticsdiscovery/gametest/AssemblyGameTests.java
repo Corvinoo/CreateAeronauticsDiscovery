@@ -14,18 +14,20 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
 
 @GameTestHolder(CreateAeronauticsDiscovery.MODID)
+@PrefixGameTestTemplate(false)
 public class AssemblyGameTests {
-    private static final ResourceLocation TEMPLATE_ID = ResourceLocation.parse("aeronauticsdiscovery:ballon_test");
+    private static final ResourceLocation TEMPLATE_ID = ResourceLocation.parse("aeronauticsdiscovery:balloon_loot");
 
     // ========================================================================
     // Pipeline execution order & short-circuiting
     // ========================================================================
 
-    @GameTest(template = "empty")
+    @GameTest(template = "airplane")
     public void pipelineExecutesAllStepsInOrder(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos rA = new BlockPos(1, 2, 1);
@@ -91,7 +93,7 @@ public class AssemblyGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @GameTest(template = "airplane")
     public void pipelineShortCircuitsOnFail(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos rA = new BlockPos(1, 2, 1);
@@ -161,7 +163,7 @@ public class AssemblyGameTests {
     // Queue integration – IMMEDIATE trigger processing
     // ========================================================================
 
-    @GameTest(template = "empty")
+    @GameTest(template = "airplane")
     public void queueProcessesImmediateEntry(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos rMarker = new BlockPos(5, 2, 5);
@@ -202,7 +204,7 @@ public class AssemblyGameTests {
     // Queue retry behaviour on FAIL
     // ========================================================================
 
-    @GameTest(template = "empty")
+    @GameTest(template = "airplane")
     public void queueRetriesOnFailThenDiscards(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos r1 = new BlockPos(1, 2, 1);
@@ -255,7 +257,7 @@ public class AssemblyGameTests {
     // Real template: load + place blocks, find assembler position
     // ========================================================================
 
-    @GameTest(template = "empty")
+    @GameTest(template = "airplane")
     public void realTemplateLoadAndPlaceBlocks(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos rAnchor = new BlockPos(2, 2, 2);
@@ -276,7 +278,7 @@ public class AssemblyGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @GameTest(template = "airplane")
     public void realTemplateFindAssemblerStart(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos rAnchor = new BlockPos(2, 2, 2);
