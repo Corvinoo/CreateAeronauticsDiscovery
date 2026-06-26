@@ -13,11 +13,12 @@ public final class Pipelines {
     //TODO: replace static delays with contextual ones from steps themselves
     public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", List.of(
             step(LoadTemplateStep::new, 2),
-            step(LoadChunkStep::new, 200),
+            step(LoadChunkStep::new, 200), //TODO this must use ChunkLoad events to be able to be deferred regardless of the machine
             step(PlaceBlocksStep::new, 0),
             step(FindAssemblyStartStep::new, 0),
             step(ReadinessCheckStep::new, 0),
-            step(AssembleStep::new, 0),
+            step(AssembleStep::new, 0), // TODO rotation and placement should have a step that overrides the "afterAssembly" branch, meaning that I can rotate the structure way before and make it look nice
+            step(AddForceLoadTicketStep::new, 0),
             step(CleanUpItemEntities::new, 0),
             step(PopulateSeatsStep::new, 0),
             step(UnloadChunkStep::new, 0)
@@ -31,14 +32,15 @@ public final class Pipelines {
 
     public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", List.of(
             step(LoadTemplateStep::new, 2),
-            step(LoadChunkStep::new, 200),
+            step(LoadChunkStep::new, 200), //TODO this must use ChunkLoad events to be able to be deferred regardless of the machine
             step(PlaceBlocksStep::new, 0),
             step(FindAssemblyStartStep::new, 0),
             step(ReadinessCheckStep::new, 0),
-            step(AssembleStep::new, 1),
-            step(CleanUpItemEntities::new, 1),
-            step(PopulateSeatsStep::new, 1),
-            step(UnloadChunkStep::new, 1)
+            step(AssembleStep::new, 0),
+            step(AddForceLoadTicketStep::new, 0),
+            step(CleanUpItemEntities::new, 0),
+            step(PopulateSeatsStep::new, 0),
+            step(UnloadChunkStep::new, 0)
     )));
 
     private Pipelines() {}

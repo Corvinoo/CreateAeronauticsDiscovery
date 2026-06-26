@@ -10,7 +10,7 @@ public class CleanUpItemEntities implements AssemblyStep {
     public AssemblyResult run(AssemblyContext ctx) {
         assert ctx.assemblyResult != null;
         if(ctx.assemblyResult.subLevel() == null) return AssemblyResult.FAIL;
-        FlyoverManager.removeAllEntitiesInSublevel((ServerSubLevel)ctx.assemblyResult.subLevel(), true, entity -> entity instanceof ItemEntity);
+        FlyoverManager.removeAllEntitiesInSublevel((ServerSubLevel)ctx.assemblyResult.subLevel(), true, entity -> entity instanceof ItemEntity, false);
         return AssemblyResult.SUCCESS;
     }
 }
