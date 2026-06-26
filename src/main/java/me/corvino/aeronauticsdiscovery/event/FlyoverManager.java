@@ -152,6 +152,10 @@ public class FlyoverManager extends SavedData {
             if (isPlayerNearSubLevel(this.level, subLevel)) {
                 CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Releasing flyover {} (template '{}'); player nearby",
                         data.subLevelId(), data.templateId());
+                var container = SubLevelContainer.getContainer(level);
+                if (container != null) {
+                    container.removeForceLoadTicket(subLevel, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+                }
                 toRemove.add(entry.getKey());
                 continue;
             }
