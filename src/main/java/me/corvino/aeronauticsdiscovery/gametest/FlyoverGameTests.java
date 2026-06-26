@@ -14,6 +14,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Rotation;
+import net.neoforged.neoforge.gametest.GameTestHolder;
 import org.slf4j.Logger;
 
 /**
@@ -40,6 +41,7 @@ import org.slf4j.Logger;
  *
  * Future expansion: add verify/analysis steps after the "Terminal" log line.
  */
+@GameTestHolder(CreateAeronauticsDiscovery.MODID)
 public class FlyoverGameTests {
 
     private static final Logger LOG = CreateAeronauticsDiscovery.LOGGER;

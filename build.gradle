@@ -127,7 +127,18 @@ runs {
     // By default, the server will crash when no gametests are provided.
     // The gametest system is also enabled by default for other run configs under the /test command.
     gameTestServer {
+        // NOTE: both forge. and neoforge. prefixes are set for compatibility;
+        // NeoForge reads neoforge.enabledGameTestNamespaces to filter tests.
         systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+    }
+
+    // Runs ONLY our mod's game tests (FlyoverGameTests + AssemblyGameTests).
+    // Other mods' tests are excluded via neoforge.enabledGameTestNamespaces.
+    flyoverTestServer {
+        runType 'gameTestServer'
+        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
     }
 
     data {

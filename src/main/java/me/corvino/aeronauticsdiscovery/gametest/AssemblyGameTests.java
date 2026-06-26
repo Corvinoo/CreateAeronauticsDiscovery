@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.gametest;
 
+import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.*;
 import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
 import me.corvino.aeronauticsdiscovery.assembly.steps.FindAssemblyStartStep;
@@ -12,9 +13,11 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.gametest.GameTestHolder;
 
 import java.util.List;
 
+@GameTestHolder(CreateAeronauticsDiscovery.MODID)
 public class AssemblyGameTests {
     private static final ResourceLocation TEMPLATE_ID = ResourceLocation.parse("aeronauticsdiscovery:ballon_test");
 
