@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.gametest;
 
+import it.unimi.dsi.fastutil.longs.LongSet;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
@@ -14,11 +15,13 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ForcedChunksSavedData;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Rotation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.slf4j.Logger;
+import java.util.Map;
 
 /**
  * FlyoverGameTests - 4-tier distance test suite for flyover spawning & assembly
@@ -138,6 +141,106 @@ public class FlyoverGameTests {
         logHeader("TIER_4", origin, target, info);
         runTier(helper, level, "TIER_4", origin, target, info,
                 false, false);
+    }
+
+    // ========================================================================
+    // Leak test – verify forced chunk tickets are released after flyover lifecycle
+    // ========================================================================
+
+    /**
+     * Verifies that no forced chunk tickets leak after a flyover completes its
+     * assembly pipeline AND is despawned.
+     *
+     * Mock player note:
+     *   The mock player created by {@link #spawnPlayer} is NOT registered in
+     *   {@code level.players()} - it is a lightweight stub for API calls
+     *   ({@code blockPosition()}, {@code teleportTo()}) but does NOT appear
+     *   in the server's player list. This means: 
+     *   <p>
+     *   - {@code FlyoverManager.isTooFarFromAllPlayers()} returns {@code true}
+     *     immediately (zero real players), so the flyover despawns on the very
+     *     next server tick after pipeline completion.
+     *   <p>
+     *   - For tests that need player proximity checks, the mock player would
+     *     need to be registered via {@code PlayerList.placeNewPlayer()} or
+     *     equivalent to appear in {@code level.players()}.
+     *   <p>  
+     *   - A registered mock player would NOT trigger {@code isPlayerNearSubLevel}
+     *     unless it is within ~5 blocks of the sub-level bounding box, and the
+     *     "too far" threshold is
+     *     {@code viewDistance * 16 + Config.flyoverMaxUnloadDistance} (default
+     *     224 blocks with VIEW_CHUNKS=10).
+     */
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS, batch = "flyover_leak")
+    public void noChunkTicketLeakAfterDespawn(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Player player = spawnPlayer(helper, level);
+        configureServer(level, VIEW_CHUNKS, SIM_CHUNKS);
+        BlockPos origin = player.blockPosition();
+        DistanceInfo info = DistanceInfo.from(level);
+
+        // Place flyover outside both distances so FlyoverManager despawns it
+        // immediately after pipeline completion (no players in level.players())
+        int offset = Math.max(info.viewDistBlocks, info.simDistBlocks) + 96;
+        BlockPos target = origin.offset(offset, 0, 0);
+
+        logHeader("LEAK_CHECK", origin, target, info);
+
+        // Baseline: forced-chunks state before any pipeline activity
+        ForcedChunksSnapshot before = ForcedChunksSnapshot.capture(level);
+        LOG.info("[FLYOVER_TEST] LEAK_CHECK Before: {}", before);
+
+        AssemblyContext ctx = buildContext(level, target);
+        AssemblyQueue queue = AssemblyQueue.get(level);
+        queue.enqueue(Pipelines.FLYOVER, ctx);
+
+        int beforeCount = queue.getEntries().size();
+        long startTick = level.getGameTime();
+
+        helper.succeedWhen(() -> {
+            long elapsed = level.getGameTime() - startTick;
+
+            AssemblyQueue currentQueue = AssemblyQueue.get(level);
+            FlyoverManager manager = FlyoverManager.get(level);
+            int queueSize    = currentQueue.getEntries().size();
+            int flyoverCount = manager.getAllFlyovers().size();
+
+            if (elapsed % 25 == 0 && elapsed > 0) {
+                LOG.info("[FLYOVER_TEST] LEAK_CHECK Poll @ {}t: queue={}, flyovers={}",
+                         elapsed, queueSize, flyoverCount);
+            }
+
+            // Pipeline complete AND flyover despawned
+            if (queueSize == 0 && flyoverCount == 0 && beforeCount > 0) {
+                ForcedChunksSnapshot after = ForcedChunksSnapshot.capture(level);
+                LOG.info("[FLYOVER_TEST] LEAK_CHECK After: {}", after);
+
+                if (before.total() != after.total()) {
+                    String msg = String.format(
+                        "Chunk ticket leak detected! before=%d, after=%d",
+                        before.total(), after.total());
+                    LOG.error("[FLYOVER_TEST] {}", msg);
+                    throw new GameTestAssertException(msg);
+                }
+
+                LOG.info("[FLYOVER_TEST] === LEAK_CHECK PASSED === "
+                         + "(forced chunks: before={}, after={})",
+                         before.total(), after.total());
+                helper.succeed();
+                return;
+            }
+
+            if (elapsed >= TIMEOUT_TICKS - 50) {
+                LOG.warn("[FLYOVER_TEST] LEAK_CHECK TIMEOUT (queue={}, flyovers={})",
+                         queueSize, flyoverCount);
+                helper.succeed();
+                return;
+            }
+
+            throw new GameTestAssertException(
+                "LEAK_CHECK awaiting pipeline & despawn "
+                + "(queue=" + queueSize + ", flyovers=" + flyoverCount + ")");
+        });
     }
 
     // ========================================================================
@@ -268,6 +371,57 @@ public class FlyoverGameTests {
 
         boolean tier3Possible() {
             return viewDistBlocks > simDistBlocks;
+        }
+    }
+
+    // ========================================================================
+    // Forced-chunks snapshot – tracks all NeoForge + vanilla forced chunk
+    // tickets in a level. Used by the leak-detection test to verify cleanup.
+    // ========================================================================
+
+    /**
+     * Captures the number of forced chunks in a level across five categories:
+     * vanilla {@code /forceload}, NeoForge block-forced (non-ticking), block-forced
+     * (ticking), entity-forced (non-ticking), and entity-forced (ticking).
+     *
+     * <p>NeoForge's {@link ForcedChunksSavedData} is persisted per-dimension
+     * and stores entries added by {@code TicketController.forceChunk()} (which
+     * the mod's {@code LoadChunkStep} uses). If no saved data exists yet, all
+     * counts default to zero.
+     */
+    private record ForcedChunksSnapshot(int vanillaForced, int blockForced, int blockTicking,
+                                         int entityForced, int entityTicking) {
+
+        static ForcedChunksSnapshot capture(ServerLevel level) {
+            ForcedChunksSavedData data = level.getDataStorage()
+                    .get(ForcedChunksSavedData.factory(), "chunks");
+            if (data == null) return new ForcedChunksSnapshot(0, 0, 0, 0, 0);
+
+            return new ForcedChunksSnapshot(
+                    data.getChunks().size(),
+                    sumSizes(data.getBlockForcedChunks().getChunks()),
+                    sumSizes(data.getBlockForcedChunks().getTickingChunks()),
+                    sumSizes(data.getEntityForcedChunks().getChunks()),
+                    sumSizes(data.getEntityForcedChunks().getTickingChunks())
+            );
+        }
+
+        private static int sumSizes(Map<?, LongSet> map) {
+            int sum = 0;
+            for (LongSet set : map.values()) {
+                sum += set.size();
+            }
+            return sum;
+        }
+
+        int total() {
+            return vanillaForced + blockForced + blockTicking + entityForced + entityTicking;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("v=%d, b=%d, bt=%d, e=%d, et=%d (total=%d)",
+                    vanillaForced, blockForced, blockTicking, entityForced, entityTicking, total());
         }
     }
 
