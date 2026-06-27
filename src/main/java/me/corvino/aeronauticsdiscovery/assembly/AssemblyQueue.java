@@ -115,8 +115,6 @@ public class AssemblyQueue extends SavedData {
                 case FAIL -> {
                     CreateAeronauticsDiscovery.LOGGER.warn("[QUEUE] FAIL: '{}' (src={}, attempt {}/{})",
                             ctx.templateId, ctx.source, entry.retryCount + 1, ctx.maxRetries);
-                    ctx.currentStepIndex = 0;
-                    ctx.nextStepTick = 0L;
                     it.set(entry.withRetryCount(entry.retryCount + 1));
                     setDirty();
                 }
@@ -243,11 +241,10 @@ public class AssemblyQueue extends SavedData {
             tag.putString("SubLevelName", entry.context.subLevelName);
         }
         tag.putBoolean("RegisterAsFlyover", entry.context.registerAsFlyover);
+        tag.putUUID("entryId", entry.context.entryId);
         tag.putInt("CurrentStepIndex", entry.context.currentStepIndex);
-        tag.putLong("NextStepTick", entry.context.nextStepTick);
         return tag;
     }
-
     private static java.util.Optional<Entry> loadEntry(CompoundTag tag) {
         try {
             ResourceLocation templateId = ResourceLocation.parse(tag.getString("Template"));
@@ -272,11 +269,10 @@ public class AssemblyQueue extends SavedData {
                 ctx.subLevelName = tag.getString("SubLevelName");
             }
             ctx.registerAsFlyover = tag.getBoolean("RegisterAsFlyover");
+            ctx.entryId = tag.getUUID("entryId");
+            ctx.currentStepIndex = tag.getInt("CurrentStepIndex");
 
             int retryCount = tag.getInt("RetryCount");
-            ctx.currentStepIndex = tag.getInt("CurrentStepIndex");
-            ctx.nextStepTick = tag.getLong("NextStepTick");
-
             return java.util.Optional.of(new Entry(templateId, pipeline, ctx, retryCount));
         } catch (Exception e) {
             CreateAeronauticsDiscovery.LOGGER.error("[QUEUE] Failed to deserialize entry: {}", e.getMessage());
