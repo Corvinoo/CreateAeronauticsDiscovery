@@ -13,6 +13,8 @@ import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Rotation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -21,26 +23,16 @@ import org.slf4j.Logger;
 /**
  * FlyoverGameTests - 4-tier distance test suite for flyover spawning & assembly
  *
- * Each test spawns a fully configured flyover through the standard AssemblyQueue
- * pipeline ({@link Pipelines#FLYOVER}) at a controlled distance from the test
- * origin, waits for the pipeline to reach a terminal state, then logs structured
- * results that can be analysed after the run.
+ * Each test creates a mock player at the origin, configures server view/simulation
+ * distances appropriate for that tier, then spawns a flyover at a controlled distance
+ * and waits for the pipeline to complete.
  *
- *  TIER_1  │  Flyover inside BOTH render AND simulation distance          
- *  TIER_2  │  Flyover OUTSIDE render distance, INSIDE simulation distance 
- *  TIER_3  │  Flyover INSIDE render distance, OUTSIDE simulation distance 
- *  TIER_4  │  Flyover OUTSIDE BOTH distances                              
+ *  TIER_1  │  Flyover inside BOTH render AND simulation distance
+ *  TIER_2  │  Flyover OUTSIDE render distance, INSIDE simulation distance
+ *  TIER_3  │  Flyover INSIDE render distance, OUTSIDE simulation distance
+ *  TIER_4  │  Flyover OUTSIDE BOTH distances
  *
- * Each tier logs the following in a structured, grep-able format:
- *   [FLYOVER_TEST] === header / tier marker ===
- *   [FLYOVER_TEST] Server config: viewDist (blocks), simDist (blocks)
- *   [FLYOVER_TEST] Spawn: world position, distance from origin (blocks)
- *   [FLYOVER_TEST] Enqueue: template, pipeline name
- *   [FLYOVER_TEST] Poll @ <tick>: state dump (queue entries, flyovers)
- *   [FLYOVER_TEST] Terminal: elapsed ticks, pipeline result, flyover count
- *   [FLYOVER_TEST] === tier PASSED / FAILED ===
- *
- * Future expansion: add verify/analysis steps after the "Terminal" log line.
+ * Each tier runs in its own batch so server-wide distance settings don't conflict.
  */
 @GameTestHolder(CreateAeronauticsDiscovery.MODID)
 @PrefixGameTestTemplate(false)
@@ -59,13 +51,24 @@ public class FlyoverGameTests {
     // pipeline: each attempt can take ~205 ticks, 3 retries → ~615
     private static final int TIMEOUT_TICKS    = 800;
 
+    // Distance configs (in chunks) for each tier
+    private static final int VIEW_CHUNKS  = 10;  // 160 blocks
+    private static final int SIM_CHUNKS   = 8;   // 128 blocks
+    private static final int SIM_GT_VIEW  = 12;  // > VIEW_CHUNKS, for tier 2
+    private static final int VIEW_GT_SIM  = 12;  // > SIM_CHUNKS, for tier 3
+
     // Tier 1 – Inside both render AND simulation distance
-    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS)
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS, batch = "flyover_tier1")
     public void tier1_insideBoth(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
+        Player player = spawnPlayer(helper, level);
+        configureServer(level, VIEW_CHUNKS, SIM_CHUNKS);
+        BlockPos origin = player.blockPosition();
         DistanceInfo info = DistanceInfo.from(level);
-        BlockPos target = origin.offset(16, 0, 16);
+
+        // Place flyover well within both distances (distance < simDistBlocks)
+        int distBlocks = Math.min(info.viewDistBlocks, info.simDistBlocks) - 32;
+        BlockPos target = origin.offset(distBlocks, 0, 0);
 
         logHeader("TIER_1", origin, target, info);
         runTier(helper, level, "TIER_1", origin, target, info,
@@ -73,10 +76,12 @@ public class FlyoverGameTests {
     }
 
     // Tier 2 – Outside render distance, INSIDE simulation distance
-    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS)
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS, batch = "flyover_tier2")
     public void tier2_outsideRenderInsideSim(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
+        Player player = spawnPlayer(helper, level);
+        configureServer(level, VIEW_CHUNKS, SIM_GT_VIEW); // sim (12) > view (10)
+        BlockPos origin = player.blockPosition();
         DistanceInfo info = DistanceInfo.from(level);
 
         if (!info.tier2Possible()) {
@@ -95,10 +100,12 @@ public class FlyoverGameTests {
     }
 
     // Tier 3 – INSIDE render distance, Outside simulation distance
-    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS)
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS, batch = "flyover_tier3")
     public void tier3_insideRenderOutsideSim(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
+        Player player = spawnPlayer(helper, level);
+        configureServer(level, VIEW_GT_SIM, SIM_CHUNKS); // view (12) > sim (8)
+        BlockPos origin = player.blockPosition();
         DistanceInfo info = DistanceInfo.from(level);
 
         if (!info.tier3Possible()) {
@@ -117,10 +124,12 @@ public class FlyoverGameTests {
     }
 
     // Tier 4 – Outside BOTH render AND simulation distance
-    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS)
+    @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS, batch = "flyover_tier4")
     public void tier4_outsideBoth(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
+        Player player = spawnPlayer(helper, level);
+        configureServer(level, VIEW_CHUNKS, SIM_CHUNKS);
+        BlockPos origin = player.blockPosition();
         DistanceInfo info = DistanceInfo.from(level);
 
         int offset = Math.max(info.viewDistBlocks, info.simDistBlocks) + 96;
@@ -131,23 +140,27 @@ public class FlyoverGameTests {
                 false, false);
     }
 
-    // Core test runner - shared by all 4 tiers
+    // ========================================================================
+    // Player & server helpers
+    // ========================================================================
 
-    /**
-     * Enqueues a flyover at {@code target}, then polls every tick via
-     * {@link GameTestHelper#succeedWhen(Runnable)} until the assembly pipeline
-     * reaches a terminal state (success, or discarded after max-retries).
-     *
-     * @param helper    the game-test helper
-     * @param level     the server level
-     * @param tier      human-readable tier name (e.g. "TIER_1")
-     * @param origin    the reference "player" position
-     * @param target    absolute spawn position for the flyover
-     * @param info      computed distance info for logging
-     * @param insideRender  whether the target is within render distance
-     * @param insideSim     whether the target is within simulation distance
-     */
-    @SuppressWarnings("SameParameterValue")
+    private static Player spawnPlayer(GameTestHelper helper, ServerLevel level) {
+        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+        BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
+        player.teleportTo(level, origin.getX(), origin.getY(), origin.getZ(),
+                          java.util.Set.of(), 0.0F, 0.0F);
+        return player;
+    }
+
+    private static void configureServer(ServerLevel level, int viewChunks, int simChunks) {
+        level.getServer().getPlayerList().setViewDistance(viewChunks);
+        level.getServer().getPlayerList().setSimulationDistance(simChunks);
+    }
+
+    // ========================================================================
+    // Core test runner
+    // ========================================================================
+
     private void runTier(GameTestHelper helper,
                          ServerLevel level,
                          String tier,
@@ -157,7 +170,6 @@ public class FlyoverGameTests {
                          boolean insideRender,
                          boolean insideSim) {
 
-        // ---- Spawn the flyover (synchronous enqueue) ----
         AssemblyContext ctx = buildContext(level, target);
 
         LOG.info("[FLYOVER_TEST] {} Enqueue: template={}, pipeline={}, anchor={}",
@@ -169,7 +181,6 @@ public class FlyoverGameTests {
         int beforeCount = queue.getEntries().size();
         long startTick  = level.getGameTime();
 
-        // ---- Poll for pipeline completion ----
         helper.succeedWhen(() -> {
             long elapsed = level.getGameTime() - startTick;
 
@@ -179,13 +190,11 @@ public class FlyoverGameTests {
             int flyoverCount    = manager.getAllFlyovers().size();
             boolean progressed  = queueSize < beforeCount || flyoverCount > 0;
 
-            // Periodic progress log
             if (elapsed % 25 == 0 && elapsed > 0) {
                 LOG.info("[FLYOVER_TEST] {} Poll @ {}t: queue={}, flyovers={}, progressed={}",
                          tier, elapsed, queueSize, flyoverCount, progressed);
             }
 
-            // Terminal condition: queue processed the entry (either success or final discard after max retries)
             boolean queueDone = queueSize == 0 && beforeCount > 0;
             boolean flyoverRegistered = flyoverCount > 0;
 
@@ -222,12 +231,10 @@ public class FlyoverGameTests {
         });
     }
 
+    // ========================================================================
     // AssemblyContext factory
-    /**
-     * Builds an {@link AssemblyContext} identical to what
-     * {@link FlyoverEventScheduler#spawnAtPosition} produces, except the
-     * position is completely controlled (no random offset).
-     */
+    // ========================================================================
+
     private static AssemblyContext buildContext(ServerLevel level, BlockPos anchor) {
         return AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.FLYOVER)
                 .anchor(anchor)
@@ -241,11 +248,10 @@ public class FlyoverGameTests {
                 .build();
     }
 
-    // Distance-info helper - reads server config at test time
-    /**
-     * Snapshot of the server's view/simulation distances converted to blocks,
-     * with convenience queries for each tier.
-     */
+    // ========================================================================
+    // Distance-info helper
+    // ========================================================================
+
     private record DistanceInfo(int viewDistBlocks, int simDistBlocks) {
 
         static DistanceInfo from(ServerLevel level) {
@@ -256,18 +262,19 @@ public class FlyoverGameTests {
             );
         }
 
-        /** Tier 2 is valid only when sim-distance exceeds view-distance. */
         boolean tier2Possible() {
             return simDistBlocks > viewDistBlocks;
         }
 
-        /** Tier 3 is valid only when view-distance exceeds sim-distance. */
         boolean tier3Possible() {
             return viewDistBlocks > simDistBlocks;
         }
     }
 
-    // Structured logging helpers
+    // ========================================================================
+    // Logging helpers
+    // ========================================================================
+
     private static void logHeader(String tier, BlockPos origin, BlockPos target,
                                   DistanceInfo info) {
         int dX = target.getX() - origin.getX();
