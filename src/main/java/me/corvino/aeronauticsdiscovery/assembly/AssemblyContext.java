@@ -1,6 +1,7 @@
 package me.corvino.aeronauticsdiscovery.assembly;
 
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
+import me.corvino.aeronauticsdiscovery.assembly.steps.StepState;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -10,8 +11,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class AssemblyContext {
     @Nullable public ServerLevel level;
@@ -36,8 +36,16 @@ public class AssemblyContext {
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
     public boolean seatsPopulated;
 
+    public UUID entryId = UUID.randomUUID();
     public int currentStepIndex = 0;
-    public long nextStepTick = 0;
+
+
+    // Transients
+    public long currentTick;
+
+    public StepState currentStepState = StepState.NOT_STARTED;
+
+    public final Map<String, Object> stepData = new HashMap<>();
 
     AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,
                     TriggerType trigger, BlockPos anchor, BlockPos templatePos,

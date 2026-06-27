@@ -2,45 +2,44 @@ package me.corvino.aeronauticsdiscovery.assembly;
 
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
+import me.corvino.aeronauticsdiscovery.assembly.steps.StepState;
 
 import java.util.List;
 
-public record AssemblyPipeline(String name, List<AssemblyPipelineEntry> steps) {
+public record AssemblyPipeline(String name, List<AssemblyStep> steps) {
+
     public AssemblyResult execute(AssemblyContext ctx, long currentTick) {
-        if (currentTick < ctx.nextStepTick) {
-            return AssemblyResult.WAITING;
-        }
+        ctx.currentTick = currentTick;
 
         while (ctx.currentStepIndex < steps.size()) {
-            var holder = steps.get(ctx.currentStepIndex);
-            AssemblyStep step = holder.step();
+            AssemblyStep step = steps.get(ctx.currentStepIndex);
+
             try {
                 AssemblyResult result = step.run(ctx);
-                if (result == AssemblyResult.FAIL) {
-                    CreateAeronauticsDiscovery.LOGGER.debug("[PIPELINE:{}] Step '{}' returned {} for '{}', cleaning up",
-                            name, step.getClass().getSimpleName(), result, ctx.templateId);
-                    cleanup(ctx, ctx.currentStepIndex);
-                    return result;
-                }
 
-                ctx.currentStepIndex++;
-
-                long delay = holder.delayInTicks();
-                if (delay > 0 && ctx.currentStepIndex < steps.size()) {
-                    ctx.nextStepTick = currentTick + delay;
-                    CreateAeronauticsDiscovery.LOGGER.debug("[PIPELINE:{}] Step '{}' done, waiting {} ticks before next",
-                            name, step.getClass().getSimpleName(), delay);
-                    return AssemblyResult.WAITING;
+                switch (result) {
+                    case WAITING -> { return AssemblyResult.WAITING; }
+                    case FAIL -> {
+                        CreateAeronauticsDiscovery.LOGGER.debug(
+                                "[PIPELINE:{}] Step '{}' FAIL per '{}'",
+                                name, step.getClass().getSimpleName(), ctx.templateId);
+                        cleanup(ctx, ctx.currentStepIndex);
+                        return AssemblyResult.FAIL;
+                    }
+                    case SUCCESS -> {
+                        ctx.currentStepState = StepState.NOT_STARTED;
+                        ctx.currentStepIndex++;
+                    }
                 }
-            } catch (Exception exceptionPipeline) {
-                CreateAeronauticsDiscovery.LOGGER.error("[PIPELINE:{}] Step '{}' threw exception for '{}', cleaning up",
-                        name, step.getClass().getSimpleName(), ctx.templateId, exceptionPipeline);
+            } catch (Exception e) {
+                CreateAeronauticsDiscovery.LOGGER.error(
+                        "[PIPELINE:{}] Step '{}' exception per '{}'",
+                        name, step.getClass().getSimpleName(), ctx.templateId, e);
                 try {
                     cleanup(ctx, ctx.currentStepIndex);
-                }
-                catch (Exception exceptionCleanup) {
-                    CreateAeronauticsDiscovery.LOGGER.error("[PIPELINE:{}] Cleaning up '{}' threw exception for '{}', cleaning up",
-                            name, step.getClass().getSimpleName(), ctx.templateId, exceptionCleanup);
+                } catch (Exception ce) {
+                    CreateAeronauticsDiscovery.LOGGER.error(
+                            "[PIPELINE:{}] Cleanup exception per '{}'", name, ctx.templateId, ce);
                 }
                 return AssemblyResult.FAIL;
             }
@@ -49,18 +48,15 @@ public record AssemblyPipeline(String name, List<AssemblyPipelineEntry> steps) {
         return AssemblyResult.SUCCESS;
     }
 
-
     private void cleanup(AssemblyContext ctx, int upToIndex) {
         for (int i = upToIndex; i >= 0; i--) {
             try {
-                steps.get(i).step().cleanup(ctx);
+                steps.get(i).cleanup(ctx);
             } catch (Exception e) {
-                CreateAeronauticsDiscovery.LOGGER.error("[PIPELINE:{}] Cleanup failed for step '{}'",
+                CreateAeronauticsDiscovery.LOGGER.error(
+                        "[PIPELINE:{}] Cleanup step '{}' fallito",
                         name, steps.get(i).getClass().getSimpleName(), e);
             }
         }
     }
-
 }
-
-

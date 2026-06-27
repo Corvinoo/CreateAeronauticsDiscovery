@@ -18,3 +18,4 @@ public interface AssemblyStep {
         return AssemblyResult.SUCCESS;
     }
 }
+

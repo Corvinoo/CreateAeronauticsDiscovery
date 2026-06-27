@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.assembly.steps;
 
+import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -13,18 +14,55 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 
-public class ReadinessCheckStep implements AssemblyStep {
+public class ReadinessCheckStep implements DeferrableStep {
     @Override
-    public AssemblyResult run(AssemblyContext ctx) {
-        if (ctx.bounds == null) {
-            return AssemblyResult.FAIL;
-        }
-        if (firstFailing(ctx.level, ctx.bounds).isPresent()) {
-            return AssemblyResult.FAIL;
-        }
-        return AssemblyResult.SUCCESS;
+    public AssemblyResult begin(AssemblyContext ctx) {
+        return check(ctx);
     }
 
+    @Override
+    public AssemblyResult poll(AssemblyContext ctx) {
+        long readyAt = (long) ctx.stepData.getOrDefault("readiness:readyAt", 0L);
+        if (ctx.currentTick < readyAt) return AssemblyResult.WAITING;
+        return check(ctx);
+    }
+
+    private AssemblyResult check(AssemblyContext ctx) {
+        if (ctx.bounds == null) return AssemblyResult.FAIL;
+
+        int attempts = (int) ctx.stepData.getOrDefault("readiness:attempts", 0);
+        int maxAttempts = 120;
+
+        Optional<String> failing = firstFailing(ctx.level, ctx.bounds);
+        if (failing.isEmpty()) {
+            ctx.stepData.remove("readiness:readyAt");
+            ctx.stepData.remove("readiness:attempts");
+            return AssemblyResult.SUCCESS;
+        }
+
+        if (attempts >= maxAttempts) {
+            CreateAeronauticsDiscovery.LOGGER.warn(
+                    "[ReadinessCheckStep] '{}' failed after {} attempts, missing: {}",
+                    ctx.templateId, attempts, failing.get());
+            ctx.stepData.remove("readiness:readyAt");
+            ctx.stepData.remove("readiness:attempts");
+            return AssemblyResult.FAIL;
+        }
+
+        CreateAeronauticsDiscovery.LOGGER.debug(
+                "[ReadinessCheckStep] '{}' not ready yet (attempt {}/{}), missing: {}, retrying next tick",
+                ctx.templateId, attempts + 1, maxAttempts, failing.get());
+
+        ctx.stepData.put("readiness:attempts", attempts + 1);
+        ctx.stepData.put("readiness:readyAt", ctx.currentTick + 1);
+        return AssemblyResult.WAITING;
+    }
+
+    @Override
+    public void abort(AssemblyContext ctx) {
+        ctx.stepData.remove("readiness:readyAt");
+        ctx.stepData.remove("readiness:attempts");
+    }
 
 
     private record Check(String name, BiPredicate<ServerLevel, BoundingBox> test) {

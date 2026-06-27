@@ -16,12 +16,11 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.phys.AABB;
 
-public class PlaceBlocksStep implements AssemblyStep {
+public class PlaceBlocksStep implements DeferrableStep {
+
     @Override
-    public AssemblyResult run(AssemblyContext ctx) {
-        if (ctx.assemblerPos != null) {
-            return AssemblyResult.SUCCESS;
-        }
+    public AssemblyResult begin(AssemblyContext ctx) {
+        if (ctx.assemblerPos != null) return AssemblyResult.SUCCESS;
         assert ctx.template != null;
         assert ctx.anchor != null;
         assert ctx.level != null;
@@ -39,36 +38,24 @@ public class PlaceBlocksStep implements AssemblyStep {
                 ctx.level, ctx.anchor, ctx.anchor, settings, ctx.level.getRandom(), 2
         );
 
-        if (!placed) {
-            return AssemblyResult.FAIL;
-        }
+        if (!placed) return AssemblyResult.FAIL;
 
-//        debugEntitiesInArea(ctx.level, AABB.of(ctx.bounds));
+        ctx.stepData.put("placeblocks:readyAt", ctx.currentTick + 2);
+        return AssemblyResult.WAITING;
+    }
 
+    @Override
+    public AssemblyResult poll(AssemblyContext ctx) {
+        long readyAt = (long) ctx.stepData.getOrDefault("placeblocks:readyAt", 0L);
+        if (ctx.currentTick < readyAt) return AssemblyResult.WAITING;
+        ctx.stepData.remove("placeblocks:readyAt");
         return AssemblyResult.SUCCESS;
     }
 
-    private void debugEntitiesInArea(ServerLevel level, AABB bounds) {
-        AABB expandedBounds = bounds.inflate(1.0);
-        var allEntities = level.getAllEntities();
-        var entityCount = 0;
-
-        CreateAeronauticsDiscovery.LOGGER.info("Flyover entity check start");
-        for (Entity entity : allEntities) {
-            if (expandedBounds.contains(entity.getX(), entity.getY(), entity.getZ())) {
-                CreateAeronauticsDiscovery.LOGGER.info("Found entity: {}", entity);
-                entityCount++;
-            }
-        }
-        if (entityCount > 8) {
-            CreateAeronauticsDiscovery.LOGGER.warn("Found MORE entities than what the default structure contains! Please check!");
-        }
-
-        if (entityCount < 8) {
-            CreateAeronauticsDiscovery.LOGGER.warn("Found LESS entities than what the default structure contains! Please check!");
-        }
-
-        CreateAeronauticsDiscovery.LOGGER.info("Flyover entity check stop");
+    @Override
+    public void abort(AssemblyContext ctx) {
+        ctx.stepData.remove("placeblocks:readyAt");
+        cleanup(ctx);
     }
 
     @Override
@@ -79,8 +66,6 @@ public class PlaceBlocksStep implements AssemblyStep {
                 ctx.bounds.maxX(), ctx.bounds.maxY(), ctx.bounds.maxZ())) {
             ctx.level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
         }
-//        ctx.worldSeatPositions.clear();
     }
-
 }
 

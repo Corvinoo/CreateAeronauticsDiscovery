@@ -1,7 +1,9 @@
 package me.corvino.aeronauticsdiscovery;
 
 import com.mojang.logging.LogUtils;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
 import me.corvino.aeronauticsdiscovery.benchmark.BenchmarkCommand;
+import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
 import me.corvino.aeronauticsdiscovery.commands.PipelineDebugCommand;
 import me.corvino.aeronauticsdiscovery.commands.PrefabCommands;
@@ -10,15 +12,11 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverCommands;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventScheduler;
 import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
-import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -27,6 +25,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
@@ -50,7 +49,7 @@ public class CreateAeronauticsDiscovery {
     // Create a Deferred Register to hold Items which will all be registered under the "aeronauticsdiscovery" namespace
     // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "aeronauticsdiscovery" namespace
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
-    
+
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public CreateAeronauticsDiscovery(IEventBus modEventBus, ModContainer modContainer) {
@@ -97,7 +96,7 @@ public class CreateAeronauticsDiscovery {
     private void commonSetup(final FMLCommonSetupEvent event) {
 
     }
-    
+
 
     // Add the example block item to the building blocks tab
     private void addCreative(BuildCreativeModeTabContentsEvent event) {

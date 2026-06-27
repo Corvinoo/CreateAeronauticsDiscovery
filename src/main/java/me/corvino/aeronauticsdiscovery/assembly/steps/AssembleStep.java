@@ -131,6 +131,5 @@ public class AssembleStep implements AssemblyStep {
         ctx.assemblyResult = null;
     }
 
-
-
 }
+
