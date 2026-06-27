@@ -59,7 +59,7 @@ public class PipelineDebugCommand {
             return 0;
         }
 
-        List<AssemblyStep> steps = pipeline.steps().stream().map(AssemblyPipelineEntry::step).toList();
+        List<AssemblyStep> steps = pipeline.steps();
         
         source.sendSuccess(() -> Component.literal(
                 "§6=== Pipeline: §e" + pipeline.name() + "§r §6(" + steps.size() + " steps) ===§r"), false);

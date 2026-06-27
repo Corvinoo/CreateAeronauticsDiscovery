@@ -4,7 +4,7 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
-import me.corvino.aeronauticsdiscovery.assembly.ChunkLoadingHelper;
+import me.corvino.aeronauticsdiscovery.assembly.helper.ChunkLoadingHelper;
 
 public class UnloadChunkStep implements AssemblyStep {
     @Override
@@ -29,7 +29,7 @@ public class UnloadChunkStep implements AssemblyStep {
         }
 
         CreateAeronauticsDiscovery.LOGGER.info("Unloaded {} chunks for flyover at {}",
-                (bounds.maxX() - bounds.minX()) * (bounds.maxZ() - bounds.minZ()),
+                (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1),
                 ctx.anchor
         );
 
