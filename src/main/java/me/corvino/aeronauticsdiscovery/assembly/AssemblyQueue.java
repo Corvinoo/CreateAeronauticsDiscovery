@@ -362,7 +362,7 @@ public class AssemblyQueue extends SavedData {
 
         private static void registerFlyover(ServerLevel level, AssemblyContext ctx, ServerSubLevel subLevel) {
             if (ctx.registerAsFlyover) {
-                FlyoverManager.get(level).addFlyover(subLevel, ctx.templateId, ctx.anchor);
+                FlyoverManager.get(level).addFlyover(subLevel, ctx.templateId);
             }
         }
     }
