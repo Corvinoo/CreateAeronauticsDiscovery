@@ -9,7 +9,6 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
@@ -97,11 +96,11 @@ public class FlyoverManager extends SavedData {
         return java.util.Collections.unmodifiableMap(this.flyovers);
     }
 
-    public void addFlyover(SubLevel subLevel, ResourceLocation templateId, BlockPos spawnPos) {
-        this.flyovers.put(subLevel.getUniqueId(), new FlyoverData(subLevel.getUniqueId(), 0, templateId, spawnPos));
+    public void addFlyover(SubLevel subLevel, ResourceLocation templateId) {
+        this.flyovers.put(subLevel.getUniqueId(), new FlyoverData(subLevel.getUniqueId(), 0, templateId));
         this.setDirty();
-        CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Registered '{}' (id={}) at {} for despawn tracking (max {} ticks)",
-                templateId, subLevel.getUniqueId(), spawnPos, Config.flyoverMaxLifetimeTicks);
+        CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Registered '{}' (id={}) for despawn tracking (max {} ticks)",
+                templateId, subLevel.getUniqueId(), Config.flyoverMaxLifetimeTicks);
     }
 
     private static boolean isPlayerNearSubLevel(ServerLevel level, SubLevel subLevel) {
@@ -114,9 +113,14 @@ public class FlyoverManager extends SavedData {
         return false;
     }
 
-    private static boolean isTooFarFromAllPlayers(ServerLevel level, BlockPos spawnPos) {
-        double cx = spawnPos.getX() + 0.5;
-        double cz = spawnPos.getZ() + 0.5;
+    private static boolean isTooFarFromAllPlayers(ServerLevel level, SubLevel subLevel) {
+        AABB bb = subLevel.boundingBox().toMojang();
+        // Bounding box not yet initialized (first tick after assembly); defer check
+        if (bb.minX == 0 && bb.minY == 0 && bb.minZ == 0 && bb.maxX == 0 && bb.maxY == 0 && bb.maxZ == 0) {
+            return false;
+        }
+        double cx = (bb.minX + bb.maxX) / 2.0;
+        double cz = (bb.minZ + bb.maxZ) / 2.0;
         int viewDist = level.getServer().getPlayerList().getViewDistance();
         double limit = viewDist * 16.0 + 64.0;
         double limitSqr = limit * limit;
@@ -177,7 +181,7 @@ public class FlyoverManager extends SavedData {
                 continue;
             }
 
-            if (isTooFarFromAllPlayers(this.level, data.spawnPos())) {
+            if (isTooFarFromAllPlayers(this.level, subLevel)) {
                 CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Despawning flyover {} (template '{}'); too far from all players",
                         data.subLevelId(), data.templateId());
                 var container = SubLevelContainer.getContainer(level);
