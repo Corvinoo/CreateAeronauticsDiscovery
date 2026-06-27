@@ -122,7 +122,7 @@ public class FlyoverManager extends SavedData {
         double cx = (bb.minX + bb.maxX) / 2.0;
         double cz = (bb.minZ + bb.maxZ) / 2.0;
         int viewDist = level.getServer().getPlayerList().getViewDistance();
-        double limit = viewDist * 16.0 + 64.0;
+        double limit = viewDist * 16.0 + Config.flyoverMaxUnloadDistance;
         double limitSqr = limit * limit;
         for (ServerPlayer player : level.players()) {
             double dx = cx - player.getX();
