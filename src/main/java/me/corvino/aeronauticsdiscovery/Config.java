@@ -21,16 +21,23 @@ public class Config {
             .comment("Length in blocks of each macro chunk.")
             .defineInRange("flyover.macroChunkSize", 128, 16, 512);
 
+    private static final ModConfigSpec.IntValue FLYOVER_MAX_UNLOAD_DISTANCE = BUILDER
+            .comment("Extra distance in blocks beyond render distance at which a flyover is force-despawned. "
+                    + "Set to 0 to despawn exactly at render distance edge.")
+            .defineInRange("flyover.maxUnloadDistance", 64, 0, 1024);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
     public static int flyoverCooldownTicks;
     public static int macroChunkSize;
+    public static int flyoverMaxUnloadDistance;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
         flyoverMaxLifetimeTicks = FLYOVER_MAX_LIFETIME.get();
         flyoverCooldownTicks = FLYOVER_COOLDOWN.get();
         macroChunkSize = MACRO_CHUNK_SIZE.get();
+        flyoverMaxUnloadDistance = FLYOVER_MAX_UNLOAD_DISTANCE.get();
     }
 }
