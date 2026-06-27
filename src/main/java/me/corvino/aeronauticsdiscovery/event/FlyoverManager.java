@@ -9,6 +9,7 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
@@ -96,11 +97,11 @@ public class FlyoverManager extends SavedData {
         return java.util.Collections.unmodifiableMap(this.flyovers);
     }
 
-    public void addFlyover(SubLevel subLevel, ResourceLocation templateId) {
-        this.flyovers.put(subLevel.getUniqueId(), new FlyoverData(subLevel.getUniqueId(), 0, templateId));
+    public void addFlyover(SubLevel subLevel, ResourceLocation templateId, BlockPos spawnPos) {
+        this.flyovers.put(subLevel.getUniqueId(), new FlyoverData(subLevel.getUniqueId(), 0, templateId, spawnPos));
         this.setDirty();
-        CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Registered '{}' (id={}) for despawn tracking (max {} ticks)",
-                templateId, subLevel.getUniqueId(), Config.flyoverMaxLifetimeTicks);
+        CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Registered '{}' (id={}) at {} for despawn tracking (max {} ticks)",
+                templateId, subLevel.getUniqueId(), spawnPos, Config.flyoverMaxLifetimeTicks);
     }
 
     private static boolean isPlayerNearSubLevel(ServerLevel level, SubLevel subLevel) {
@@ -113,10 +114,9 @@ public class FlyoverManager extends SavedData {
         return false;
     }
 
-    private static boolean isTooFarFromAllPlayers(ServerLevel level, SubLevel subLevel) {
-        AABB bb = subLevel.boundingBox().toMojang();
-        double cx = (bb.minX + bb.maxX) / 2.0;
-        double cz = (bb.minZ + bb.maxZ) / 2.0;
+    private static boolean isTooFarFromAllPlayers(ServerLevel level, BlockPos spawnPos) {
+        double cx = spawnPos.getX() + 0.5;
+        double cz = spawnPos.getZ() + 0.5;
         int viewDist = level.getServer().getPlayerList().getViewDistance();
         double limit = viewDist * 16.0 + 64.0;
         double limitSqr = limit * limit;
@@ -177,7 +177,7 @@ public class FlyoverManager extends SavedData {
                 continue;
             }
 
-            if (isTooFarFromAllPlayers(this.level, subLevel)) {
+            if (isTooFarFromAllPlayers(this.level, data.spawnPos())) {
                 CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Despawning flyover {} (template '{}'); too far from all players",
                         data.subLevelId(), data.templateId());
                 var container = SubLevelContainer.getContainer(level);
