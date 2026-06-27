@@ -113,6 +113,23 @@ public class FlyoverManager extends SavedData {
         return false;
     }
 
+    private static boolean isTooFarFromAllPlayers(ServerLevel level, SubLevel subLevel) {
+        AABB bb = subLevel.boundingBox().toMojang();
+        double cx = (bb.minX + bb.maxX) / 2.0;
+        double cz = (bb.minZ + bb.maxZ) / 2.0;
+        int viewDist = level.getServer().getPlayerList().getViewDistance();
+        double limit = viewDist * 16.0 + 64.0;
+        double limitSqr = limit * limit;
+        for (ServerPlayer player : level.players()) {
+            double dx = cx - player.getX();
+            double dz = cz - player.getZ();
+            if (dx * dx + dz * dz < limitSqr) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Enqueue entry removal from external events and not directly tied to the manager lifecycle.
      * @param id
@@ -155,6 +172,18 @@ public class FlyoverManager extends SavedData {
                 var container = SubLevelContainer.getContainer(level);
                 if (container != null) {
                     container.removeForceLoadTicket(subLevel, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+                }
+                toRemove.add(entry.getKey());
+                continue;
+            }
+
+            if (isTooFarFromAllPlayers(this.level, subLevel)) {
+                CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Despawning flyover {} (template '{}'); too far from all players",
+                        data.subLevelId(), data.templateId());
+                var container = SubLevelContainer.getContainer(level);
+                if (container != null) {
+                    container.removeForceLoadTicket(subLevel, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+                    container.removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
                 }
                 toRemove.add(entry.getKey());
                 continue;
