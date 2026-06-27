@@ -5,17 +5,26 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.level.ForcedChunksSavedData;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Rotation;
 import org.slf4j.Logger;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public final class FlyoverTestHelper {
 
@@ -37,12 +46,52 @@ public final class FlyoverTestHelper {
 
     private FlyoverTestHelper() {}
 
-    public static Player spawnPlayer(GameTestHelper helper, ServerLevel level) {
-        Player player = helper.makeMockPlayer(GameType.CREATIVE);
+    public static ServerPlayer spawnAndRegisterPlayer(GameTestHelper helper, ServerLevel level) {
+        MinecraftServer server = level.getServer();
+        GameProfile profile = new GameProfile(UUID.randomUUID(), "flyover_tester");
+        ClientInformation clientInfo = ClientInformation.createDefault();
+        ServerPlayer player = new ServerPlayer(server, level, profile, clientInfo);
+
+        player.connection = new ServerGamePacketListenerImpl(
+                server, new Connection(PacketFlow.SERVERBOUND), player,
+                CommonListenerCookie.createInitial(profile, false)
+        );
+
+        // Bypass placeNewPlayer (which triggers mod packet sync issues on EmbeddedChannel)
+        // and directly add the player to ServerLevel.players only.
+        // Uses level.players() for the FlyoverManager distance check.
+        // Deliberately skips PlayerList.players to avoid Create's ServerSpeedProvider
+        // broadcasting packets to our dummy connection every tick.
+        try {
+            Field slPlayers = ServerLevel.class.getDeclaredField("players");
+            slPlayers.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<ServerPlayer> levelPlayers = (List<ServerPlayer>) slPlayers.get(level);
+            levelPlayers.add(player);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to register player", e);
+        }
+
         BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
         player.teleportTo(level, origin.getX(), origin.getY(), origin.getZ(),
-                          java.util.Set.of(), 0.0F, 0.0F);
+                          Set.of(), 0.0F, 0.0F);
+
+        LOG.info("[FLYOVER_TEST] Registered player '{}' (uuid={}) at ({}, {}, {})",
+                 profile.getName(), profile.getId(), origin.getX(), origin.getY(), origin.getZ());
         return player;
+    }
+
+    public static void unregisterPlayer(ServerLevel level, ServerPlayer player) {
+        try {
+            Field slPlayers = ServerLevel.class.getDeclaredField("players");
+            slPlayers.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<ServerPlayer> levelPlayers = (List<ServerPlayer>) slPlayers.get(level);
+            levelPlayers.remove(player);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to unregister player", e);
+        }
+        LOG.info("[FLYOVER_TEST] Unregistered player '{}'", player.getGameProfile().getName());
     }
 
     public static void configureServer(ServerLevel level, int viewChunks, int simChunks) {

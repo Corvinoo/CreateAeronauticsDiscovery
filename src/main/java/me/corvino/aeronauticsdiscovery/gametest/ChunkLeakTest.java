@@ -2,6 +2,7 @@ package me.corvino.aeronauticsdiscovery.gametest;
 
 import static me.corvino.aeronauticsdiscovery.gametest.FlyoverTestHelper.*;
 
+import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
@@ -12,7 +13,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -25,10 +26,11 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * waits for pipeline completion + despawn, then compares forced-chunk state
  * before vs after. If any tier detects a leak the test fails immediately.
  *
- * <p>Mock player note:
- * The mock player is NOT in {@code level.players()}, so
- * {@code FlyoverManager.isTooFarFromAllPlayers()} returns {@code true}
- * immediately after pipeline completion, triggering despawn on the next tick.
+ * <p>Uses a fully registered player (via {@code PlayerList.addPlayer()}) to
+ * exercise the real {@code level.players()} path in the flyover manager.
+ * Despawn timing is controlled by setting
+ * {@link Config#flyoverMaxLifetimeTicks} to 1, so flyovers expire on the
+ * tick after registration regardless of player distance.
  */
 @GameTestHolder(CreateAeronauticsDiscovery.MODID)
 @PrefixGameTestTemplate(false)
@@ -41,8 +43,11 @@ public class ChunkLeakTest {
     @GameTest(template = "airplane", timeoutTicks = TIMEOUT_TICKS * 5, batch = "flyover_leak")
     public void noChunkTicketLeakAfterDespawn(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        Player player = spawnPlayer(helper, level);
+        ServerPlayer player = spawnAndRegisterPlayer(helper, level);
         BlockPos origin = player.blockPosition();
+
+        int originalLifetime = Config.flyoverMaxLifetimeTicks;
+        Config.flyoverMaxLifetimeTicks = 1;
 
         int[] tierIdx       = {0};
         int[] state         = {STATE_SETUP};
@@ -52,6 +57,8 @@ public class ChunkLeakTest {
 
         helper.succeedWhen(() -> {
             if (tierIdx[0] >= TierConfig.ALL.size()) {
+                Config.flyoverMaxLifetimeTicks = originalLifetime;
+                unregisterPlayer(level, player);
                 LOG.info("[FLYOVER_TEST] === ALL TIERS PASSED ===");
                 helper.succeed();
                 return;
