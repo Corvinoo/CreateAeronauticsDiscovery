@@ -40,3 +40,5 @@ Default plane nbt: @bitmochibit
 - [Simulated Project](https://github.com/Creators-of-Aeronautics/Simulated-Project) (licensed under MIT license)
 
 ---
+
+You are allowed to put this mod in any modpack you wish.
