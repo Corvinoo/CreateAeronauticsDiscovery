@@ -12,35 +12,35 @@ public final class Pipelines {
 
     //TODO: replace static delays with contextual ones from steps themselves
     public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", List.of(
-            step(LoadTemplateStep::new),
-            step(LoadChunkStep::new), //TODO this must use ChunkLoad events to be able to be deferred regardless of the machine
-            step(PlaceBlocksStep::new),
-            step(FindAssemblyStartStep::new),
-            step(ReadinessCheckStep::new),
-            step(AssembleStep::new), // TODO rotation and placement should have a step that overrides the "afterAssembly" branch, meaning that I can rotate the structure way before and make it look nice
-            step(AddForceLoadTicketStep::new),
-            step(CleanUpItemEntities::new),
-            step(PopulateSeatsStep::new),
-            step(UnloadChunkStep::new)
+            new LoadTemplateStep(),
+            new LoadChunkStep(), //TODO this must use ChunkLoad events to be able to be deferred regardless of the machine
+            new PlaceBlocksStep(),
+            new FindAssemblyStartStep(),
+            new ReadinessCheckStep(),
+            new AssembleStep(), // TODO rotation and placement should have a step that overrides the "afterAssembly" branch, meaning that I can rotate the structure way before and make it look nice
+            new AddForceLoadTicketStep(),
+            new CleanUpItemEntities(),
+            new PopulateSeatsStep(),
+            new UnloadChunkStep()
     )));
 
     public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", List.of(
-            step(LoadTemplateStep::new),
-            step(ReadinessCheckStep::new),
-            step(AssembleStep::new)
+            new LoadTemplateStep(),
+            new ReadinessCheckStep(),
+            new AssembleStep()
     )));
 
     public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", List.of(
-            step(LoadTemplateStep::new),
-            step(LoadChunkStep::new), //TODO this must use ChunkLoad events to be able to be deferred regardless of the machine
-            step(PlaceBlocksStep::new),
-            step(FindAssemblyStartStep::new),
-            step(ReadinessCheckStep::new),
-            step(AssembleStep::new),
-            step(AddForceLoadTicketStep::new),
-            step(CleanUpItemEntities::new),
-            step(PopulateSeatsStep::new),
-            step(UnloadChunkStep::new)
+            new LoadTemplateStep(),
+            new LoadChunkStep(), //TODO this must use ChunkLoad events to be able to be deferred regardless of the machine
+            new PlaceBlocksStep(),
+            new FindAssemblyStartStep(),
+            new ReadinessCheckStep(),
+            new AssembleStep(),
+            new AddForceLoadTicketStep(),
+            new CleanUpItemEntities(),
+            new PopulateSeatsStep(),
+            new UnloadChunkStep()
     )));
 
     private Pipelines() {}
@@ -64,7 +64,4 @@ public final class Pipelines {
         return Map.copyOf(REGISTRY);
     }
 
-    public static AssemblyStep step(Supplier<AssemblyStep> stepFactory) {
-        return stepFactory.get();
-    }
 }
