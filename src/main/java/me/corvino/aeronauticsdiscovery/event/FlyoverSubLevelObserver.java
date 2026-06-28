@@ -6,12 +6,13 @@ import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import net.minecraft.util.Unit;
 
 public class FlyoverSubLevelObserver implements SubLevelObserver {
     private final FlyoverManager manager;
 
-    FlyoverSubLevelObserver(FlyoverManager manager) {
+    public FlyoverSubLevelObserver(FlyoverManager manager) {
         this.manager = manager;
     }
 
@@ -26,7 +27,7 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
             throw new IllegalStateException("Somehow the container was null when removing the sublevel!");
         }
         container.removeForceLoadTicket(serverSubLevel, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
-        FlyoverManager.removeAllEntitiesInSublevel(serverSubLevel, false);
+        FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
         manager.enqueueExternalRemoval(subLevel.getUniqueId());
     }
 }
