@@ -5,10 +5,13 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
+import me.corvino.aeronauticsdiscovery.Config;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
+import net.minecraft.network.PacketSendListener;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -19,6 +22,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.level.ForcedChunksSavedData;
 import net.minecraft.world.level.block.Rotation;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -52,10 +56,21 @@ public final class FlyoverTestHelper {
         ClientInformation clientInfo = ClientInformation.createDefault();
         ServerPlayer player = new ServerPlayer(server, level, profile, clientInfo);
 
+        Connection conn = new Connection(PacketFlow.SERVERBOUND);
         player.connection = new ServerGamePacketListenerImpl(
-                server, new Connection(PacketFlow.SERVERBOUND), player,
+                server, conn, player,
                 CommonListenerCookie.createInitial(profile, false)
-        );
+        ) {
+            @Override
+            public void send(Packet<?> packet) {
+                // silently discard, prevents SubLevelTrackingSystem crash
+            }
+
+            @Override
+            public void send(Packet<?> packet, @Nullable PacketSendListener listener) {
+                // silently discard
+            }
+        };
 
         // Bypass placeNewPlayer (which triggers mod packet sync issues on EmbeddedChannel)
         // and directly add the player to ServerLevel.players only.
@@ -97,6 +112,8 @@ public final class FlyoverTestHelper {
     public static void configureServer(ServerLevel level, int viewChunks, int simChunks) {
         level.getServer().getPlayerList().setViewDistance(viewChunks);
         level.getServer().getPlayerList().setSimulationDistance(simChunks);
+        // Prevent distance-based despawn from interfering with lifetime-driven test flow
+        Config.flyoverMaxUnloadDistance = 512;
     }
 
     public static AssemblyContext buildContext(ServerLevel level, BlockPos anchor) {
