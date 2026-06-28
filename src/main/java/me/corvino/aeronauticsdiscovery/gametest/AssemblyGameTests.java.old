@@ -78,9 +78,9 @@ public class AssemblyGameTests {
         };
 
         AssemblyPipeline p = new AssemblyPipeline("all_ok", List.of(
-                Pipelines.step(() -> assemblyStep1),
-                Pipelines.step(() -> assemblyStep2),
-                Pipelines.step(() -> assemblyStep3)
+                assemblyStep1,
+                assemblyStep2,
+                assemblyStep3
         ));
 
         AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build(), currentTick);
@@ -144,9 +144,9 @@ public class AssemblyGameTests {
         };
 
         AssemblyPipeline p = new AssemblyPipeline("fail_mid", List.of(
-                Pipelines.step(() -> assemblyStep1),
-                Pipelines.step(() -> assemblyStep2),
-                Pipelines.step(() -> assemblyStep3)
+                assemblyStep1,
+                assemblyStep2,
+                assemblyStep3
         ));
 
         AssemblyResult result = p.execute(AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND).build(), currentTick);
@@ -183,8 +183,8 @@ public class AssemblyGameTests {
         };
 
         AssemblyPipeline markerPipeline = new AssemblyPipeline("marker", List.of(
-                Pipelines.step(() -> assemblyStep1)
-        ));
+                assemblyStep1)
+        );
 
         AssemblyContext ctx = AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND)
                 .trigger(TriggerType.IMMEDIATE)
@@ -216,7 +216,7 @@ public class AssemblyGameTests {
 
         int[] callCount = {0};
 
-        AssemblyPipeline failPipeline = new AssemblyPipeline("fail", List.of(Pipelines.step(() ->
+        AssemblyPipeline failPipeline = new AssemblyPipeline("fail", List.of(
                 new AssemblyStep() {
                     @Override
                     public AssemblyResult run(AssemblyContext ctx) {
@@ -236,7 +236,7 @@ public class AssemblyGameTests {
                         AssemblyStep.super.cleanup(ctx);
                     }
                 }
-        )));
+        ));
 
         AssemblyQueue.get(level).enqueue(failPipeline, AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.COMMAND)
                 .trigger(TriggerType.IMMEDIATE)
