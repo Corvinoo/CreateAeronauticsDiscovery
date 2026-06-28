@@ -6,6 +6,8 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverData;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.commands.CommandSourceStack;
@@ -17,9 +19,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class FlyoverCommands {
     private static final Random RANDOM = new Random();
@@ -335,7 +337,7 @@ public final class FlyoverCommands {
         if (flyoverId != null) {
             ServerLevel level = player.serverLevel();
             FlyoverManager manager = FlyoverManager.get(level);
-            FlyoverData data = manager.getFlyoverData(flyoverId);
+            @Nullable FlyoverData data = manager.getEntry(flyoverId);
             SubLevel subLevel = manager.getSubLevel(flyoverId);
 
             boolean alive = data != null && subLevel != null && !subLevel.isRemoved();

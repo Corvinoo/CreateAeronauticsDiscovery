@@ -12,7 +12,7 @@ import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +23,7 @@ import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 
-import static me.corvino.aeronauticsdiscovery.event.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
 
 public class AssembleStep implements AssemblyStep {
     @Override
@@ -123,7 +123,7 @@ public class AssembleStep implements AssemblyStep {
         SubLevel subLevel = ctx.assemblyResult.subLevel();
         if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
 
-        FlyoverManager.removeAllEntitiesInSublevel(serverSubLevel, false);
+        FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
         SubLevelContainer container = SubLevelContainer.getContainer(ctx.level);
         if (container != null) {
             container.removeSubLevel(serverSubLevel, SubLevelRemovalReason.REMOVED);
