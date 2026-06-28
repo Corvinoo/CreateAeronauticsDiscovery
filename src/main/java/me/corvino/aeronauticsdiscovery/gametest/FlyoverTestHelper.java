@@ -1,0 +1,221 @@
+package me.corvino.aeronauticsdiscovery.gametest;
+
+import it.unimi.dsi.fastutil.longs.LongSet;
+import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
+import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
+import me.corvino.aeronauticsdiscovery.Config;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.PacketSendListener;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.level.ForcedChunksSavedData;
+import net.minecraft.world.level.block.Rotation;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+public final class FlyoverTestHelper {
+
+    public static final Logger LOG = CreateAeronauticsDiscovery.LOGGER;
+
+    public static final ResourceLocation TEMPLATE_ID =
+            ResourceLocation.parse("aeronauticsdiscovery:airplane");
+
+    public static final int ALTITUDE         = 64;
+    public static final int ACTIVATION_DIST  = 128;
+    public static final int MAX_RETRIES      = 3;
+    public static final int TIMEOUT_TICKS    = 800;
+
+
+    private FlyoverTestHelper() {}
+
+    public static ServerPlayer spawnAndRegisterPlayer(GameTestHelper helper, ServerLevel level) {
+        MinecraftServer server = level.getServer();
+        GameProfile profile = new GameProfile(UUID.randomUUID(), "flyover_tester");
+        ClientInformation clientInfo = ClientInformation.createDefault();
+        ServerPlayer player = new ServerPlayer(server, level, profile, clientInfo);
+
+        Connection conn = new Connection(PacketFlow.SERVERBOUND);
+        player.connection = new ServerGamePacketListenerImpl(
+                server, conn, player,
+                CommonListenerCookie.createInitial(profile, false)
+        ) {
+            @Override
+            public void send(Packet<?> packet) {
+                // silently discard, prevents SubLevelTrackingSystem crash
+            }
+
+            @Override
+            public void send(Packet<?> packet, @Nullable PacketSendListener listener) {
+                // silently discard
+            }
+        };
+
+        // Bypass placeNewPlayer (which triggers mod packet sync issues on EmbeddedChannel)
+        // and directly add the player to ServerLevel.players only.
+        // Uses level.players() for the FlyoverManager distance check.
+        // Deliberately skips PlayerList.players to avoid Create's ServerSpeedProvider
+        // broadcasting packets to our dummy connection every tick.
+        try {
+            Field slPlayers = ServerLevel.class.getDeclaredField("players");
+            slPlayers.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<ServerPlayer> levelPlayers = (List<ServerPlayer>) slPlayers.get(level);
+            levelPlayers.add(player);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to register player", e);
+        }
+
+        BlockPos origin = helper.absolutePos(new BlockPos(0, ALTITUDE, 0));
+        player.teleportTo(level, origin.getX(), origin.getY(), origin.getZ(),
+                          Set.of(), 0.0F, 0.0F);
+
+        LOG.info("[FLYOVER_TEST] Registered player '{}' (uuid={}) at ({}, {}, {})",
+                 profile.getName(), profile.getId(), origin.getX(), origin.getY(), origin.getZ());
+        return player;
+    }
+
+    public static void unregisterPlayer(ServerLevel level, ServerPlayer player) {
+        try {
+            Field slPlayers = ServerLevel.class.getDeclaredField("players");
+            slPlayers.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<ServerPlayer> levelPlayers = (List<ServerPlayer>) slPlayers.get(level);
+            levelPlayers.remove(player);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to unregister player", e);
+        }
+        LOG.info("[FLYOVER_TEST] Unregistered player '{}'", player.getGameProfile().getName());
+    }
+
+    public static void configureServer(ServerLevel level, int viewChunks, int simChunks) {
+        level.getServer().getPlayerList().setViewDistance(viewChunks);
+        level.getServer().getPlayerList().setSimulationDistance(simChunks);
+        // Prevent distance-based despawn from interfering with lifetime-driven test flow
+        Config.flyoverMaxUnloadDistance = 512;
+    }
+
+    public static AssemblyContext buildContext(ServerLevel level, BlockPos anchor) {
+        return AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.FLYOVER)
+                .anchor(anchor)
+                .rotationTemplate(Rotation.NONE)
+                .setYaw(0.0)
+                .overrideVelocity(InitialVelocity.NONE)
+                .activationDistance(ACTIVATION_DIST)
+                .maxRetries(MAX_RETRIES)
+                .setName("flyover_test")
+                .registerFlyover()
+                .build();
+    }
+
+    public static void logHeader(String tier, BlockPos origin, BlockPos target,
+                                  DistanceInfo info) {
+        int dX = target.getX() - origin.getX();
+        int dZ = target.getZ() - origin.getZ();
+        int dist = (int) Math.sqrt(dX * dX + dZ * dZ);
+
+        LOG.info("==============================================");
+        LOG.info("[FLYOVER_TEST] === {} ===", tier);
+        LOG.info("[FLYOVER_TEST] Server viewDist={}b, simDist={}b",
+                 info.viewDistBlocks(), info.simDistBlocks());
+        LOG.info("[FLYOVER_TEST] Origin: ({}, {}, {})", origin.getX(), origin.getY(), origin.getZ());
+        LOG.info("[FLYOVER_TEST] Target: ({}, {}, {})", target.getX(), target.getY(), target.getZ());
+        LOG.info("[FLYOVER_TEST] Distance: {} blocks", dist);
+        LOG.info("[FLYOVER_TEST] Template: {}", TEMPLATE_ID);
+    }
+
+    // ========================================================================
+    // Value types
+    // ========================================================================
+
+    public record DistanceInfo(int viewDistBlocks, int simDistBlocks) {
+
+        public static DistanceInfo from(ServerLevel level) {
+            var playerList = level.getServer().getPlayerList();
+            return new DistanceInfo(
+                    playerList.getViewDistance() * 16,
+                    playerList.getSimulationDistance() * 16
+            );
+        }
+
+        public boolean tier2Possible() {
+            return simDistBlocks > viewDistBlocks;
+        }
+
+        public boolean tier3Possible() {
+            return viewDistBlocks > simDistBlocks;
+        }
+    }
+
+    public record TierConfig(String name, int viewChunks, int simChunks,
+                              boolean insideView, boolean insideSim) {
+
+        public static final TierConfig TIER_1 = new TierConfig("TIER_1", 10,  8,  true,  true);
+        public static final TierConfig TIER_2 = new TierConfig("TIER_2", 10,  12, false, true);
+        public static final TierConfig TIER_3 = new TierConfig("TIER_3", 12,  8,  true,  false);
+        public static final TierConfig TIER_4 = new TierConfig("TIER_4", 10,  8,  false, false);
+
+        public static final List<TierConfig> ALL = List.of(TIER_1, TIER_2, TIER_3, TIER_4);
+
+        public int computeTargetOffsetBlocks() {
+            int viewBlocks = viewChunks * 16;
+            int simBlocks  = simChunks * 16;
+            if (insideView && insideSim)      return Math.min(viewBlocks, simBlocks) - 32;
+            if (!insideView && insideSim)     return (simBlocks + viewBlocks) / 2;
+            if (insideView && !insideSim)     return (viewBlocks + simBlocks) / 2;
+            return Math.max(viewBlocks, simBlocks) + 96;
+        }
+    }
+
+    public record ForcedChunksSnapshot(int vanillaForced, int blockForced, int blockTicking,
+                                        int entityForced, int entityTicking) {
+
+        public static ForcedChunksSnapshot capture(ServerLevel level) {
+            ForcedChunksSavedData data = level.getDataStorage()
+                    .get(ForcedChunksSavedData.factory(), "chunks");
+            if (data == null) return new ForcedChunksSnapshot(0, 0, 0, 0, 0);
+
+            return new ForcedChunksSnapshot(
+                    data.getChunks().size(),
+                    sumSizes(data.getBlockForcedChunks().getChunks()),
+                    sumSizes(data.getBlockForcedChunks().getTickingChunks()),
+                    sumSizes(data.getEntityForcedChunks().getChunks()),
+                    sumSizes(data.getEntityForcedChunks().getTickingChunks())
+            );
+        }
+
+        private static int sumSizes(Map<?, LongSet> map) {
+            int sum = 0;
+            for (LongSet set : map.values()) {
+                sum += set.size();
+            }
+            return sum;
+        }
+
+        public int total() {
+            return vanillaForced + blockForced + blockTicking + entityForced + entityTicking;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("v=%d, b=%d, bt=%d, e=%d, et=%d (total=%d)",
+                    vanillaForced, blockForced, blockTicking, entityForced, entityTicking, total());
+        }
+    }
+}
