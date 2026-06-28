@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static me.corvino.aeronauticsdiscovery.entities.EntityRegistry.SOARING_TRADER;
-import static me.corvino.aeronauticsdiscovery.event.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
 
 public final class SeatPopulator {
     private SeatPopulator() {}
