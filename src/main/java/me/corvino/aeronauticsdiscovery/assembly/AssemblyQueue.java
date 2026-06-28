@@ -88,7 +88,7 @@ public class AssemblyQueue extends SavedData {
                 AssemblyContext ctx = entry.context;
                 ctx.injectLevel(level);
 
-                if (ctx.trigger == TriggerType.PROXIMITY) {
+                if (ctx.trigger == TriggerType.PROXIMITY) { //todo change this to instantly assemble worldgen like flyovers, but hold in air until the players get close
                     if (!isNearPlayer(level, ctx)) continue;
                     if (!isLoaded(level, ctx))     continue;
                 }
