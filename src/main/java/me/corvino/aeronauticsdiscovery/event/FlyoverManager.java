@@ -31,6 +31,7 @@ import java.util.function.Predicate;
 
 public class FlyoverManager extends SavedData {
     public static final String FLYOVER_ID_TAG = "flyover_sublevel_id";
+    private static final float MINIMUM_LIFETIME = 20*10f;
     public static TicketController ticketController = new TicketController(
             ResourceLocation.fromNamespaceAndPath(CreateAeronauticsDiscovery.MODID, "chunkticketmanager")
     );
@@ -181,7 +182,7 @@ public class FlyoverManager extends SavedData {
                 continue;
             }
 
-            if (isTooFarFromAllPlayers(this.level, subLevel)) {
+            if (isTooFarFromAllPlayers(this.level, subLevel) && data.lifeTicks() >= MINIMUM_LIFETIME) {
                 CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Despawning flyover {} (template '{}'); too far from all players",
                         data.subLevelId(), data.templateId());
                 var container = SubLevelContainer.getContainer(level);

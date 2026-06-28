@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.event;
 
+import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
@@ -56,7 +57,7 @@ public final class FlyoverEventScheduler {
 
         int viewDist = level.getServer().getPlayerList().getViewDistance();
         int maxDist = viewDist * 16;
-        int offset = Math.max(48, maxDist - 24 + random.nextInt(17) - 8);
+        int offset = maxDist + Config.flyoverMaxUnloadDistance / 2;
 
         double angle = random.nextDouble() * 2 * Math.PI;
         int dx = (int) (Math.cos(angle) * offset);
@@ -76,7 +77,7 @@ public final class FlyoverEventScheduler {
                 .rotationTemplate(Rotation.NONE)
                 .setYaw(yawRadians)
                 .overrideVelocity(config.velocity())
-                .activationDistance(128)
+                .activationDistance(128) //todo check whether working properly
                 .maxRetries(3)
                 .setName("flyover")
                 .registerFlyover()
