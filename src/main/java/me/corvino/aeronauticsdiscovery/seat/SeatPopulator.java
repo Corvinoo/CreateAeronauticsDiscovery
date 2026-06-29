@@ -1,15 +1,11 @@
 package me.corvino.aeronauticsdiscovery.seat;
 
 import com.simibubi.create.content.contraptions.actors.seat.SeatBlock;
-import com.simibubi.create.content.contraptions.actors.seat.SeatEntity;
 import dev.ryanhcode.sable.Sable;
-import dev.ryanhcode.sable.mixinterface.entity.entities_stick_sublevels.EntityStickExtension;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.entities.SoaringTrader;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -38,7 +34,8 @@ public final class SeatPopulator {
             }
 
             trader.setPos(projected.x() + 0.5, projected.y(), projected.z() + 0.5);
-            trader.getPersistentData().putUUID(FLYOVER_ID_TAG, subLevel.getUniqueId());
+            trader.getPersistentData().putUUID(FLYOVER_ID_TAG, subLevel.getUniqueId()); 
+//            trader.setPersistenceRequired(); //fixes random despawn
 
             if (!level.addFreshEntity(trader)) {
                 CreateAeronauticsDiscovery.LOGGER.warn("[SeatPopulator] addFreshEntity failed at {}", seatPos);
