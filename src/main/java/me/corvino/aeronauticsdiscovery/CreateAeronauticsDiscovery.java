@@ -13,6 +13,7 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverEventRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventScheduler;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
+import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
@@ -76,6 +77,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
+        TaskScheduler.setup();
 
         modEventBus.addListener(this::onTicketControllerRegister);
 

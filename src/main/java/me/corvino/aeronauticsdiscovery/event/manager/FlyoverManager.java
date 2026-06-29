@@ -196,9 +196,10 @@ public class FlyoverManager extends SavedData {
     private void despawn(FlyoverData entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
         LOGGER.info("[FLYOVER] Despawning {} ('{}') - {}",
                 entry.subLevelId(), entry.templateId(), reason.describe());
-        //todo: the entity cleanup cam ne finicky here, ideally it should be inside the observer and be called *after* the removal of a sublevel
         //it's currently placed here to avoid weird concurrency crash caused by the aquifier noise cache (yes. the water caverns.)
-        FlyoverUtils.removeAllEntitiesInSublevel(subLevel, false); 
+//        FlyoverUtils.removeAllEntitiesInSublevel(subLevel, false);
+
+        //it should be fixed by the schedule that waits that the chunks are ready
         removeSubLevelFromWorld(subLevel);
     }
 
