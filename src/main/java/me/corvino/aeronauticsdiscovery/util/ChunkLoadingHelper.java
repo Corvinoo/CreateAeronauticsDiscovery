@@ -1,16 +1,11 @@
-package me.corvino.aeronauticsdiscovery.assembly.helper;
+package me.corvino.aeronauticsdiscovery.util;
 
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
+import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.ChunkPos;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ChunkLoadingHelper {
 
@@ -31,6 +26,12 @@ public class ChunkLoadingHelper {
         int maxChunkZ = SectionPos.blockToSectionCoord(maxBlockZ);
 
         return new ChunkBounds(minChunkX, minChunkZ, maxChunkX, maxChunkZ);
+    }
+
+    public static ChunkBounds calculateChunkBounds(ServerSubLevel serverSubLevel) {
+        var level = serverSubLevel.getLevel();
+        int minX = 0, minZ = 0, maxX = 0, maxZ = 0;
+        return new ChunkBounds(minX, minZ, maxX, maxZ);
     }
 
     public record ChunkBounds(int minX, int minZ, int maxX, int maxZ) {}
