@@ -3,8 +3,8 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.assembly.helper.ChunkLoadingHelper;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 
 
 public class UnloadChunkStep extends AssemblyStep {
