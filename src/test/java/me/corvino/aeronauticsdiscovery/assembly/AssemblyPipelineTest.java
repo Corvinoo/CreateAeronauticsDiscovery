@@ -1,6 +1,5 @@
 package me.corvino.aeronauticsdiscovery.assembly;
 
-import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
 import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
@@ -64,7 +63,7 @@ class AssemblyPipelineTest {
 
     @Test
     void stepsListIsAccessible() {
-        AssemblyStep step = ctx -> AssemblyResult.SUCCESS;
+        IAssemblyStep step = ctx -> AssemblyResult.SUCCESS;
         AssemblyPipeline pipeline = new AssemblyPipeline("test", List.of(step));
         assertEquals(1, pipeline.steps().size());
         assertSame(step, pipeline.steps().getFirst());

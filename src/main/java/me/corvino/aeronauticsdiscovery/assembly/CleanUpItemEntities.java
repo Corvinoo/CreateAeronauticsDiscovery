@@ -5,12 +5,16 @@ import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
 import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import net.minecraft.world.entity.item.ItemEntity;
 
-public class CleanUpItemEntities implements AssemblyStep {
+public class CleanUpItemEntities extends AssemblyStep {
+
     @Override
-    public AssemblyResult run(AssemblyContext ctx) {
-        assert ctx.assemblyResult != null;
-        if(ctx.assemblyResult.subLevel() == null) return AssemblyResult.FAIL;
-        FlyoverManager.removeAllEntitiesInSublevel((ServerSubLevel)ctx.assemblyResult.subLevel(), true, entity -> entity instanceof ItemEntity, false);
+    protected AssemblyResult tick(AssemblyContext ctx) {
+        if (ctx.assemblyResult == null) return AssemblyResult.FAIL;
+        if (!(ctx.assemblyResult.subLevel() instanceof ServerSubLevel serverSubLevel))
+            return AssemblyResult.FAIL;
+
+        FlyoverManager.removeAllEntitiesInSublevel(
+                serverSubLevel, true, entity -> entity instanceof ItemEntity, false);
         return AssemblyResult.SUCCESS;
     }
 }

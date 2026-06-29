@@ -2,7 +2,7 @@ package me.corvino.aeronauticsdiscovery.gametest;
 
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.*;
-import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
+import me.corvino.aeronauticsdiscovery.assembly.steps.IAssemblyStep;
 import me.corvino.aeronauticsdiscovery.assembly.steps.FindAssemblyStartStep;
 import me.corvino.aeronauticsdiscovery.assembly.steps.LoadTemplateStep;
 import me.corvino.aeronauticsdiscovery.assembly.steps.PlaceBlocksStep;

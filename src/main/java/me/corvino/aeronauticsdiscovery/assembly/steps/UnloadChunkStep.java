@@ -6,32 +6,21 @@ import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.assembly.helper.ChunkLoadingHelper;
 
-public class UnloadChunkStep implements AssemblyStep {
+
+public class UnloadChunkStep extends AssemblyStep {
+
     @Override
-    public AssemblyResult run(AssemblyContext ctx) {
-        if(ctx.template == null) return AssemblyResult.FAIL;
-        if(ctx.level == null) return AssemblyResult.FAIL;
-        assert ctx.anchor != null;
+    protected AssemblyResult tick(AssemblyContext ctx) {
+        if (ctx.template == null || ctx.level == null || ctx.anchor == null) return AssemblyResult.FAIL;
 
         ChunkLoadingHelper.ChunkBounds bounds = ChunkLoadingHelper.calculateChunkBounds(ctx);
+        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++)
+            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++)
+                FlyoverManager.ticketController.forceChunk(ctx.level, ctx.anchor, cx, cz, false, true);
 
-        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
-            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
-                FlyoverManager.ticketController.forceChunk(
-                        ctx.level,
-                        ctx.anchor,
-                        cx,
-                        cz,
-                        false,
-                        true
-                );
-            }
-        }
-
-        CreateAeronauticsDiscovery.LOGGER.info("Unloaded {} chunks for flyover at {}",
+        CreateAeronauticsDiscovery.LOGGER.info("[UnloadChunkStep] Unloaded {} chunks for '{}'",
                 (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1),
-                ctx.anchor
-        );
+                ctx.templateId);
 
         return AssemblyResult.SUCCESS;
     }

@@ -4,77 +4,64 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import me.corvino.aeronauticsdiscovery.assembly.helper.ChunkLoadingHelper;
-import me.corvino.aeronauticsdiscovery.assembly.scheduler.StepScheduler;
 import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.ChunkPos;
 
-public class LoadChunkStep implements DeferrableStep {
-    private final StepScheduler scheduler = new StepScheduler(LoadChunkStep.class);
+public class LoadChunkStep extends AssemblyStep {
+    private boolean ticketsForced = false;
 
     @Override
-    public AssemblyResult begin(AssemblyContext ctx) {
+    protected int timeoutTicks() { return 600; }
+
+    @Override
+    protected AssemblyResult tick(AssemblyContext ctx) {
         if (ctx.template == null || ctx.level == null || ctx.anchor == null)
             return AssemblyResult.FAIL;
 
         ChunkLoadingHelper.ChunkBounds bounds = ChunkLoadingHelper.calculateChunkBounds(ctx);
-        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++)
-            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++)
-                FlyoverManager.ticketController.forceChunk(
-                        ctx.level, ctx.anchor, cx, cz, true, true);
 
-        scheduler.scheduleAfter(ctx, 2);
-        return AssemblyResult.WAITING;
-    }
-
-    @Override
-    public AssemblyResult poll(AssemblyContext ctx) {
-        if (ctx.level == null) return AssemblyResult.FAIL;
-        if (!scheduler.isReady(ctx)) return AssemblyResult.WAITING;
-
-        ChunkLoadingHelper.ChunkBounds bounds = ChunkLoadingHelper.calculateChunkBounds(ctx);
-        int notReady = 0;
-        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
-            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
-                long chunkKey = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
-                if (!ctx.level.getChunkSource().isPositionTicking(chunkKey)) {
-                    notReady++;
-                }
-            }
-        }
-
-        if (notReady > 0) {
-            CreateAeronauticsDiscovery.LOGGER.debug(
-                    "[LoadChunkStep] {}/{} chunks not ticking for '{}', waiting...",
-                    notReady,
-                    (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1),
-                    ctx.templateId);
-            scheduler.scheduleAfter(ctx, 1);
+        if (!ticketsForced) {
+            forceTickets(ctx, bounds, true);
+            ticketsForced = true;
             return AssemblyResult.WAITING;
         }
 
-        scheduler.reset(ctx);
-        CreateAeronauticsDiscovery.LOGGER.info(
-                "[LoadChunkStep] All chunks ticking for '{}'", ctx.templateId);
+        int notReady = 0;
+        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++)
+            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++)
+                if (!ctx.level.getChunkSource().isPositionTicking(ChunkPos.asLong(cx, cz)))
+                    notReady++;
+
+        if (notReady > 0) {
+            CreateAeronauticsDiscovery.LOGGER.debug(
+                    "[LoadChunkStep] {}/{} chunk(s) are not ticking for '{}', waiting..",
+                    notReady,
+                    (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1),
+                    ctx.templateId);
+            return AssemblyResult.WAITING;
+        }
+
+        CreateAeronauticsDiscovery.LOGGER.info("[LoadChunkStep] All chunks are ticking for '{}'", ctx.templateId);
         return AssemblyResult.SUCCESS;
     }
 
     @Override
-    public void abort(AssemblyContext ctx) {
-        scheduler.reset(ctx);
-        releaseTickets(ctx);
+    protected void onAbort(AssemblyContext ctx) {
+        if (ticketsForced) releaseTickets(ctx);
     }
 
-    @Override
-    public void cleanup(AssemblyContext ctx) {
-        DeferrableStep.super.cleanup(ctx);
+    private void forceTickets(AssemblyContext ctx, ChunkLoadingHelper.ChunkBounds bounds, boolean add) {
+        assert ctx.anchor != null;
+        assert ctx.level != null;
+        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++)
+            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
+                FlyoverManager.ticketController.forceChunk(ctx.level, ctx.anchor, cx, cz, add, true);
+            }
     }
 
     private void releaseTickets(AssemblyContext ctx) {
         if (ctx.template == null || ctx.level == null || ctx.anchor == null) return;
         ChunkLoadingHelper.ChunkBounds bounds = ChunkLoadingHelper.calculateChunkBounds(ctx);
-        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++)
-            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++)
-                FlyoverManager.ticketController.forceChunk(
-                        ctx.level, ctx.anchor, cx, cz, false, true);
+        forceTickets(ctx, bounds, false);
     }
 }

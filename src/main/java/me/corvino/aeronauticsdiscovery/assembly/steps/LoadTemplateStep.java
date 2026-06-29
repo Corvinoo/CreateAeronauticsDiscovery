@@ -1,30 +1,23 @@
 package me.corvino.aeronauticsdiscovery.assembly.steps;
 
 import me.corvino.aeronauticsdiscovery.assembly.*;
-import me.corvino.aeronauticsdiscovery.assembly.scheduler.StepScheduler;
-
-public class LoadTemplateStep implements DeferrableStep {
-    private final StepScheduler scheduler = new StepScheduler(LoadTemplateStep.class);
 
 
-    @Override
-    public AssemblyResult begin(AssemblyContext ctx) {
-        scheduler.scheduleAfter(ctx, 2);
-        return AssemblyResult.WAITING;
-    }
+public class LoadTemplateStep extends AssemblyStep {
+    private final TickDelay delay = newDelay();
 
     @Override
-    public AssemblyResult poll(AssemblyContext ctx) {
-        if (!scheduler.isReady(ctx)) return AssemblyResult.WAITING;
+    protected AssemblyResult tick(AssemblyContext ctx) {
+        delay.start(2);
+        if (delay.isWaiting()) return AssemblyResult.WAITING;
 
-        assert ctx.level != null;
+        if (ctx.level == null) return AssemblyResult.FAIL;
         ctx.template = PrefabService.loadPrefab(ctx.level, ctx.templateId);
         return AssemblyResult.SUCCESS;
     }
 
     @Override
-    public void abort(AssemblyContext ctx) {
-        scheduler.reset(ctx);
+    protected void onAbort(AssemblyContext ctx) {
         ctx.template = null;
     }
 }
