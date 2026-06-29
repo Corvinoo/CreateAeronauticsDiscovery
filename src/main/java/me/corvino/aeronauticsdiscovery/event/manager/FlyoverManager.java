@@ -9,6 +9,7 @@ import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
+import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -192,9 +193,12 @@ public class FlyoverManager extends SavedData {
         removeForceTicket(subLevel);
     }
 
-    private void despawn(FlyoverData entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) { //check if collides with sublevel observer
+    private void despawn(FlyoverData entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
         LOGGER.info("[FLYOVER] Despawning {} ('{}') - {}",
                 entry.subLevelId(), entry.templateId(), reason.describe());
+        //todo: the entity cleanup cam ne finicky here, ideally it should be inside the observer and be called *after* the removal of a sublevel
+        //it's currently placed here to avoid weird concurrency crash caused by the aquifier noise cache (yes. the water caverns.)
+        FlyoverUtils.removeAllEntitiesInSublevel(subLevel, false); 
         removeSubLevelFromWorld(subLevel);
     }
 

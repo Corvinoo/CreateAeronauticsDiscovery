@@ -27,7 +27,6 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
             throw new IllegalStateException("Somehow the container was null when removing the sublevel!");
         }
         container.removeForceLoadTicket(serverSubLevel, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
-        FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
         manager.enqueueExternalRemoval(subLevel.getUniqueId());
     }
 }
