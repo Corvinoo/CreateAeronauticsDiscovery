@@ -41,7 +41,7 @@ public class PipelineDebugCommand {
         pipelines.values().stream()
                 .sorted(Comparator.comparing(AssemblyPipeline::name))
                 .forEach(p -> {
-                    int count = p.steps().size();
+                    int count = p.createSteps().size();
                     source.sendSuccess(() -> Component.literal(
                             "  §e" + p.name() + "§r — " + count + " step(s)"), false);
                 });
@@ -59,7 +59,7 @@ public class PipelineDebugCommand {
             return 0;
         }
 
-        List<AssemblyStep> steps = pipeline.steps();
+        List<AssemblyStep> steps = pipeline.createSteps();
         
         source.sendSuccess(() -> Component.literal(
                 "§6=== Pipeline: §e" + pipeline.name() + "§r §6(" + steps.size() + " steps) ===§r"), false);

@@ -3,7 +3,6 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
@@ -17,7 +16,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Unit;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 
@@ -25,100 +23,51 @@ import java.util.ArrayList;
 
 import static me.corvino.aeronauticsdiscovery.event.FlyoverManager.FLYOVER_ID_TAG;
 
-public class AssembleStep implements AssemblyStep {
+public class AssembleStep extends AssemblyStep {
+
     @Override
-    public AssemblyResult run(AssemblyContext ctx) {
-        if (ctx.assemblerPos == null) {
-            return AssemblyResult.FAIL;
-        }
+    protected int timeoutTicks() { return Integer.MAX_VALUE; }
+
+    @Override
+    protected AssemblyResult tick(AssemblyContext ctx) {
+        assert ctx.level != null;
+        if (ctx.assemblerPos == null) return AssemblyResult.FAIL;
 
         BlockPos pos = ctx.assemblerPos;
-        var state = ctx.level.getBlockState(pos);
+        var blockState = ctx.level.getBlockState(pos);
         BlockPos toAssemble = pos;
 
-        if (state.getBlock() instanceof PhysicsAssemblerBlock) {
-            Direction stickyFacing = PhysicsAssemblerBlock.getStickyFacing(state);
+        if (blockState.getBlock() instanceof PhysicsAssemblerBlock) {
+            Direction stickyFacing = PhysicsAssemblerBlock.getStickyFacing(blockState);
             toAssemble = pos.relative(stickyFacing);
         }
 
         SimAssemblyHelper.AssemblyResult result;
         try {
             result = SimAssemblyHelper.assembleFromSingleBlock(
-                    ctx.level, pos, toAssemble, true, true
-            );
+                    ctx.level, pos, toAssemble, true, true);
         } catch (AssemblyException e) {
-            CreateAeronauticsDiscovery.LOGGER.warn("[ASSEMBLE] AssemblyException for '{}' from {}: {}",
+            CreateAeronauticsDiscovery.LOGGER.warn("[AssembleStep] AssemblyException for '{}' from pos {}: {}",
                     ctx.templateId, toAssemble, e.getMessage());
             return AssemblyResult.FAIL;
         }
 
-//        debugEntitiesInArea(result);
-
-
         if (result == null) {
-            CreateAeronauticsDiscovery.LOGGER.warn("[ASSEMBLE] Simulated could not assemble '{}' from {} (selected block: {})",
-                    ctx.templateId, toAssemble, ctx.level.getBlockState(toAssemble).getBlock());
+            CreateAeronauticsDiscovery.LOGGER.warn("[AssembleStep] Simulated could not assemble '{}' at {}",
+                    ctx.templateId, toAssemble);
             return AssemblyResult.FAIL;
         }
 
-
-        // Marker for entities (so they can be filtered by flyover/sublevel id)
         var plotAABB = result.subLevel().getPlot().getBoundingBox().toAABB();
-        ctx.level.getEntities((Entity) null, plotAABB, entity -> !(entity instanceof ServerPlayer))
-                .forEach(entity -> {
-                    entity.getPersistentData().putUUID(FLYOVER_ID_TAG, result.subLevel().getUniqueId());
-                });
+        ctx.level.getEntities((Entity) null, plotAABB, e -> !(e instanceof ServerPlayer))
+                .forEach(e -> e.getPersistentData().putUUID(FLYOVER_ID_TAG, result.subLevel().getUniqueId()));
 
         ctx.assemblyResult = result;
         return AssemblyResult.SUCCESS;
-
-    }
-
-    private void debugEntitiesInArea(SimAssemblyHelper.AssemblyResult result) {
-        var subLevel = result.subLevel();
-        var level = (ServerLevel) subLevel.getLevel();
-        var entitiesViaHelper = new ArrayList<Entity>();
-        var entitiesViaBoundingBox = new ArrayList<Entity>();
-
-        level.getAllEntities().forEach(entity -> {
-            if (entity instanceof ServerPlayer) return;
-            if (entity == null) return;
-
-            SubLevel containing = Sable.HELPER.getContaining(entity);
-            if (containing == null) return;
-            if (!containing.getUniqueId().equals(subLevel.getUniqueId())) return;
-
-            entitiesViaHelper.add(entity);
-        });
-
-        AABB bb = subLevel.boundingBox().toMojang();
-        entitiesViaBoundingBox.addAll(level.getEntities((Entity) null, bb, e -> !(e instanceof ServerPlayer)));
-
-        CreateAeronauticsDiscovery.LOGGER.info("=== Entities in SubLevel {} ===", subLevel.getUniqueId());
-        CreateAeronauticsDiscovery.LOGGER.info("SubLevel Bounds: {}", subLevel.boundingBox());
-        CreateAeronauticsDiscovery.LOGGER.info("Entities via HELPER: {}", entitiesViaHelper.size());
-        CreateAeronauticsDiscovery.LOGGER.info("Entities via BoundingBox: {}", entitiesViaBoundingBox.size());
-
-
-        CreateAeronauticsDiscovery.LOGGER.info("--- Entities via HELPER ---");
-        for (Entity entity : entitiesViaHelper) {
-            CreateAeronauticsDiscovery.LOGGER.info("  - {} at ({}, {}, {})",
-                    entity,
-                    entity.getX(), entity.getY(), entity.getZ()
-            );
-        }
-
-        CreateAeronauticsDiscovery.LOGGER.info("--- Entities via BoundingBox ---");
-        for (Entity entity : entitiesViaBoundingBox) {
-            CreateAeronauticsDiscovery.LOGGER.info("  - {} at ({}, {}, {})",
-                    entity,
-                    entity.getX(), entity.getY(), entity.getZ()
-            );
-        }
     }
 
     @Override
-    public void cleanup(AssemblyContext ctx) {
+    protected void onAbort(AssemblyContext ctx) {
         if (ctx.assemblyResult == null) return;
         SubLevel subLevel = ctx.assemblyResult.subLevel();
         if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
@@ -130,6 +79,5 @@ public class AssembleStep implements AssemblyStep {
         }
         ctx.assemblyResult = null;
     }
-
 }
 

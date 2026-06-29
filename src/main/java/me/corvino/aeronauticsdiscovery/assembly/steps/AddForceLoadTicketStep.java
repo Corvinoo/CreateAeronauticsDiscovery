@@ -10,18 +10,23 @@ import net.minecraft.util.Unit;
 /**
  * This step should be generally required for ALL flyovers since the lifecycle is handled by an external manager and is not using loading lifecycles as world gen ones.
  */
-public class AddForceLoadTicketStep implements AssemblyStep {
+public class AddForceLoadTicketStep extends AssemblyStep {
+
     @Override
-    public AssemblyResult run(AssemblyContext ctx) {
-        assert ctx.assemblyResult != null;
+    protected AssemblyResult tick(AssemblyContext ctx) {
+        if (ctx.assemblyResult == null) return AssemblyResult.FAIL;
         var container = SubLevelContainer.getContainer(ctx.level);
-        assert container != null;
-        container.addForceLoadTicket((ServerSubLevel) ctx.assemblyResult.subLevel(), SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+        if (container == null) return AssemblyResult.FAIL;
+
+        container.addForceLoadTicket(
+                (ServerSubLevel) ctx.assemblyResult.subLevel(),
+                SubLevelLoadingTicketType.COMMAND_FORCED,
+                Unit.INSTANCE);
         return AssemblyResult.SUCCESS;
     }
 
     @Override
-    public void cleanup(AssemblyContext ctx) {
+    protected void onAbort(AssemblyContext ctx) {
         if (ctx.assemblyResult == null) return;
         if (!(ctx.assemblyResult.subLevel() instanceof ServerSubLevel serverSubLevel)) return;
         var container = SubLevelContainer.getContainer(ctx.level);

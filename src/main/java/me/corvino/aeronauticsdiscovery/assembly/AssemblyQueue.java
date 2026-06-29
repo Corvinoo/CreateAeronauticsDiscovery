@@ -64,6 +64,7 @@ public class AssemblyQueue extends SavedData {
     }
 
     public void enqueue(AssemblyPipeline pipeline, AssemblyContext ctx) {
+        ctx.steps = pipeline.createSteps();
         Entry entry = new Entry(ctx.templateId, pipeline, ctx, 0);
         if (processing) {
             pendingAdd.add(entry);
@@ -271,6 +272,8 @@ public class AssemblyQueue extends SavedData {
             ctx.registerAsFlyover = tag.getBoolean("RegisterAsFlyover");
             ctx.entryId = tag.getUUID("entryId");
             ctx.currentStepIndex = tag.getInt("CurrentStepIndex");
+
+            ctx.steps = pipeline.createSteps();
 
             int retryCount = tag.getInt("RetryCount");
             return java.util.Optional.of(new Entry(templateId, pipeline, ctx, retryCount));

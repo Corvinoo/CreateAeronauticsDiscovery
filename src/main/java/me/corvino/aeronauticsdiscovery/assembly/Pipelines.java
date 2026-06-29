@@ -10,10 +10,9 @@ import java.util.function.Supplier;
 public final class Pipelines {
     private static final Map<String, AssemblyPipeline> REGISTRY = new HashMap<>();
 
-    //TODO: replace static delays with contextual ones from steps themselves
-    public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", List.of(
+    public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", () -> List.of(
             new LoadTemplateStep(),
-            new LoadChunkStep(), //TODO this must use ChunkLoad events to be able to be deferred regardless of the machine
+            new LoadChunkStep(),
             new PlaceBlocksStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
@@ -24,15 +23,15 @@ public final class Pipelines {
             new UnloadChunkStep()
     )));
 
-    public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", List.of(
+    public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", () -> List.of(
             new LoadTemplateStep(),
             new ReadinessCheckStep(),
             new AssembleStep()
     )));
 
-    public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", List.of(
+    public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", () -> List.of(
             new LoadTemplateStep(),
-            new LoadChunkStep(), //TODO this must use ChunkLoad events to be able to be deferred regardless of the machine
+            new LoadChunkStep(),
             new PlaceBlocksStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),

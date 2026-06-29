@@ -7,26 +7,32 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.seat.SeatPopulator;
 import net.minecraft.world.entity.Mob;
 
-public class PopulateSeatsStep implements AssemblyStep {
+public class PopulateSeatsStep extends AssemblyStep {
+    private final Flag entitiesSpawned = newFlag();
+    private final TickDelay settleDelay = newDelay();
+
     @Override
-    public AssemblyResult run(AssemblyContext ctx) {
-        if (ctx.assemblyResult == null || ctx.seatsPopulated) {
-            return AssemblyResult.SUCCESS;
+    protected AssemblyResult tick(AssemblyContext ctx) {
+        if (ctx.assemblyResult == null || ctx.seatsPopulated) return AssemblyResult.SUCCESS;
+
+        if (!entitiesSpawned.isSet()) {
+            SeatPopulator.spawnTraders(ctx.assemblyResult.subLevel());
+            entitiesSpawned.set();
         }
 
-        SeatPopulator.populateSeats(ctx.assemblyResult.subLevel());
+        settleDelay.start(1);
+        if (settleDelay.isWaiting()) return AssemblyResult.WAITING;
+
+        SeatPopulator.sitTraders(ctx.assemblyResult.subLevel());
         ctx.seatsPopulated = true;
         return AssemblyResult.SUCCESS;
     }
 
-
     @Override
-    public void cleanup(AssemblyContext ctx) {
+    protected void onAbort(AssemblyContext ctx) {
         if (ctx.assemblyResult == null) return;
         if (!(ctx.assemblyResult.subLevel() instanceof ServerSubLevel serverSubLevel)) return;
-        FlyoverManager.removeAllEntitiesInSublevel(serverSubLevel, false,
-                e -> e instanceof Mob, true);
+        FlyoverManager.removeAllEntitiesInSublevel(serverSubLevel, false, e -> e instanceof Mob, true);
         ctx.seatsPopulated = false;
     }
-
 }
