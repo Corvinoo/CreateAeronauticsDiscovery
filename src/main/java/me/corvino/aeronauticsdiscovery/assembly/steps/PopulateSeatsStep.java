@@ -8,7 +8,7 @@ import me.corvino.aeronauticsdiscovery.seat.SeatPopulator;
 import net.minecraft.world.entity.Mob;
 
 public class PopulateSeatsStep extends AssemblyStep {
-    private final Flag entitiesSpawned = newFlag();
+    private final Guard entitiesSpawned = newGuard();
     private final TickDelay settleDelay = newDelay();
 
     @Override
@@ -22,6 +22,7 @@ public class PopulateSeatsStep extends AssemblyStep {
 
         settleDelay.start(1);
         if (settleDelay.isWaiting()) return AssemblyResult.WAITING;
+        this.forceEntityUpdate(ctx);
 
         SeatPopulator.sitTraders(ctx.assemblyResult.subLevel());
         ctx.seatsPopulated = true;

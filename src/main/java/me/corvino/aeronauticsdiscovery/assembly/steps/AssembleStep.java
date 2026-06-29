@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
 
 public class AssembleStep extends AssemblyStep {
+    private final TickDelay delay = newDelay();
 
     @Override
     protected int timeoutTicks() { return Integer.MAX_VALUE; }
@@ -63,6 +64,9 @@ public class AssembleStep extends AssemblyStep {
                 .forEach(e -> e.getPersistentData().putUUID(FLYOVER_ID_TAG, result.subLevel().getUniqueId()));
 
         ctx.assemblyResult = result;
+        delay.start(1);
+        if (delay.isWaiting()) return AssemblyResult.WAITING;
+
         return AssemblyResult.SUCCESS;
     }
 

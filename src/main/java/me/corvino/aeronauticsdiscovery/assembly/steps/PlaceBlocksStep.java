@@ -3,10 +3,12 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.phys.AABB;
 
 public class PlaceBlocksStep extends AssemblyStep {
     private final TickDelay postPlaceDelay = newDelay();
@@ -26,14 +28,17 @@ public class PlaceBlocksStep extends AssemblyStep {
             if (ctx.bounds == null)
                 ctx.bounds = ctx.template.getBoundingBox(settings, ctx.anchor);
 
-            if (!ctx.template.placeInWorld(ctx.level, ctx.anchor, ctx.anchor, settings, ctx.level.getRandom(), 2))
+            if (!ctx.template.placeInWorld(ctx.level, ctx.anchor, ctx.anchor, settings, ctx.level.getRandom(), 4))
                 return AssemblyResult.FAIL;
 
             placed = true;
         }
 
-        postPlaceDelay.start(2);
+        postPlaceDelay.start(1); // delays this since the template can be pretty big and potentially strain the server
         if (postPlaceDelay.isWaiting()) return AssemblyResult.WAITING;
+
+        this.forceEntityUpdate(ctx);
+
         return AssemblyResult.SUCCESS;
     }
 
@@ -42,6 +47,7 @@ public class PlaceBlocksStep extends AssemblyStep {
         placed = false;
         removeBlocks(ctx);
     }
+
 
     private void removeBlocks(AssemblyContext ctx) {
         if (ctx.bounds == null || ctx.level == null) return;

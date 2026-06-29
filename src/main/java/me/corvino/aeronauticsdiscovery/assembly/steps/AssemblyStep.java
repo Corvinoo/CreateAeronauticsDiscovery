@@ -3,6 +3,8 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +14,7 @@ public abstract class AssemblyStep {
     // At each enqueue in the assembly queue, steps are created from scratch again from the factory but for API clarity maybe fields should be encapsulated
     // to be able to distinguish between Global state (Assembly Context) and StepContext (which is the state living in the step instance itself?)
     private final List<TickDelay> delays = new ArrayList<>();
-    private final List<Flag> flags = new ArrayList<>();
+    private final List<Guard> guards = new ArrayList<>();
 
     private long maxTickOfExecution = -1;
 
@@ -55,7 +57,7 @@ public abstract class AssemblyStep {
     public final void abort(AssemblyContext ctx) {
         onAbort(ctx);
         delays.forEach(TickDelay::reset);
-        flags.forEach(Flag::reset);
+        guards.forEach(Guard::reset);
         maxTickOfExecution = -1;
     }
 
@@ -71,12 +73,33 @@ public abstract class AssemblyStep {
 
     /**
      * Creates a single value flag and each one you make is independent of each other.
-     * The {@link Flag} is very useful to have one-shots or for keeping tack of some simple boolean conditions.
+     * The {@link Guard} is very useful to have one-shots or for keeping tack of some simple boolean conditions.
      */
-    protected final Flag newFlag() {
-        var flag = new Flag();
-        flags.add(flag);
+    protected final Guard newGuard() {
+        var flag = new Guard();
+        guards.add(flag);
         return flag;
+    }
+
+    /**
+     * Forces entities to tick
+     * @apiNote This is very useful, since placing entities in each step will not tick them right away,
+     * and coupled with a {@link me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep.TickDelay}
+     * can let you control more easily entities lifecycles that won't update right when constructed.
+     */
+    protected void forceEntityUpdate(AssemblyContext ctx) {
+        if (ctx.bounds == null || ctx.level == null) return;
+
+        AABB searchBox = new AABB(
+                ctx.bounds.minX(), ctx.bounds.minY(), ctx.bounds.minZ(),
+                ctx.bounds.maxX(), ctx.bounds.maxY(), ctx.bounds.maxZ()
+        );
+
+        ctx.level.getEntities(
+                (Entity) null,
+                searchBox,
+                entity -> true
+        ).forEach(Entity::tick);
     }
 
     protected static final class TickDelay {
@@ -101,11 +124,11 @@ public abstract class AssemblyStep {
         public void reset() { remaining = 0; }
     }
 
-    protected static final class Flag {
+    protected static final class Guard {
         /**
-         * @apiNote Do not use this constructor, use the managed {@link AssemblyStep#newDelay()} instead.
+         * @apiNote Do not use this constructor, use the managed {@link AssemblyStep#newGuard()} instead.
          */
-        private Flag() {};
+        private Guard() {};
         private boolean value = false;
 
         public boolean isSet() { return value; }
