@@ -11,7 +11,7 @@ import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverCommands;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventScheduler;
-import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
 import net.minecraft.core.registries.Registries;
