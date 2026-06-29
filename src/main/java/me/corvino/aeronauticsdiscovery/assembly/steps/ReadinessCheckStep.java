@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.function.BiPredicate;
 
 public class ReadinessCheckStep extends AssemblyStep {
+    //TODO Maybe this should check if all the contraption entities are present? in a rare case it happened that the flyover spawned with some missing rudders
 
     @Override
     protected AssemblyResult tick(AssemblyContext ctx) {
