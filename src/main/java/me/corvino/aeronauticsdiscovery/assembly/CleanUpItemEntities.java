@@ -2,7 +2,7 @@ package me.corvino.aeronauticsdiscovery.assembly;
 
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
-import me.corvino.aeronauticsdiscovery.event.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import net.minecraft.world.entity.item.ItemEntity;
 
 public class CleanUpItemEntities extends AssemblyStep {
@@ -13,7 +13,7 @@ public class CleanUpItemEntities extends AssemblyStep {
         if (!(ctx.assemblyResult.subLevel() instanceof ServerSubLevel serverSubLevel))
             return AssemblyResult.FAIL;
 
-        FlyoverManager.removeAllEntitiesInSublevel(
+        FlyoverUtils.removeAllEntitiesInSublevel(
                 serverSubLevel, true, entity -> entity instanceof ItemEntity, false);
         return AssemblyResult.SUCCESS;
     }

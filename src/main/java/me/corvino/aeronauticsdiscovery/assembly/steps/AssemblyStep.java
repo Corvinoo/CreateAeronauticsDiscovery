@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AssemblyStep {
+    //TODO: actually some implementation doubt, since each step inner state is actually isolate should API enforcing fields be a thing at all?
+    // At each enqueue in the assembly queue, steps are created from scratch again from the factory but for API clarity maybe fields should be encapsulated
+    // to be able to distinguish between Global state (Assembly Context) and StepContext (which is the state living in the step instance itself?)
     private final List<TickDelay> delays = new ArrayList<>();
     private final List<Flag> flags = new ArrayList<>();
 
