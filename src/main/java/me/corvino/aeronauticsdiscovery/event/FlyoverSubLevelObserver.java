@@ -19,65 +19,16 @@ import java.util.concurrent.TimeoutException;
 
 public class FlyoverSubLevelObserver implements SubLevelObserver {
     private final FlyoverManager manager;
-    private final TaskScheduler scheduler;
 
     public FlyoverSubLevelObserver(FlyoverManager manager) {
         this.manager = manager;
-        this.scheduler = TaskScheduler.getInstance();
     }
 
     @Override
     public void onSubLevelRemoved(SubLevel subLevel, SubLevelRemovalReason reason) {
         if (!reason.equals(SubLevelRemovalReason.REMOVED)) return;
-        if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
-        if (subLevel.getName() == null) return;
-        if (!subLevel.getName().contains("flyover")) return;
-
-        var container = SubLevelContainer.getContainer(serverSubLevel.getLevel());
-        if (container == null) {
-            throw new IllegalStateException("Somehow the container was null when removing the sublevel!");
-        }
-
-        waitForChunksThenRemove(serverSubLevel)
-                .thenRun(() -> {
-                    container.removeForceLoadTicket(
-                            serverSubLevel,
-                            SubLevelLoadingTicketType.COMMAND_FORCED,
-                            Unit.INSTANCE
-                    );
-                    manager.enqueueExternalRemoval(subLevel.getUniqueId());
-                });
-    }
-
-    private CompletableFuture<Void> waitForChunksThenRemove(ServerSubLevel serverSubLevel) {
-        ServerLevel level = serverSubLevel.getLevel();
-        var bounds = ChunkLoadingHelper.calculateChunkBounds(serverSubLevel);
-        int totalChunks = (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1);
-
-        return scheduler.runSyncRepeatingUntil(future -> {
-            int notReady = 0;
-            for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
-                for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
-                    if (!level.getChunkSource().isPositionTicking(ChunkPos.asLong(cx, cz))) {
-                        notReady++;
-                    }
-                }
-            }
-
-            if (notReady == 0) {
-                CreateAeronauticsDiscovery.LOGGER.debug(
-                        "All chunks ready for '{}', removing entities...",
-                        serverSubLevel.getName()
-                );
-                FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
-                future.complete(null);
-                return;
-            }
-
-            CreateAeronauticsDiscovery.LOGGER.debug(
-                    "[FlyoverObserver] {}/{} chunk(s) not ticking for '{}', waiting...",
-                    notReady, totalChunks, serverSubLevel.getName()
-            );
-        }, 20, 100_000);
+        if (!(subLevel instanceof ServerSubLevel)) return;
+        if (subLevel.getName() == null || !subLevel.getName().contains("flyover")) return;
+        manager.enqueueExternalRemoval(subLevel.getUniqueId());
     }
 }
