@@ -3,17 +3,21 @@ package me.corvino.aeronauticsdiscovery.event;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
+import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
@@ -99,5 +103,27 @@ public class FlyoverUtils {
         for (int cx = minCX; cx <= maxCX; cx++)
             for (int cz = minCZ; cz <= maxCZ; cz++)
                 ticketController.forceChunk(level, id, cx, cz, add, true);
+    }
+
+    public static CompletableFuture<Void> removeAllEntitiesInSublevelAwaitingChunks(ServerSubLevel subLevel) {
+        ServerLevel level = subLevel.getLevel();
+        var bounds = ChunkLoadingHelper.calculateChunkBounds(subLevel);
+
+        return TaskScheduler.getInstance().runSyncRepeatingUntil(future -> {
+            boolean allReady = true;
+            for (int cx = bounds.minX(); cx <= bounds.maxX() && allReady; cx++) {
+                for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
+                    if (!level.getChunkSource().isPositionTicking(ChunkPos.asLong(cx, cz))) {
+                        allReady = false;
+                        break;
+                    }
+                }
+            }
+
+            if (allReady) {
+                removeAllEntitiesInSublevel(subLevel, false);
+                future.complete(null);
+            }
+        }, 20, 100_000);
     }
 }
