@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Unit;
 import net.minecraft.world.level.ChunkPos;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
 public class FlyoverSubLevelObserver implements SubLevelObserver {
@@ -37,54 +38,46 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
             throw new IllegalStateException("Somehow the container was null when removing the sublevel!");
         }
 
-        scheduler.runAsyncTask(() -> waitForChunksThenRemove(serverSubLevel))
+        waitForChunksThenRemove(serverSubLevel)
                 .thenRun(() -> {
-                    container.removeForceLoadTicket(serverSubLevel, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+                    container.removeForceLoadTicket(
+                            serverSubLevel,
+                            SubLevelLoadingTicketType.COMMAND_FORCED,
+                            Unit.INSTANCE
+                    );
                     manager.enqueueExternalRemoval(subLevel.getUniqueId());
                 });
     }
 
-    private void waitForChunksThenRemove(ServerSubLevel serverSubLevel) {
+    private CompletableFuture<Void> waitForChunksThenRemove(ServerSubLevel serverSubLevel) {
         ServerLevel level = serverSubLevel.getLevel();
         var bounds = ChunkLoadingHelper.calculateChunkBounds(serverSubLevel);
         int totalChunks = (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1);
 
-        scheduler.runAsyncTaskRepeatingUntil(future -> {
-                    int notReady = 0;
-                    for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
-                        for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
-                            if (!level.getChunkSource().isPositionTicking(ChunkPos.asLong(cx, cz))) {
-                                notReady++;
-                            }
-                        }
+        return scheduler.runSyncRepeatingUntil(future -> {
+            int notReady = 0;
+            for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
+                for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
+                    if (!level.getChunkSource().isPositionTicking(ChunkPos.asLong(cx, cz))) {
+                        notReady++;
                     }
+                }
+            }
 
-                    if (notReady == 0) {
-                        CreateAeronauticsDiscovery.LOGGER.debug(
-                                "All chunks ready for '{}', removing entities...",
-                                serverSubLevel.getName()
-                        );
-                        future.complete(null);
-                        scheduler.runSyncTask(() ->
-                                FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false)
-                        );
-                        return;
-                    }
+            if (notReady == 0) {
+                CreateAeronauticsDiscovery.LOGGER.debug(
+                        "All chunks ready for '{}', removing entities...",
+                        serverSubLevel.getName()
+                );
+                FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
+                future.complete(null);
+                return;
+            }
 
-                    CreateAeronauticsDiscovery.LOGGER.debug(
-                            "[LoadChunkStep] {}/{} chunk(s) not ticking for '{}', waiting...",
-                            notReady, totalChunks, serverSubLevel.getName()
-                    );
-
-                }, 1000, 100_000)
-                .exceptionally(throwable -> {
-                    if (throwable instanceof TimeoutException) {
-                        CreateAeronauticsDiscovery.LOGGER.warn(
-                                "Timeout waiting for chunks for '{}'",
-                                serverSubLevel.getName()
-                        );
-                    }
-                    return null;
-                });
+            CreateAeronauticsDiscovery.LOGGER.debug(
+                    "[FlyoverObserver] {}/{} chunk(s) not ticking for '{}', waiting...",
+                    notReady, totalChunks, serverSubLevel.getName()
+            );
+        }, 20, 100_000);
     }
 }
