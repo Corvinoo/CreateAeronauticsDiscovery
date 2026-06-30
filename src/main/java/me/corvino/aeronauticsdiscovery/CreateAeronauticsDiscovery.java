@@ -1,7 +1,7 @@
 package me.corvino.aeronauticsdiscovery;
 
 import com.mojang.logging.LogUtils;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyQueue;
+import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import me.corvino.aeronauticsdiscovery.benchmark.BenchmarkCommand;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
