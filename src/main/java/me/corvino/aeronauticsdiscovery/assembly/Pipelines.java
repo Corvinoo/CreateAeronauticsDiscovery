@@ -25,9 +25,10 @@ public final class Pipelines {
 
     public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", () -> List.of(
             new LoadTemplateStep(),
-            new LoadChunkStep(),
+//            new LoadChunkStep(),
             new ReadinessCheckStep(),
-            new AssembleStep()
+            new AssembleStep(),
+            new StabilizeBuoyancyStep()
 //            new UnloadChunkStep() !not sure if this should be present or not
     )));
 
