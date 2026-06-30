@@ -7,6 +7,7 @@ import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -26,9 +27,9 @@ final class AssemblyEntrySerializer {
         tag.putInt("RetryCount", entry.retryCount());
         tag.putString("Source", ctx.source.name());
         tag.putString("Trigger", ctx.trigger.name());
-        writeOptPos(tag, "Anchor", ctx.anchor);
-        writeOptPos(tag, "AssemblerPos", ctx.assemblerPos);
-        writeOptPos(tag, "TemplatePos", ctx.templatePos);
+        putOptPos(tag, "Anchor", ctx.anchor);
+        putOptPos(tag, "AssemblerPos", ctx.assemblerPos);
+        putOptPos(tag, "TemplatePos", ctx.templatePos);
         if (ctx.rotationTemplate != null) {
             tag.putString("Rotation", ctx.rotationTemplate.name());
         }
@@ -54,8 +55,8 @@ final class AssemblyEntrySerializer {
 
             AssemblyContext ctx = AssemblyContext.builder(null, templateId, source)
                     .trigger(trigger)
-                    .anchor(readOptPos(tag, "Anchor"))
-                    .templatePos(readOptPos(tag, "TemplatePos"))
+                    .anchor(NbtUtils.readBlockPos(tag, "Anchor").orElse(null))
+                    .templatePos(NbtUtils.readBlockPos(tag, "TemplatePos").orElse(null))
                     .rotationTemplate(tag.contains("Rotation") ? Rotation.valueOf(tag.getString("Rotation")) : null)
                     .bounds(readBounds(tag))
                     .activationDistance(tag.getInt("ActivationDistance"))
@@ -63,9 +64,7 @@ final class AssemblyEntrySerializer {
                     .build();
 
             ctx.yawRadians = tag.getDouble("YawRadians");
-            if (tag.contains("AssemblerPos")) {
-                ctx.assemblerPos = readOptPos(tag, "AssemblerPos");
-            }
+            ctx.assemblerPos = NbtUtils.readBlockPos(tag, "AssemblerPos").orElse(null);
             if (tag.contains("SubLevelName")) {
                 ctx.subLevelName = tag.getString("SubLevelName");
             }
@@ -82,19 +81,9 @@ final class AssemblyEntrySerializer {
         }
     }
 
-    private static void writeOptPos(CompoundTag tag, String key, BlockPos pos) {
+    private static void putOptPos(CompoundTag tag, String key, BlockPos pos) {
         if (pos == null) return;
-        CompoundTag posTag = new CompoundTag();
-        posTag.putInt("X", pos.getX());
-        posTag.putInt("Y", pos.getY());
-        posTag.putInt("Z", pos.getZ());
-        tag.put(key, posTag);
-    }
-
-    private static BlockPos readOptPos(CompoundTag tag, String key) {
-        if (!tag.contains(key)) return null;
-        CompoundTag posTag = tag.getCompound(key);
-        return new BlockPos(posTag.getInt("X"), posTag.getInt("Y"), posTag.getInt("Z"));
+        tag.put(key, NbtUtils.writeBlockPos(pos));
     }
 
     private static void writeBounds(CompoundTag tag, BoundingBox bounds) {
