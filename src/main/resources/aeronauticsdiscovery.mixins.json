@@ -4,7 +4,9 @@
   "package": "me.corvino.aeronauticsdiscovery.mixin",
   "compatibilityLevel": "JAVA_21",
   "refmap": "AeronauticsDiscovery.refmap.json",
-  "mixins": [],
+  "mixins": [
+    "patch.AquiferMixin"
+  ],
   "client": [
   ],
   "injectors": {
