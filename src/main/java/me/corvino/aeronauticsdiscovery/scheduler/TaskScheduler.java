@@ -8,23 +8,22 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class TaskScheduler {
+    private static final TaskScheduler INSTANCE = new TaskScheduler();
 
-    private static final class Holder {
-        static final TaskScheduler INSTANCE = new TaskScheduler();
+    public static TaskScheduler getInstance() {
+        return INSTANCE;
     }
 
-    private final ConcurrentLinkedDeque<ScheduledTask> syncTasks;
-    private ScheduledExecutorService asyncExecutor;
-    private volatile MinecraftServer server;
-    private volatile boolean running;
-
+    /**
+     * Call during mod init to trigger class loading before the first server tick.
+     */
     public static void setup() {
-        // trigger class loading or this thing will never be running (or too late)
-        CreateAeronauticsDiscovery.LOGGER.info("Loading task scheduler..");
+        CreateAeronauticsDiscovery.LOGGER.info("Loading task scheduler...");
     }
 
     static {
@@ -33,48 +32,78 @@ public final class TaskScheduler {
         NeoForge.EVENT_BUS.addListener(TaskScheduler::onServerTick);
     }
 
+    private final ConcurrentLinkedDeque<SyncTask> syncTasks = new ConcurrentLinkedDeque<>();
+    private volatile ScheduledExecutorService asyncExecutor = buildAsyncExecutor();
+    private volatile MinecraftServer server;
+    private volatile boolean running;
+
     private TaskScheduler() {
-        this.syncTasks = new ConcurrentLinkedDeque<>();
-        this.asyncExecutor = createAsyncExecutor();
-        this.running = false;
+    }
+
+    /**
+     * Runs {@code task} on the next server tick.
+     */
+    public CompletableFuture<Void> runSync(Runnable task) {
+        return scheduleSync(task, 0, 0);
+    }
+
+    /**
+     * Runs {@code task} on the server thread, supplying the current server instance.
+     */
+    public CompletableFuture<Void> runSync(Consumer<MinecraftServer> task) {
+        return scheduleSync(() -> {
+            if (server != null) task.accept(server);
+        }, 0, 0);
+    }
+
+    /**
+     * Runs {@code task} on the server tick after {@code delayTicks} have elapsed.
+     */
+    public CompletableFuture<Void> runSyncLater(Runnable task, long delayTicks) {
+        return scheduleSync(task, delayTicks, 0);
+    }
+
+    /**
+     * Runs {@code task} repeatedly on the server thread.
+     *
+     * @param initialDelay ticks before the first execution
+     * @param period       ticks between subsequent executions
+     */
+    public Cancellable runSyncRepeating(Runnable task, long initialDelay, long period) {
+        if (period <= 0) throw new IllegalArgumentException("period must be > 0");
+        SyncTask t = new SyncTask(task, initialDelay, period);
+        syncTasks.add(t);
+        return t;
     }
 
 
-    public static TaskScheduler getInstance() {
-        return Holder.INSTANCE;
+    public CompletableFuture<Void> runSyncRepeatingUntil(Consumer<CompletableFuture<Void>> task,
+                                                         long periodTicks,
+                                                         long timeoutTicks) {
+        long timeoutMs = timeoutTicks * 50L; // 1 tick = 50ms at 20 TPS (1/20s)
+        CompletableFuture<Void> resultFuture =
+                new CompletableFuture<Void>().orTimeout(timeoutMs, TimeUnit.MILLISECONDS);
+
+        Cancellable poll = runSyncRepeating(() -> {
+            if (!resultFuture.isDone()) task.accept(resultFuture);
+        }, 0, periodTicks);
+
+        resultFuture.whenComplete((v, ex) -> poll.cancel());
+        return resultFuture;
     }
 
-    private static ScheduledExecutorService createAsyncExecutor() {
-        return Executors.newScheduledThreadPool(
-                Runtime.getRuntime().availableProcessors(),
-                Thread.ofPlatform()
-                        .name("scheduler-async-", 0)
-                        .daemon(true)
-                        .factory()
-        );
-    }
-
-    public CompletableFuture<Void> runSyncTask(Runnable task) {
-        return scheduleSyncTask(task, 0);
-    }
-
-    public CompletableFuture<Void> runSyncTaskLater(Runnable task, long delayTicks) {
-        return scheduleSyncTask(task, delayTicks);
-    }
-
-    public CompletableFuture<Void> runSyncTask(Consumer<MinecraftServer> task) {
-        return scheduleSyncTask(() -> {
-            if (server != null) {
-                task.accept(server);
-            }
-        }, 0);
-    }
-
-    public CompletableFuture<Void> runAsyncTask(Runnable task) {
+    public CompletableFuture<Void> runAsync(Runnable task) {
         return CompletableFuture.runAsync(task, asyncExecutor);
     }
 
-    public CompletableFuture<Void> runAsyncTaskLater(Runnable task, long delayMs) {
+    public <T> CompletableFuture<T> runAsync(Supplier<T> task) {
+        return CompletableFuture.supplyAsync(task, asyncExecutor);
+    }
+
+    /**
+     * Runs {@code task} off-thread after {@code delayMs} milliseconds.
+     */
+    public CompletableFuture<Void> runAsyncLater(Runnable task, long delayMs) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         asyncExecutor.schedule(() -> {
             try {
@@ -87,111 +116,48 @@ public final class TaskScheduler {
         return future;
     }
 
-    public <T> CompletableFuture<T> runAsyncTask(Supplier<T> task) {
-        return CompletableFuture.supplyAsync(task, asyncExecutor);
+    /**
+     * Runs an async task then delivers the result to a sync callback.
+     */
+    public <T> CompletableFuture<T> runAsyncWithSyncCallback(Supplier<T> asyncTask,
+                                                             Consumer<T> syncCallback) {
+        return runAsync(asyncTask)
+                .thenCompose(result ->
+                        runSync(() -> syncCallback.accept(result)).thenApply(v -> result));
     }
 
-    public <T> CompletableFuture<T> runAsyncWithSyncCallback(
-            Supplier<T> asyncTask,
-            Consumer<T> syncCallback) {
-        return runAsyncTask(asyncTask)
-                .thenCompose(result -> runSyncTask(() -> syncCallback.accept(result))
-                        .thenApply(v -> result));
+    public Cancellable runAsyncRepeating(Runnable task, long initialDelayMs, long periodMs) {
+        AsyncRepeatingTask t = new AsyncRepeatingTask(task, initialDelayMs, periodMs);
+        t.start(asyncExecutor);
+        return t;
     }
 
-    public Cancellable runSyncTaskRepeating(Runnable task, long initialDelay, long periodTicks) {
-        RepeatingTask repeatingTask = new RepeatingTask(task, initialDelay, periodTicks);
-        syncTasks.add(repeatingTask);
-        return repeatingTask;
-    }
+    /**
+     * Polls {@code task} every {@code periodMs} ms off-thread until the supplied
+     * future is completed (by the task itself) or {@code timeoutMs} elapses.
+     *
+     * <p>The consumer receives the shared future; complete it to stop polling.
+     */
+    public CompletableFuture<Void> runAsyncRepeatingUntil(Consumer<CompletableFuture<Void>> task,
+                                                          long periodMs,
+                                                          long timeoutMs) {
+        // orTimeout returns a new future — keep that one so the timeout actually fires.
+        CompletableFuture<Void> resultFuture =
+                new CompletableFuture<Void>().orTimeout(timeoutMs, TimeUnit.MILLISECONDS);
 
-    private CompletableFuture<Void> scheduleSyncTask(Runnable task, long delayTicks) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        ScheduledTask scheduledTask = new ScheduledTask(
-                () -> {
-                    try {
-                        task.run();
-                        future.complete(null);
-                    } catch (Exception e) {
-                        future.completeExceptionally(e);
-                    }
-                },
-                delayTicks,
-                false
-        );
-        syncTasks.add(scheduledTask);
-        return future;
-    }
-
-    public Cancellable runAsyncTaskRepeating(Runnable task, long initialDelayMs, long periodMs) {
-        RepeatingAsyncTask repeatingTask = new RepeatingAsyncTask(task, initialDelayMs, periodMs);
-        repeatingTask.start(asyncExecutor);
-        return repeatingTask;
-    }
-
-    public CompletableFuture<Void> runAsyncTaskRepeatingUntil(
-            Consumer<CompletableFuture<Void>> task,
-            long periodMs,
-            long timeoutMs) {
-
-        CompletableFuture<Void> resultFuture = new CompletableFuture<>();
-        resultFuture.orTimeout(timeoutMs, TimeUnit.MILLISECONDS);
-
-        var cancellable = runAsyncTaskRepeating(() -> {
-            if (resultFuture.isDone()) {
-                return;
-            }
-            task.accept(resultFuture);
+        Cancellable poll = runAsyncRepeating(() -> {
+            if (!resultFuture.isDone()) task.accept(resultFuture);
         }, 0, periodMs);
 
-
-        resultFuture.whenComplete((v, ex) -> cancellable.cancel());
-
+        resultFuture.whenComplete((v, ex) -> poll.cancel());
         return resultFuture;
     }
 
-    private void tick() {
-        if (!running || server == null) return;
-
-        var iterator = syncTasks.iterator();
-        while (iterator.hasNext()) {
-            ScheduledTask task = iterator.next();
-            task.tick();
-
-            if (task.isReady() && !task.isCancelled()) {
-                task.run();
-
-                if (task.isRepeating()) {
-                    task.reset();
-                } else {
-                    iterator.remove();
-                }
-            } else if (task.isCancelled()) {
-                iterator.remove();
-            }
-        }
-    }
-
-    public void shutdown() {
-        running = false;
-        asyncExecutor.shutdown();
-        try {
-            if (!asyncExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                asyncExecutor.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            asyncExecutor.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-        syncTasks.clear();
-    }
-
     private static void onServerStarted(ServerStartedEvent event) {
-        TaskScheduler instance = getInstance();
-        instance.server = event.getServer();
-        instance.running = true;
-
-        instance.reset();
+        TaskScheduler s = getInstance();
+        s.server = event.getServer();
+        s.running = true;
+        s.restart();
     }
 
     private static void onServerStopping(ServerStoppingEvent event) {
@@ -202,142 +168,145 @@ public final class TaskScheduler {
         getInstance().tick();
     }
 
-    private synchronized void reset() {
-        syncTasks.clear();
+    private void tick() {
+        if (!running || server == null) return;
 
-        if (asyncExecutor.isShutdown() || asyncExecutor.isTerminated()) {
-            asyncExecutor = createAsyncExecutor();
+        for (var it = syncTasks.iterator(); it.hasNext(); ) {
+            SyncTask task = it.next();
+
+            if (task.isCancelled()) {
+                it.remove();
+                continue;
+            }
+
+            if (task.tickAndReady()) {
+                task.run();
+                if (task.isRepeating()) task.resetCounter();
+                else it.remove();
+            }
         }
     }
 
-    private static class ScheduledTask {
-        private final Runnable task;
-        private final long delayTicks;
-        private final boolean repeating;
-        private long currentTick;
-        private boolean cancelled;
-
-        ScheduledTask(Runnable task, long delayTicks, boolean repeating) {
-            this.task = task;
-            this.delayTicks = delayTicks;
-            this.repeating = repeating;
-            this.currentTick = 0;
-            this.cancelled = false;
+    private void shutdown() {
+        running = false;
+        syncTasks.clear();
+        asyncExecutor.shutdown();
+        try {
+            if (!asyncExecutor.awaitTermination(5, TimeUnit.SECONDS))
+                asyncExecutor.shutdownNow();
+        } catch (InterruptedException e) {
+            asyncExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
         }
+    }
 
-        void tick() {
-            if (!cancelled) {
-                currentTick++;
+    private void restart() {
+        syncTasks.clear();
+        ScheduledExecutorService old = asyncExecutor;
+        asyncExecutor = buildAsyncExecutor();
+        if (!old.isShutdown()) old.shutdownNow();
+    }
+
+    private CompletableFuture<Void> scheduleSync(Runnable body, long delayTicks, long period) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        syncTasks.add(new SyncTask(() -> {
+            try {
+                body.run();
+                future.complete(null);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
             }
+        }, delayTicks, period));
+        return future;
+    }
+
+    private static ScheduledExecutorService buildAsyncExecutor() {
+        return Executors.newScheduledThreadPool(
+                Runtime.getRuntime().availableProcessors(),
+                Thread.ofPlatform().name("scheduler-async-", 0).daemon(true).factory());
+    }
+
+    /**
+     * A sync task that is both one-shot and repeating depending on whether
+     * {@code period > 0}
+     */
+    private static final class SyncTask implements Cancellable {
+        private final Runnable body;
+        private final long delay;
+        private final long period;  // 0 = one-shot; >0 = repeating
+        private long counter;
+        private final AtomicBoolean cancelled = new AtomicBoolean(false);
+
+        SyncTask(Runnable body, long delay, long period) {
+            this.body = body;
+            this.delay = delay;
+            this.period = period;
+            this.counter = 0;
         }
 
-        boolean isReady() {
-            return currentTick >= delayTicks;
+        boolean tickAndReady() {
+            return ++counter > (isRepeating() && counter > delay ? delay + period - 1 : delay);
         }
 
         void run() {
-            if (!cancelled) {
-                task.run();
-            }
+            if (!cancelled.get()) body.run();
         }
 
-        void reset() {
-            currentTick = 0;
-        }
-
-        protected void resetCounter() {
-            this.currentTick = 0;
-        }
-
-        void cancel() {
-            cancelled = true;
-        }
-
-        boolean isCancelled() {
-            return cancelled;
+        void resetCounter() {
+            counter = delay; // next threshold will be delay + period
         }
 
         boolean isRepeating() {
-            return repeating;
-        }
-
-        protected long getCurrentTick() {
-            return currentTick;
-        }
-    }
-
-    private static class RepeatingTask extends ScheduledTask implements Cancellable {
-        private boolean cancelled;
-
-        RepeatingTask(Runnable task, long initialDelay, long periodTicks) {
-            super(task, initialDelay, true);
-            this.cancelled = false;
-        }
-
-        @Override
-        void reset() {
-            resetCounter();
+            return period > 0;
         }
 
         @Override
         public void cancel() {
-            this.cancelled = true;
+            cancelled.set(true);
         }
 
         @Override
         public boolean isCancelled() {
-            return this.cancelled;
-        }
-
-        @Override
-        boolean isRepeating() {
-            return true;
+            return cancelled.get();
         }
     }
 
-    private static class RepeatingAsyncTask implements Cancellable {
-        private final Runnable task;
+    private static final class AsyncRepeatingTask implements Cancellable {
+        private final Runnable body;
         private final long initialDelayMs;
         private final long periodMs;
-        private volatile boolean cancelled;
+        private final AtomicBoolean cancelled = new AtomicBoolean(false);
         private ScheduledFuture<?> future;
 
-        RepeatingAsyncTask(Runnable task, long initialDelayMs, long periodMs) {
-            this.task = task;
+        AsyncRepeatingTask(Runnable body, long initialDelayMs, long periodMs) {
+            this.body = body;
             this.initialDelayMs = initialDelayMs;
             this.periodMs = periodMs;
-            this.cancelled = false;
         }
 
         void start(ScheduledExecutorService executor) {
             future = executor.scheduleAtFixedRate(
                     () -> {
-                        if (!cancelled) {
-                            task.run();
-                        }
+                        if (!cancelled.get()) body.run();
                     },
-                    initialDelayMs,
-                    periodMs,
-                    TimeUnit.MILLISECONDS
-            );
+                    initialDelayMs, periodMs, TimeUnit.MILLISECONDS);
         }
 
         @Override
         public void cancel() {
-            cancelled = true;
-            if (future != null) {
-                future.cancel(false);
-            }
+            cancelled.set(true);
+            if (future != null) future.cancel(false);
         }
 
         @Override
         public boolean isCancelled() {
-            return cancelled;
+            return cancelled.get();
         }
     }
 
     public interface Cancellable {
         void cancel();
+
         boolean isCancelled();
     }
 }
