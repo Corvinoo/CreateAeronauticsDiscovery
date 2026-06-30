@@ -16,7 +16,7 @@ class AssemblyQueueTest {
 
     @Test
     void entryWithRetryCountReturnsNewEntry() {
-        AssemblyPipeline pipeline = new AssemblyPipeline("test", (Supplier<List<AssemblyStep>>) List.of());
+        AssemblyPipeline pipeline = new AssemblyPipeline("test", () -> List.of());
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
         AssemblyQueue.Entry entry = new AssemblyQueue.Entry(TEMPLATE_ID, pipeline, ctx, 0);
 
@@ -31,7 +31,7 @@ class AssemblyQueueTest {
 
     @Test
     void entryPreservesAllFields() {
-        AssemblyPipeline pipeline = new AssemblyPipeline("test", List.of());
+        AssemblyPipeline pipeline = new AssemblyPipeline("test", () -> List.of());
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN)
                 .activationDistance(64)
                 .build();
