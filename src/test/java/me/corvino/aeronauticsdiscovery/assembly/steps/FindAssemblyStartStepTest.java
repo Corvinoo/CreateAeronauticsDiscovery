@@ -20,12 +20,12 @@ class FindAssemblyStartStepTest {
                 .bounds(new net.minecraft.world.level.levelgen.structure.BoundingBox(0, 140, 0, 10, 160, 10))
                 .build();
 
-        assertEquals(AssemblyResult.SUCCESS, new FindAssemblyStartStep().run(ctx));
+        assertEquals(AssemblyResult.SUCCESS, new FindAssemblyStartStep().execute(ctx));
     }
 
     @Test
     void returnsFailWhenBoundsAreNull() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.FLYOVER).build();
-        assertEquals(AssemblyResult.FAIL, new FindAssemblyStartStep().run(ctx));
+        assertEquals(AssemblyResult.FAIL, new FindAssemblyStartStep().execute(ctx));
     }
 }

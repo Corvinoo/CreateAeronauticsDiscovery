@@ -15,6 +15,6 @@ class AssembleStepTest {
     @Test
     void returnsFailWhenAssemblerPosIsNull() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
-        assertEquals(AssemblyResult.FAIL, new AssembleStep().run(ctx));
+        assertEquals(AssemblyResult.FAIL, new AssembleStep().execute(ctx));
     }
 }

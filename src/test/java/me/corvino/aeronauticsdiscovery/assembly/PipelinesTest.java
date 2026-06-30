@@ -54,10 +54,11 @@ class PipelinesTest {
                 PopulateSeatsStep.class,
                 UnloadChunkStep.class,
         };
+        var steps = pipeline.createSteps();
         for (int i = 0; i < expectedTypes.length; i++) {
-            assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
+            assertTrue(expectedTypes[i].isInstance(steps.get(i)),
                     "Step " + i + " should be " + expectedTypes[i].getSimpleName()
-                            + " but was " + pipeline.steps().get(i).getClass().getSimpleName());
+                            + " but was " + steps.get(i).getClass().getSimpleName());
         }
     }
 
@@ -69,10 +70,11 @@ class PipelinesTest {
                 ReadinessCheckStep.class,
                 AssembleStep.class,
         };
+        var steps = pipeline.createSteps();
         for (int i = 0; i < expectedTypes.length; i++) {
-            assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
+            assertTrue(expectedTypes[i].isInstance(steps.get(i)),
                     "Step " + i + " should be " + expectedTypes[i].getSimpleName()
-                            + " but was " + pipeline.steps().get(i).getClass().getSimpleName());
+                            + " but was " + steps.get(i).getClass().getSimpleName());
         }
     }
 
@@ -90,10 +92,11 @@ class PipelinesTest {
                 PopulateSeatsStep.class,
                 UnloadChunkStep.class,
         };
+        var steps = pipeline.createSteps();
         for (int i = 0; i < expectedTypes.length; i++) {
-            assertTrue(expectedTypes[i].isInstance(pipeline.steps().get(i)),
+            assertTrue(expectedTypes[i].isInstance(steps.get(i)),
                     "Step " + i + " should be " + expectedTypes[i].getSimpleName()
-                            + " but was " + pipeline.steps().get(i).getClass().getSimpleName());
+                            + " but was " + steps.get(i).getClass().getSimpleName());
         }
     }
 }

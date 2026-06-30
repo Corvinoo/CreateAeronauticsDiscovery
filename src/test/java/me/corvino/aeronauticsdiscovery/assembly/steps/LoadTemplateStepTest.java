@@ -16,6 +16,6 @@ class LoadTemplateStepTest {
     void skipsWhenTemplateAlreadyLoaded() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
         ctx.template = new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate();
-        assertEquals(AssemblyResult.SUCCESS, new LoadTemplateStep().run(ctx));
+        assertEquals(AssemblyResult.SUCCESS, new LoadTemplateStep().execute(ctx));
     }
 }

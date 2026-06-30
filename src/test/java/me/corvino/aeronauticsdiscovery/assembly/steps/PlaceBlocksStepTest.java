@@ -19,6 +19,6 @@ class PlaceBlocksStepTest {
                 .assemblerPos(new BlockPos(0, 150, 0))
                 .build();
 
-        assertEquals(AssemblyResult.SUCCESS, new PlaceBlocksStep().run(ctx));
+        assertEquals(AssemblyResult.SUCCESS, new PlaceBlocksStep().execute(ctx));
     }
 }
