@@ -85,7 +85,7 @@ public final class FlyoverEventScheduler {
 
         AssemblyQueue.get(level).enqueue(Pipelines.FLYOVER, ctx);
 
-        CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Enqueued '{}' at {}", config.template(), spawnPos);
+        CreateAeronauticsDiscovery.LOGGER.debug("[FLYOVER] Enqueued '{}' at {}", config.template(), spawnPos);
     }
 
     static boolean isFlatWorld(ServerLevel level) {
