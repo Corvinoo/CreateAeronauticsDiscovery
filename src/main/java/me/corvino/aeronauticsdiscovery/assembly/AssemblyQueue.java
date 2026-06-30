@@ -338,7 +338,7 @@ public class AssemblyQueue extends SavedData {
                 angular = rotateVec3(angular, ctx.yawRadians);
             }
 
-            CreateAeronauticsDiscovery.LOGGER.info("[PHYSICS] Applying velocity to '{}': linear={}, angular={}, impulse={}",
+            CreateAeronauticsDiscovery.LOGGER.debug("[PHYSICS] Applying velocity to '{}': linear={}, angular={}, impulse={}",
                     ctx.templateId, linear, angular, vel.impulse());
 
             if (vel.impulse()) {
