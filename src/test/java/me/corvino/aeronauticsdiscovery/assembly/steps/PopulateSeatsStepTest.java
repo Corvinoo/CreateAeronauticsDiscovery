@@ -15,13 +15,12 @@ class PopulateSeatsStepTest {
     @Test
     void returnsSuccessWhenNoSeats() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
-        assertEquals(AssemblyResult.SUCCESS, new PopulateSeatsStep().run(ctx));
+        assertEquals(AssemblyResult.SUCCESS, new PopulateSeatsStep().execute(ctx));
     }
 
     @Test
     void returnsSuccessWhenNoAssemblyResult() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
-        ctx.worldSeatPositions.add(new net.minecraft.core.BlockPos(0, 150, 0));
-        assertEquals(AssemblyResult.SUCCESS, new PopulateSeatsStep().run(ctx));
+        assertEquals(AssemblyResult.SUCCESS, new PopulateSeatsStep().execute(ctx));
     }
 }

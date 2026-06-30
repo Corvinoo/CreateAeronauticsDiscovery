@@ -15,6 +15,6 @@ class ReadinessCheckStepTest {
     @Test
     void failsWhenBoundsAreNull() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN).build();
-        assertEquals(AssemblyResult.FAIL, new ReadinessCheckStep().run(ctx));
+        assertEquals(AssemblyResult.FAIL, new ReadinessCheckStep().execute(ctx));
     }
 }
