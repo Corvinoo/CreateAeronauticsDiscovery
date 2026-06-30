@@ -5,6 +5,7 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
+import me.corvino.aeronauticsdiscovery.assembly.TriggerType;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -113,6 +114,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                 assemblerCount++;
                 queue.enqueue(Pipelines.WORLDGEN,
                         AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
+                                .trigger(TriggerType.IMMEDIATE) //todo check flow immaediate and consider refactor;
                                 .templatePos(this.templatePosition)
                                 .rotationTemplate(this.placeSettings.getRotation())
                                 .bounds(templateBounds)
@@ -130,6 +132,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                     templateId, firstNonAir);
             queue.enqueue(Pipelines.WORLDGEN,
                     AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
+                            .trigger(TriggerType.IMMEDIATE)
                             .templatePos(this.templatePosition)
                             .rotationTemplate(this.placeSettings.getRotation())
                             .bounds(templateBounds)
