@@ -10,11 +10,12 @@ class AssemblyResultTest {
     void enumValuesExist() {
         assertNotNull(AssemblyResult.SUCCESS);
         assertNotNull(AssemblyResult.FAIL);
+        
     }
 
     @Test
     void noUnexpectedValues() {
         AssemblyResult[] values = AssemblyResult.values();
-        assertEquals(2, values.length);
+        assertEquals(3, values.length);
     }
 }

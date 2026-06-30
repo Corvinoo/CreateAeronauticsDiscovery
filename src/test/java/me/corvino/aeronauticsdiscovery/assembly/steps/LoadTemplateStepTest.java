@@ -4,6 +4,7 @@ import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +16,7 @@ class LoadTemplateStepTest {
     @Test
     void skipsWhenTemplateAlreadyLoaded() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
-        ctx.template = new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate();
+        ctx.template = new StructureTemplate();
         assertEquals(AssemblyResult.SUCCESS, new LoadTemplateStep().execute(ctx));
     }
 }
