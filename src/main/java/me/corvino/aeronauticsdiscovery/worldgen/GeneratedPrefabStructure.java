@@ -17,27 +17,23 @@ public class GeneratedPrefabStructure extends Structure {
             settingsCodec(instance),
             ResourceLocation.CODEC.fieldOf("template").forGetter(structure -> structure.template),
             Codec.INT.optionalFieldOf("fixed_y", 150).forGetter(structure -> structure.fixedY),
-            Codec.BOOL.optionalFieldOf("random_rotation", true).forGetter(structure -> structure.randomRotation),
-            Codec.INT.optionalFieldOf("activation_distance", 128).forGetter(structure -> structure.activationDistance)
+            Codec.BOOL.optionalFieldOf("random_rotation", true).forGetter(structure -> structure.randomRotation)
     ).apply(instance, GeneratedPrefabStructure::new));
 
     private final ResourceLocation template;
     private final int fixedY;
     private final boolean randomRotation;
-    private final int activationDistance;
 
     public GeneratedPrefabStructure(
             StructureSettings settings,
             ResourceLocation template,
             int fixedY,
-            boolean randomRotation,
-            int activationDistance
+            boolean randomRotation
     ) {
         super(settings);
         this.template = template;
         this.fixedY = fixedY;
         this.randomRotation = randomRotation;
-        this.activationDistance = activationDistance;
     }
 
     @Override
@@ -50,8 +46,7 @@ public class GeneratedPrefabStructure extends Structure {
                 context.structureTemplateManager(),
                 this.template,
                 pos,
-                rotation,
-                this.activationDistance
+                rotation
         ))));
     }
 

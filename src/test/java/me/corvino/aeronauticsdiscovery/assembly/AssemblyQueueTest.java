@@ -32,9 +32,7 @@ class AssemblyQueueTest {
     @Test
     void entryPreservesAllFields() {
         AssemblyPipeline pipeline = new AssemblyPipeline("test", () -> List.of());
-        AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN)
-                .activationDistance(64)
-                .build();
+        AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN).build();
         AssemblyQueue.Entry entry = new AssemblyQueue.Entry(TEMPLATE_ID, pipeline, ctx, 3);
 
         assertEquals(TEMPLATE_ID, entry.templateId());

@@ -68,7 +68,6 @@ public final class PrefabCommands {
         try {
             AssemblyContext ctx = AssemblyContext.builder(level, finalId, AssemblySource.COMMAND)
                     .anchor(finalPos)
-                    .activationDistance(128)
                     .maxRetries(5)
                     .build();
 

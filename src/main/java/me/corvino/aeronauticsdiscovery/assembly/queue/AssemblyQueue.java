@@ -22,8 +22,7 @@ import java.util.ListIterator;
  * to completion, one queue per level, ticked every {@link LevelTickEvent.Post}.
  *
  * <p>Entries are retried until they succeed, fail past {@code maxRetries}, or
- * are still {@code WAITING} on their next eligible tick. See {@link TriggerType}
- * for when an entry becomes eligible to attempt assembly at all.</p>
+ * are still {@code WAITING} on their next eligible tick.</p>
  */
 public class AssemblyQueue extends SavedData {
 
@@ -120,8 +119,6 @@ public class AssemblyQueue extends SavedData {
         AssemblyContext ctx = entry.context();
         ctx.level = level;
 
-        if (!isTriggerReady(level, ctx)) return;
-
         if (entry.retryCount() >= ctx.maxRetries) {
             discardEntry(it, entry);
             return;
@@ -129,13 +126,6 @@ public class AssemblyQueue extends SavedData {
 
         AssemblyResult result = entry.pipeline().execute(ctx, currentTick);
         applyResult(level, it, entry, ctx, result);
-    }
-
-    private boolean isTriggerReady(ServerLevel level, AssemblyContext ctx) {
-        return switch (ctx.trigger) {
-            case IMMEDIATE -> true;
-            case PROXIMITY -> ActivationChecks.isNearPlayer(level, ctx) && ActivationChecks.isChunksLoaded(level, ctx);
-        };
     }
 
     private void discardEntry(ListIterator<Entry> it, Entry entry) {

@@ -5,7 +5,6 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
-import me.corvino.aeronauticsdiscovery.assembly.TriggerType;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -26,14 +25,12 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 
 public class GeneratedPrefabPiece extends TemplateStructurePiece {
-    private final int activationDistance;
 
     public GeneratedPrefabPiece(
             StructureTemplateManager templateManager,
             ResourceLocation template,
             BlockPos pos,
-            Rotation rotation,
-            int activationDistance
+            Rotation rotation
     ) {
         super(
                 ModWorldgen.GENERATED_PREFAB_PIECE.get(),
@@ -44,12 +41,10 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                 makeSettings(rotation),
                 pos
         );
-        this.activationDistance = activationDistance;
     }
 
     public GeneratedPrefabPiece(StructureTemplateManager templateManager, CompoundTag tag) {
         super(ModWorldgen.GENERATED_PREFAB_PIECE.get(), tag, templateManager, location -> makeSettings(Rotation.valueOf(tag.getString("Rot"))));
-        this.activationDistance = tag.getInt("ActivationDistance");
     }
 
     private static StructurePlaceSettings makeSettings(Rotation rotation) {
@@ -63,7 +58,6 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
     protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
         super.addAdditionalSaveData(context, tag);
         tag.putString("Rot", this.placeSettings.getRotation().name());
-        tag.putInt("ActivationDistance", this.activationDistance);
     }
 
     @Override
@@ -114,16 +108,14 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                 assemblerCount++;
                 queue.enqueue(Pipelines.WORLDGEN,
                         AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
-                                .trigger(TriggerType.IMMEDIATE) //todo check flow immaediate and consider refactor;
                                 .templatePos(this.templatePosition)
                                 .rotationTemplate(this.placeSettings.getRotation())
                                 .bounds(templateBounds)
-                                .activationDistance(this.activationDistance)
                                 .assemblerPos(worldPos)
                                 .build());
 
-                CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] Queued assembly for PhysicsAssembler at {} (Template: {}, Dist: {})",
-                        worldPos, templateId, this.activationDistance);
+                CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] Queued assembly for PhysicsAssembler at {} (Template: {})",
+                        worldPos, templateId);
             }
         }
 
@@ -132,11 +124,9 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                     templateId, firstNonAir);
             queue.enqueue(Pipelines.WORLDGEN,
                     AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
-                            .trigger(TriggerType.IMMEDIATE)
                             .templatePos(this.templatePosition)
                             .rotationTemplate(this.placeSettings.getRotation())
                             .bounds(templateBounds)
-                            .activationDistance(this.activationDistance)
                             .assemblerPos(firstNonAir)
                             .build());
         } else if (assemblerCount == 0) {

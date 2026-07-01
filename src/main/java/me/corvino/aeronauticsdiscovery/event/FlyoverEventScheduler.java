@@ -77,7 +77,6 @@ public final class FlyoverEventScheduler {
                 .rotationTemplate(Rotation.NONE)
                 .setYaw(yawRadians)
                 .overrideVelocity(config.velocity())
-                .activationDistance(128) //todo check whether working properly
                 .maxRetries(3)
                 .setName("flyover")
                 .registerFlyover()
