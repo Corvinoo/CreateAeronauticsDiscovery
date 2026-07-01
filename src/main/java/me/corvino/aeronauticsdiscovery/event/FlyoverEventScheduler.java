@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.event;
 
+import dev.eriksonn.aeronautics.Aeronautics;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
@@ -12,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import org.jetbrains.annotations.Debug;
 
 import java.util.Random;
 
@@ -39,43 +41,36 @@ public final class FlyoverEventScheduler {
     public static void spawnForPlayer(
             ServerLevel level, FlyoverEventConfig config, ServerPlayer player, Random random
     ) {
-        spawnAtPosition(level, config, player.blockPosition(), random);
+        final int MaxAttempt = 5;
+        SpawnPosition spawnPos = SpawnPosition.builder()
+                .center(player.blockPosition())
+                .altitudeRange(config.minAltitude(), config.maxAltitude())
+                .horizontalDistance(offsetFromViewDistance(level))
+                .facing(player.blockPosition())
+                .maxAttempts(MaxAttempt)
+                .build(level, random);
+
+        
+        if(spawnPos != null) {
+            spawnAtPosition(level, config, spawnPos);
+        }
+        else {
+            CreateAeronauticsDiscovery.LOGGER.debug("Could not find good spawn point in {} attempts for flyover, skipping", MaxAttempt);
+        }
     }
 
     public static void spawnAtPosition(
-            ServerLevel level, FlyoverEventConfig config, BlockPos centerPos, Random random
+            ServerLevel level, FlyoverEventConfig config, SpawnPosition spawnPos
     ) {
         if (isFlatWorld(level)) {
             CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Skipping flyover in flat world");
             return;
         }
 
-        int altitude = config.minAltitude();
-        if (config.maxAltitude() > config.minAltitude()) {
-            altitude += random.nextInt(config.maxAltitude() - config.minAltitude());
-        }
-
-        int viewDist = level.getServer().getPlayerList().getViewDistance();
-        int maxDist = viewDist * 16;
-        int offset = maxDist + Config.flyoverMaxUnloadDistance / 2;
-
-        double angle = random.nextDouble() * 2 * Math.PI;
-        int dx = (int) (Math.cos(angle) * offset);
-        int dz = (int) (Math.sin(angle) * offset);
-
-        BlockPos spawnPos = new BlockPos(
-                centerPos.getX() + dx,
-                altitude,
-                centerPos.getZ() + dz
-        );
-
-        double theta = Math.atan2(centerPos.getZ() - spawnPos.getZ(), centerPos.getX() - spawnPos.getX());
-        double yawRadians = -theta - Math.PI / 2;
-
         AssemblyContext ctx = AssemblyContext.builder(level, config.template(), AssemblySource.FLYOVER)
-                .anchor(spawnPos)
+                .anchor(spawnPos.pos())
                 .rotationTemplate(Rotation.NONE)
-                .setYaw(yawRadians)
+                .setYaw(spawnPos.yawRadians())
                 .overrideVelocity(config.velocity())
                 .maxRetries(3)
                 .setName("flyover")
@@ -84,7 +79,13 @@ public final class FlyoverEventScheduler {
 
         AssemblyQueue.get(level).enqueue(Pipelines.FLYOVER, ctx);
 
-        CreateAeronauticsDiscovery.LOGGER.debug("[FLYOVER] Enqueued '{}' at {}", config.template(), spawnPos);
+        CreateAeronauticsDiscovery.LOGGER.debug("[FLYOVER] Enqueued '{}' at {}", config.template(), spawnPos.pos());
+    }
+
+    private static int offsetFromViewDistance(ServerLevel level) {
+        int viewDist = level.getServer().getPlayerList().getViewDistance();
+        int maxDist = viewDist * 16;
+        return maxDist + Config.flyoverMaxUnloadDistance / 2;
     }
 
     static boolean isFlatWorld(ServerLevel level) {
