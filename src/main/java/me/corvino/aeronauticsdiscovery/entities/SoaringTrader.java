@@ -1,7 +1,14 @@
 package me.corvino.aeronauticsdiscovery.entities;
 
-import javax.annotation.Nullable;
+import com.simibubi.create.Create;
+import com.simibubi.create.content.redstone.link.IRedstoneLinkable;
+import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
+import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.companion.math.JOMLConversion;
+import dev.ryanhcode.sable.companion.math.Pose3dc;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.util.StructureSearchWorker;
+import net.createmod.catnip.data.Couple;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -12,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.item.Item;
@@ -32,44 +40,151 @@ import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement
 import net.minecraft.world.level.saveddata.maps.MapDecorationType;
 import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
+
+import javax.annotation.Nullable;
+
+import static java.lang.Math.atan2;
 
 public class SoaringTrader extends WanderingTrader {
     private static final String[] CREATE_FOODS = {
-        "create:bar_of_chocolate",
-        "create:sweet_roll",
-        "create:chocolate_glazed_berries",
-        "create:honeyed_apple",
-        "create:builders_tea"
+            "create:bar_of_chocolate",
+            "create:sweet_roll",
+            "create:chocolate_glazed_berries",
+            "create:honeyed_apple",
+            "create:builders_tea"
     };
     private static final String[] CARDBOARD_ITEMS = {
-        "create:cardboard_sword",
-        "create:cardboard_helmet",
-        "create:cardboard_chestplate",
-        "create:cardboard_leggings",
-        "create:cardboard_boots"
+            "create:cardboard_sword",
+            "create:cardboard_helmet",
+            "create:cardboard_chestplate",
+            "create:cardboard_leggings",
+            "create:cardboard_boots"
     };
     private static final StructureEntry[] STRUCTURES = {
-        new StructureEntry(BuiltinStructures.WOODLAND_MANSION, MapDecorationTypes.WOODLAND_MANSION, "filled_map.mansion"),
-        new StructureEntry(BuiltinStructures.JUNGLE_TEMPLE, MapDecorationTypes.JUNGLE_TEMPLE, "filled_map.aeronauticsdiscovery.jungle_temple"),
-        new StructureEntry(BuiltinStructures.DESERT_PYRAMID, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.desert_pyramid"),
-        new StructureEntry(BuiltinStructures.TRAIL_RUINS, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.trail_ruins"),
-        new StructureEntry(BuiltinStructures.IGLOO, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.igloo"),
-        new StructureEntry(BuiltinStructures.ANCIENT_CITY, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.ancient_city"),
-        new StructureEntry(BuiltinStructures.MINESHAFT, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.mineshaft"),
-        new StructureEntry(BuiltinStructures.TRIAL_CHAMBERS, MapDecorationTypes.TRIAL_CHAMBERS, "filled_map.trial_chambers"),
+            new StructureEntry(BuiltinStructures.WOODLAND_MANSION, MapDecorationTypes.WOODLAND_MANSION, "filled_map.mansion"),
+            new StructureEntry(BuiltinStructures.JUNGLE_TEMPLE, MapDecorationTypes.JUNGLE_TEMPLE, "filled_map.aeronauticsdiscovery.jungle_temple"),
+            new StructureEntry(BuiltinStructures.DESERT_PYRAMID, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.desert_pyramid"),
+            new StructureEntry(BuiltinStructures.TRAIL_RUINS, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.trail_ruins"),
+            new StructureEntry(BuiltinStructures.IGLOO, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.igloo"),
+            new StructureEntry(BuiltinStructures.ANCIENT_CITY, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.ancient_city"),
+            new StructureEntry(BuiltinStructures.MINESHAFT, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.mineshaft"),
+            new StructureEntry(BuiltinStructures.TRIAL_CHAMBERS, MapDecorationTypes.TRIAL_CHAMBERS, "filled_map.trial_chambers"),
     };
 
-    private record StructureEntry(ResourceKey<Structure> key, Holder<MapDecorationType> decoration, String nameKey) {}
+    private record StructureEntry(ResourceKey<Structure> key, Holder<MapDecorationType> decoration, String nameKey) {
+    }
 
     private static final String[] DYE_COLORS = {
-        "white", "orange", "magenta", "light_blue",
-        "yellow", "lime", "pink", "gray",
-        "light_gray", "cyan", "purple", "blue",
-        "brown", "green", "red", "black"
+            "white", "orange", "magenta", "light_blue",
+            "yellow", "lime", "pink", "gray",
+            "light_gray", "cyan", "purple", "blue",
+            "brown", "green", "red", "black"
     };
 
     public SoaringTrader(EntityType<? extends WanderingTrader> type, Level level) {
         super(type, level);
+    }
+
+    private static final double PITCH_THRESHOLD_ON = Math.toRadians(9);
+    private static final double PITCH_THRESHOLD_OFF = Math.toRadians(7);
+    private static final double ROLL_THRESHOLD_ON = Math.toRadians(1);
+    private static final double ROLL_THRESHOLD_OFF = Math.toRadians(0);
+    private final StabilizerTransmitter pitchUpSignal = new StabilizerTransmitter(this, Items.GREEN_WOOL);
+    private final StabilizerTransmitter pitchDownSignal = new StabilizerTransmitter(this, Items.YELLOW_WOOL);
+    private final StabilizerTransmitter rollRightSignal = new StabilizerTransmitter(this, Items.RED_WOOL);
+    private final StabilizerTransmitter rollLeftSignal = new StabilizerTransmitter(this, Items.LIGHT_BLUE_WOOL);
+
+    private double minAltitude = 160.0;
+    private static final double ALTITUDE_BIAS_PER_BLOCK = Math.toRadians(0.4);
+    private static final double MAX_ALTITUDE_BIAS = Math.toRadians(12);
+    private boolean linksRegistered = false;
+
+    private StabilizerTransmitter[] allTransmitters() {
+        return new StabilizerTransmitter[]{pitchUpSignal, pitchDownSignal, rollRightSignal, rollLeftSignal};
+    }
+
+    private void registerLinksIfNeeded(ServerLevel serverLevel) {
+        if (linksRegistered) return;
+        for (StabilizerTransmitter t : allTransmitters())
+            Create.REDSTONE_LINK_NETWORK_HANDLER.addToNetwork(serverLevel, t);
+        linksRegistered = true;
+    }
+
+    private void unregisterLinks(ServerLevel serverLevel) {
+        if (!linksRegistered) return;
+        for (StabilizerTransmitter t : allTransmitters())
+            Create.REDSTONE_LINK_NETWORK_HANDLER.removeFromNetwork(serverLevel, t);
+        linksRegistered = false;
+    }
+
+    private void setActive(ServerLevel serverLevel, StabilizerTransmitter t, boolean shouldBeActive) {
+        if (t.isActive() == shouldBeActive) return;
+        t.setActive(shouldBeActive);
+        Create.REDSTONE_LINK_NETWORK_HANDLER.updateNetworkOf(serverLevel, t);
+    }
+
+    private void setAllInactive(ServerLevel serverLevel) {
+        for (StabilizerTransmitter t : allTransmitters())
+            setActive(serverLevel, t, false);
+    }
+
+    private static boolean hysteresis(boolean currentlyActive, double value, double onThreshold, double offThreshold) {
+        return currentlyActive ? value > offThreshold : value > onThreshold;
+    }
+
+    public double getMinAltitude() {
+        return minAltitude;
+    }
+
+    public void setMinAltitude(double minAltitude) {
+        this.minAltitude = minAltitude;
+    }
+
+    private double getWorldAltitude() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) return Double.MAX_VALUE;
+        Vector3d worldPos = Sable.HELPER.projectOutOfSubLevel(
+                serverLevel, JOMLConversion.atCenterOf(this.blockPosition()));
+        return worldPos.y();
+    }
+
+    private void tickStabilizer(ServerLevel serverLevel) {
+        registerLinksIfNeeded(serverLevel);
+
+        var seatEntityMaybe = this.getRootVehicle();
+
+        SubLevel subLevel = Sable.HELPER.getContaining(seatEntityMaybe);
+        if (subLevel == null) {
+            setAllInactive(serverLevel);
+            return;
+        }
+
+        Pose3dc pose = subLevel.logicalPose();
+        Vector3d localDown = JOMLConversion.toJOML(new Vec3(0, -1, 0));
+        pose.orientation().transformInverse(localDown);
+
+        double pitch = (localDown.y() < 0 || localDown.z() * localDown.z() > 0.001)
+                ? atan2(localDown.z(), -localDown.y()) : 0;
+        double roll = (localDown.y() < 0 || localDown.x() * localDown.x() > 0.001)
+                ? atan2(localDown.x(), -localDown.y()) : 0;
+
+
+        double altitudeDeficit = minAltitude - getWorldAltitude();
+        double altitudeBias = altitudeDeficit > 0
+                ? Mth.clamp(altitudeDeficit * ALTITUDE_BIAS_PER_BLOCK, 0, MAX_ALTITUDE_BIAS)
+                : 0;
+        double adjustedPitch = pitch - altitudeBias;
+
+        boolean pitchTooLow = hysteresis(pitchUpSignal.isActive(), -adjustedPitch, PITCH_THRESHOLD_ON, PITCH_THRESHOLD_OFF);
+        boolean pitchTooHigh = hysteresis(pitchDownSignal.isActive(), adjustedPitch, PITCH_THRESHOLD_ON, PITCH_THRESHOLD_OFF);
+        boolean rollTooLeft = hysteresis(rollRightSignal.isActive(), -roll, ROLL_THRESHOLD_ON, ROLL_THRESHOLD_OFF);
+        boolean rollTooRight = hysteresis(rollLeftSignal.isActive(), roll, ROLL_THRESHOLD_ON, ROLL_THRESHOLD_OFF);
+
+        setActive(serverLevel, pitchUpSignal, pitchTooLow);
+        setActive(serverLevel, pitchDownSignal, pitchTooHigh);
+        setActive(serverLevel, rollRightSignal, rollTooLeft);
+        setActive(serverLevel, rollLeftSignal, rollTooRight);
     }
 
     @Override
@@ -124,6 +239,8 @@ public class SoaringTrader extends WanderingTrader {
     @Override
     public void tick() {
         super.tick();
+        if (this.level() instanceof ServerLevel serverLevel)
+            tickStabilizer(serverLevel);
     }
 
     @Nullable
@@ -166,6 +283,57 @@ public class SoaringTrader extends WanderingTrader {
         } else {
             String color = DYE_COLORS[this.random.nextInt(DYE_COLORS.length)];
             return BuiltInRegistries.ITEM.get(ResourceLocation.parse("create:" + color + "_toolbox"));
+        }
+    }
+
+
+    private static final class StabilizerTransmitter implements IRedstoneLinkable {
+        private final SoaringTrader owner;
+        private final Couple<RedstoneLinkNetworkHandler.Frequency> key;
+        private boolean active = false;
+
+        StabilizerTransmitter(SoaringTrader owner, Item woolItem) {
+            this.owner = owner;
+            RedstoneLinkNetworkHandler.Frequency freq = RedstoneLinkNetworkHandler.Frequency.of(new ItemStack(woolItem));
+            this.key = Couple.create(freq, freq);
+        }
+
+        boolean isActive() {
+            return active;
+        }
+
+        void setActive(boolean active) {
+            this.active = active;
+        }
+
+        @Override
+        public boolean isListening() {
+            return false;
+        }
+
+        @Override
+        public int getTransmittedStrength() {
+            return active ? 15 : 0;
+        }
+
+        @Override
+        public void setReceivedStrength(int networkPower) {
+
+        }
+
+        @Override
+        public Couple<RedstoneLinkNetworkHandler.Frequency> getNetworkKey() {
+            return key;
+        }
+
+        @Override
+        public boolean isAlive() {
+            return owner.isAlive() && !owner.isRemoved() && owner.level() != null;
+        }
+
+        @Override
+        public BlockPos getLocation() {
+            return owner.blockPosition();
         }
     }
 }
