@@ -48,11 +48,13 @@ public final class FlyoverEventScheduler {
                 .horizontalDistance(offsetFromViewDistance(level))
                 .facing(player.blockPosition())
                 .maxAttempts(MaxAttempt)
+                .constrain(SpawnPosition.noObstaclesInFront(offsetFromViewDistance(level) * 2))
                 .build(level, random);
 
         
         if(spawnPos != null) {
             spawnAtPosition(level, config, spawnPos);
+            CreateAeronauticsDiscovery.LOGGER.debug("Found good spawn point for flyover at {}", spawnPos.pos());
         }
         else {
             CreateAeronauticsDiscovery.LOGGER.debug("Could not find good spawn point in {} attempts for flyover, skipping", MaxAttempt);
