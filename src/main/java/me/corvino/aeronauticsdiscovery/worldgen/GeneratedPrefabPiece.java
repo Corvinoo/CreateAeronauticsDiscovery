@@ -108,6 +108,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                 assemblerCount++;
                 queue.enqueue(Pipelines.WORLDGEN,
                         AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
+                                .anchor(firstNonAir) // todo: change initialization of anchor (should not be nullable)
                                 .templatePos(this.templatePosition)
                                 .rotationTemplate(this.placeSettings.getRotation())
                                 .bounds(templateBounds)
@@ -122,8 +123,9 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
         if (assemblerCount == 0 && firstNonAir != null) { 
             CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
                     templateId, firstNonAir);
-            queue.enqueue(Pipelines.WORLDGEN,
+            queue.enqueue(Pipelines.WORLDGEN, //todo merge two queue into single branch for clarity, probably we do not necessarily need assembler
                     AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
+                            .anchor(firstNonAir)
                             .templatePos(this.templatePosition)
                             .rotationTemplate(this.placeSettings.getRotation())
                             .bounds(templateBounds)
