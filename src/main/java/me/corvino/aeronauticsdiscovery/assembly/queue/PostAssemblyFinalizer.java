@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
+import net.minecraft.nbt.CompoundTag;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
@@ -33,6 +34,7 @@ final class PostAssemblyFinalizer {
         teleportToYaw(ctx, handle);
         applyInitialVelocity(ctx, handle);
         nameSubLevel(ctx, subLevel);
+        tagSublevel(subLevel, ctx);
         registerAsFlyoverIfRequested(level, ctx, subLevel);
     }
 
@@ -100,6 +102,13 @@ final class PostAssemblyFinalizer {
     private static void nameSubLevel(AssemblyContext ctx, ServerSubLevel subLevel) {
         String name = ctx.subLevelName != null ? ctx.subLevelName : ctx.templateId.getPath();
         subLevel.setName(name);
+    }
+
+    private static void tagSublevel(ServerSubLevel subLevel, AssemblyContext ctx) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("mod_id", CreateAeronauticsDiscovery.MODID);
+        tag.putString("template_id", ctx.templateId.toString());
+        subLevel.setUserDataTag(tag);
     }
 
     private static void registerAsFlyoverIfRequested(ServerLevel level, AssemblyContext ctx, ServerSubLevel subLevel) {

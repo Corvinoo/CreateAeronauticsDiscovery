@@ -11,6 +11,7 @@ import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverCommands;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventScheduler;
+import me.corvino.aeronauticsdiscovery.event.StructureProximityTracker;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
@@ -74,6 +75,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(AssemblyQueue::onLevelTick);
         NeoForge.EVENT_BUS.addListener(FlyoverEventScheduler::onLevelTick);
         NeoForge.EVENT_BUS.addListener(FlyoverManager::onLevelTick);
+//        NeoForge.EVENT_BUS.addListener(StructureProximityTracker::onLevelTick); //disabled for now
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
