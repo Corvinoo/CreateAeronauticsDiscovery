@@ -107,9 +107,12 @@ public class FlyoverUtils {
 
     public static CompletableFuture<Void> removeAllEntitiesInSublevelAwaitingChunks(ServerSubLevel subLevel) {
         ServerLevel level = subLevel.getLevel();
+        UUID subLevelId = subLevel.getUniqueId();
         var bounds = ChunkLoadingHelper.calculateChunkBounds(subLevel);
 
-        return TaskScheduler.getInstance().runSyncRepeatingUntil(future -> {
+        forEachChunk(level, subLevelId, bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ(), true);
+
+        CompletableFuture<Void> result = TaskScheduler.getInstance().runSyncRepeatingUntil(future -> {
             boolean allReady = true;
             for (int cx = bounds.minX(); cx <= bounds.maxX() && allReady; cx++) {
                 for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
@@ -125,5 +128,9 @@ public class FlyoverUtils {
                 future.complete(null);
             }
         }, 20, 100_000);
+
+        return result.whenComplete((v, ex) ->
+                forEachChunk(level, subLevelId, bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ(), false));
+
     }
 }
