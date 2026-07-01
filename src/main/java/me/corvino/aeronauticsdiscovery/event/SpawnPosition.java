@@ -1,15 +1,22 @@
 package me.corvino.aeronauticsdiscovery.event;
 
+import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.function.BiPredicate;
 
 public final class SpawnPosition {
+    private static boolean DEBUG_VISUALIZE = false;
+
     private final BlockPos pos;
     private final double yawRadians;
 
@@ -27,6 +34,54 @@ public final class SpawnPosition {
     @FunctionalInterface
     public interface Constraint {
         boolean test(BlockPos pos, double yawRadians, ServerLevel level);
+    }
+
+    // direction vector from Aeronautics yaw convention (Z-negated vs Minecraft)
+    private static Vec3 dirFromYaw(double yawRadians) {
+        return new Vec3(-Math.sin(yawRadians), 0, -Math.cos(yawRadians));
+    }
+
+    private static void debugVisualizeRay(ServerLevel level, Vec3 from, Vec3 to, BlockHitResult hit, boolean miss) {
+        if (!DEBUG_VISUALIZE) return;
+        level.setBlock(BlockPos.containing(from), Blocks.GOLD_BLOCK.defaultBlockState(), 3);
+        double totalDist = from.distanceTo(to);
+        int steps = Math.max(1, (int) (totalDist / 2));
+        for (int i = 0; i <= steps; i++) {
+            Vec3 p = from.lerp(to, (double) i / steps);
+            level.setBlock(BlockPos.containing(p), Blocks.LAPIS_BLOCK.defaultBlockState(), 3);
+        }
+        if (!miss) {
+            level.setBlock(BlockPos.containing(hit.getLocation()), Blocks.REDSTONE_BLOCK.defaultBlockState(), 3);
+        }
+    }
+
+    public static Constraint noObstaclesInFront(int checkBlocks) {
+        return (pos, yawRadians, level) -> {
+            Vec3 from = Vec3.atBottomCenterOf(pos).add(0, 1, 0);
+            Vec3 dir = dirFromYaw(yawRadians);
+            Vec3 to = from.add(dir.scale(checkBlocks));
+
+            BlockHitResult hit = level.clip(new ClipContext(
+                    from, to,
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    (Entity) null
+            ));
+            boolean miss = hit.getType() == HitResult.Type.MISS;
+
+//            debugVisualizeRay(level, from, to, hit, miss);
+
+            CreateAeronauticsDiscovery.LOGGER.debug(
+                    "[OBSTACLE_CHECK] pos={} yaw={} from={} to={} dir=({}, {}) result={} hit={}",
+                    pos, Math.toDegrees(yawRadians),
+                    from, to,
+                    String.format("%.2f", dir.x), String.format("%.2f", dir.z),
+                    miss ? "MISS" : "HIT",
+                    miss ? "—" : hit.getBlockPos()
+            );
+
+            return miss;
+        };
     }
 
     public static final class Builder {
@@ -79,11 +134,9 @@ public final class SpawnPosition {
 
                 double yaw = 0;
                 if (facingTarget != null) {
-                    double theta = Math.atan2(
-                            facingTarget.getZ() - candidate.getZ(),
-                            facingTarget.getX() - candidate.getX()
-                    );
-                    yaw = -theta - Math.PI / 2;
+                    double tdx = facingTarget.getX() - candidate.getX();
+                    double tdz = facingTarget.getZ() - candidate.getZ();
+                    yaw = -Math.atan2(tdz, tdx) - (Math.PI / 2);
                 }
 
                 last = new SpawnPosition(candidate, yaw);
@@ -98,7 +151,7 @@ public final class SpawnPosition {
                 if (valid) return last;
             }
 
-            return last;
+            return null;
         }
     }
 }
