@@ -38,7 +38,6 @@ public final class FlyoverTestHelper {
             ResourceLocation.parse("aeronauticsdiscovery:airplane");
 
     public static final int ALTITUDE         = 64;
-    public static final int ACTIVATION_DIST  = 128;
     public static final int MAX_RETRIES      = 3;
     public static final int TIMEOUT_TICKS    = 800;
 
@@ -117,7 +116,6 @@ public final class FlyoverTestHelper {
                 .rotationTemplate(Rotation.NONE)
                 .setYaw(0.0)
                 .overrideVelocity(InitialVelocity.NONE)
-                .activationDistance(ACTIVATION_DIST)
                 .maxRetries(MAX_RETRIES)
                 .setName("flyover_test")
                 .registerFlyover()

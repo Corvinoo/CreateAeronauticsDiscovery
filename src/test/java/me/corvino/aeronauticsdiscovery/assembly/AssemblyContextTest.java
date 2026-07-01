@@ -13,28 +13,11 @@ class AssemblyContextTest {
     private static final ResourceLocation TEMPLATE_ID = ResourceLocation.parse("aeronauticsdiscovery:test");
 
     @Test
-    void builderCreatesWorldgenContextWithProximityTrigger() {
+    void builderSetsSource() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN).build();
 
         assertEquals(TEMPLATE_ID, ctx.templateId);
         assertEquals(AssemblySource.WORLDGEN, ctx.source);
-        assertEquals(TriggerType.PROXIMITY, ctx.trigger);
-    }
-
-    @Test
-    void builderCreatesFlyoverContextWithImmediateTrigger() {
-        AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.FLYOVER).build();
-
-        assertEquals(AssemblySource.FLYOVER, ctx.source);
-        assertEquals(TriggerType.IMMEDIATE, ctx.trigger);
-    }
-
-    @Test
-    void builderCreatesCommandContextWithImmediateTrigger() {
-        AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();
-
-        assertEquals(AssemblySource.COMMAND, ctx.source);
-        assertEquals(TriggerType.IMMEDIATE, ctx.trigger);
     }
 
     @Test
@@ -49,7 +32,6 @@ class AssemblyContextTest {
                 .templatePos(templatePos)
                 .rotationTemplate(rotation)
                 .bounds(bounds)
-                .activationDistance(200)
                 .maxRetries(99)
                 .assemblerPos(anchor)
                 .build();
@@ -58,7 +40,6 @@ class AssemblyContextTest {
         assertEquals(templatePos, ctx.templatePos);
         assertEquals(rotation, ctx.rotationTemplate);
         assertEquals(bounds, ctx.bounds);
-        assertEquals(200, ctx.activationDistance);
         assertEquals(99, ctx.maxRetries);
         assertEquals(anchor, ctx.assemblerPos);
     }
@@ -72,25 +53,11 @@ class AssemblyContextTest {
         assertNull(ctx.templatePos);
         assertNull(ctx.rotationTemplate);
         assertNull(ctx.bounds);
-        assertEquals(128, ctx.activationDistance);
         assertEquals(60, ctx.maxRetries);
         assertNull(ctx.template);
         assertNull(ctx.assemblyResult);
     }
 
-    @Test
-    void explicitTriggerOverridesSourceDefault() {
-        AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.WORLDGEN)
-                .trigger(TriggerType.IMMEDIATE)
-                .build();
-        assertEquals(TriggerType.IMMEDIATE, ctx.trigger);
-
-        ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.FLYOVER)
-                .trigger(TriggerType.PROXIMITY)
-                .build();
-        assertEquals(TriggerType.PROXIMITY, ctx.trigger);
-    }
-    
     @Test
     void builderAllowsNullLevel() {
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.COMMAND).build();

@@ -6,6 +6,5 @@
   "spawn_overrides": {},
   "template": "aeronauticsdiscovery:balloon_loot",
   "fixed_y": 150,
-  "random_rotation": true,
-  "activation_distance": 128
+  "random_rotation": true
 }

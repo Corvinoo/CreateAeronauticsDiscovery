@@ -26,7 +26,6 @@ final class AssemblyEntrySerializer {
         tag.putString("Pipeline", entry.pipeline().name());
         tag.putInt("RetryCount", entry.retryCount());
         tag.putString("Source", ctx.source.name());
-        tag.putString("Trigger", ctx.trigger.name());
         putOptPos(tag, "Anchor", ctx.anchor);
         putOptPos(tag, "AssemblerPos", ctx.assemblerPos);
         putOptPos(tag, "TemplatePos", ctx.templatePos);
@@ -34,7 +33,6 @@ final class AssemblyEntrySerializer {
             tag.putString("Rotation", ctx.rotationTemplate.name());
         }
         writeBounds(tag, ctx.bounds);
-        tag.putInt("ActivationDistance", ctx.activationDistance);
         tag.putInt("MaxRetries", ctx.maxRetries);
         tag.putDouble("YawRadians", ctx.yawRadians);
         if (ctx.subLevelName != null) {
@@ -51,15 +49,12 @@ final class AssemblyEntrySerializer {
             ResourceLocation templateId = ResourceLocation.parse(tag.getString("Template"));
             AssemblyPipeline pipeline = Pipelines.byName(tag.getString("Pipeline"));
             AssemblySource source = AssemblySource.valueOf(tag.getString("Source"));
-            me.corvino.aeronauticsdiscovery.assembly.TriggerType trigger = me.corvino.aeronauticsdiscovery.assembly.TriggerType.valueOf(tag.getString("Trigger"));
 
             AssemblyContext ctx = AssemblyContext.builder(null, templateId, source)
-                    .trigger(trigger)
                     .anchor(NbtUtils.readBlockPos(tag, "Anchor").orElse(null))
                     .templatePos(NbtUtils.readBlockPos(tag, "TemplatePos").orElse(null))
                     .rotationTemplate(tag.contains("Rotation") ? Rotation.valueOf(tag.getString("Rotation")) : null)
                     .bounds(readBounds(tag))
-                    .activationDistance(tag.getInt("ActivationDistance"))
                     .maxRetries(tag.getInt("MaxRetries"))
                     .build();
 

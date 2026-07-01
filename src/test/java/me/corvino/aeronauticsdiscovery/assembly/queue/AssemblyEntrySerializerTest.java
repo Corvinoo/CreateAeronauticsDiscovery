@@ -4,7 +4,6 @@ import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyPipeline;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
-import me.corvino.aeronauticsdiscovery.assembly.TriggerType;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -45,12 +44,10 @@ class AssemblyEntrySerializerTest {
         BoundingBox bounds = new BoundingBox(0, 40, 0, 16, 60, 16);
 
         AssemblyContext ctx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.FLYOVER)
-                .trigger(TriggerType.IMMEDIATE)
                 .anchor(anchor)
                 .templatePos(tplPos)
                 .rotationTemplate(Rotation.CLOCKWISE_90)
                 .bounds(bounds)
-                .activationDistance(256)
                 .maxRetries(99)
                 .assemblerPos(asmPos)
                 .setYaw(1.57079632679)
@@ -100,13 +97,11 @@ class AssemblyEntrySerializerTest {
             AssemblyContext ctx = loaded.context();
             assertEquals(TEMPLATE_ID, ctx.templateId);
             assertEquals(AssemblySource.FLYOVER, ctx.source);
-            assertEquals(TriggerType.IMMEDIATE, ctx.trigger);
             assertEquals(new BlockPos(100, 64, 200), ctx.anchor);
             assertEquals(new BlockPos(101, 64, 201), ctx.assemblerPos);
             assertEquals(new BlockPos(10, 20, 30), ctx.templatePos);
             assertEquals(Rotation.CLOCKWISE_90, ctx.rotationTemplate);
             assertBoundsEquals(new BoundingBox(0, 40, 0, 16, 60, 16), ctx.bounds);
-            assertEquals(256, ctx.activationDistance);
             assertEquals(99, ctx.maxRetries);
             assertEquals(1.57079632679, ctx.yawRadians, 1e-8);
             assertEquals("test_flyover", ctx.subLevelName);
@@ -163,13 +158,11 @@ class AssemblyEntrySerializerTest {
 
             assertEquals(TEMPLATE_ID, ctx.templateId);
             assertEquals(AssemblySource.COMMAND, ctx.source);
-            assertEquals(TriggerType.IMMEDIATE, ctx.trigger);
             assertNull(ctx.anchor);
             assertNull(ctx.assemblerPos);
             assertNull(ctx.templatePos);
             assertNull(ctx.rotationTemplate);
             assertNull(ctx.bounds);
-            assertEquals(128, ctx.activationDistance);
             assertEquals(60, ctx.maxRetries);
             assertEquals(0.0, ctx.yawRadians, 1e-8);
             assertNull(ctx.subLevelName);
@@ -215,21 +208,6 @@ class AssemblyEntrySerializerTest {
         }
 
         @Test
-        void zeroActivationDistance() {
-            AssemblyContext originalCtx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.FLYOVER)
-                    .activationDistance(0)
-                    .build();
-            originalCtx.steps = PIPELINE.createSteps();
-            AssemblyQueue.Entry original = new AssemblyQueue.Entry(TEMPLATE_ID, PIPELINE, originalCtx, 0);
-
-            CompoundTag tag = AssemblyEntrySerializer.save(original);
-            AssemblyQueue.Entry loaded = AssemblyEntrySerializer.load(tag)
-                    .orElseThrow(() -> new AssertionError("Load returned empty"));
-
-            assertEquals(0, loaded.context().activationDistance);
-        }
-
-        @Test
         void maxRetriesZero() {
             AssemblyContext originalCtx = AssemblyContext.builder(null, TEMPLATE_ID, AssemblySource.FLYOVER)
                     .maxRetries(0)
@@ -255,7 +233,6 @@ class AssemblyEntrySerializerTest {
                     .orElseThrow(() -> new AssertionError("Load returned empty"));
 
             assertEquals(AssemblySource.WORLDGEN, loaded.context().source);
-            assertEquals(TriggerType.PROXIMITY, loaded.context().trigger);
             assertEquals("worldgen", loaded.pipeline().name());
         }
 

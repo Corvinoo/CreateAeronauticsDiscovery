@@ -101,7 +101,6 @@ public class PipelineDebugCommand {
                     "  §b[" + idx + "]§r " + ctx.templateId.getPath()
                             + " §7|§r src=§e" + ctx.source.name().toLowerCase()
                             + "§r pipe=§e" + entry.pipeline().name()
-                            + "§r trig=§e" + ctx.trigger.name().toLowerCase()
                             + "§r retry=§c" + entry.retryCount() + "/" + ctx.maxRetries
                             + "§r" + (ctx.anchor != null ? " §7pos=" + ctx.anchor.toShortString() : "")
                             + (ctx.assemblerPos != null ? " §7asm=" + ctx.assemblerPos.toShortString() : "")

@@ -17,14 +17,12 @@ public class AssemblyContext {
     @Nullable public ServerLevel level;
     public final ResourceLocation templateId;
     public final AssemblySource source;
-    public final TriggerType trigger;
 
     @Nullable public final BlockPos anchor;
     @Nullable public BlockPos assemblerPos;
     @Nullable public final BlockPos templatePos;
     @Nullable public final Rotation rotationTemplate;
     @Nullable public BoundingBox bounds;
-    public final int activationDistance;
     public final int maxRetries;
 
     @Nullable public InitialVelocity velocityOverride;
@@ -43,18 +41,16 @@ public class AssemblyContext {
     public long currentTick;
 
     AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,
-                    TriggerType trigger, BlockPos anchor, BlockPos templatePos,
+                    BlockPos anchor, BlockPos templatePos,
                     Rotation rotationTemplate, BoundingBox bounds,
-                    int activationDistance, int maxRetries) {
+                    int maxRetries) {
         this.level = level;
         this.templateId = templateId;
         this.source = source;
-        this.trigger = trigger;
         this.anchor = anchor;
         this.templatePos = templatePos;
         this.rotationTemplate = rotationTemplate;
         this.bounds = bounds;
-        this.activationDistance = activationDistance;
         this.maxRetries = maxRetries;
     }
 
@@ -70,12 +66,10 @@ public class AssemblyContext {
         private final ServerLevel level;
         private final ResourceLocation templateId;
         private final AssemblySource source;
-        private TriggerType trigger;
         private BlockPos anchor;
         private BlockPos templatePos;
         private Rotation rotationTemplate;
         private BoundingBox bounds;
-        private int activationDistance = 128;
         private int maxRetries = 60;
         private BlockPos assemblerPos;
         private double yawRadians;
@@ -87,15 +81,12 @@ public class AssemblyContext {
             this.level = level;
             this.templateId = templateId;
             this.source = source;
-            this.trigger = source == AssemblySource.WORLDGEN ? TriggerType.PROXIMITY : TriggerType.IMMEDIATE;
         }
 
-        public Builder trigger(TriggerType trigger) { this.trigger = trigger; return this; }
         public Builder anchor(BlockPos anchor) { this.anchor = anchor; return this; }
         public Builder templatePos(BlockPos templatePos) { this.templatePos = templatePos; return this; }
         public Builder rotationTemplate(Rotation rotation) { this.rotationTemplate = rotation; return this; }
         public Builder bounds(BoundingBox bounds) { this.bounds = bounds; return this; }
-        public Builder activationDistance(int activationDistance) { this.activationDistance = activationDistance; return this; }
         public Builder maxRetries(int maxRetries) { this.maxRetries = maxRetries; return this; }
         public Builder assemblerPos(BlockPos assemblerPos) { this.assemblerPos = assemblerPos; return this; }
         public Builder setYaw(double yawRadians) { this.yawRadians = yawRadians; return this; }
@@ -104,8 +95,8 @@ public class AssemblyContext {
         public Builder registerFlyover() { this.registerAsFlyover = true; return this; }
 
         public AssemblyContext build() {
-            AssemblyContext ctx = new AssemblyContext(level, templateId, source, trigger, anchor, templatePos,
-                    rotationTemplate, bounds, activationDistance, maxRetries);
+            AssemblyContext ctx = new AssemblyContext(level, templateId, source, anchor, templatePos,
+                    rotationTemplate, bounds, maxRetries);
             ctx.assemblerPos = this.assemblerPos;
             ctx.yawRadians = this.yawRadians;
             ctx.velocityOverride = this.velocityOverride;
