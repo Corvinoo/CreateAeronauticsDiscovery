@@ -52,7 +52,7 @@ public final class StructureProximityTracker {
                     if (notified.add(player.getUUID())) {
                         String templateId = userData.getString("template_id");
                         NeoForge.EVENT_BUS.post(
-                                new PlayerApproachesModStructureEvent(level, player,
+                                new PlayerApproachesStructureEvent(level, player,
                                         ResourceLocation.parse(templateId), sl));
                     }
                 }

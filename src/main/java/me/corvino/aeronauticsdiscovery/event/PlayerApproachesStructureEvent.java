@@ -6,15 +6,15 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.Event;
 
-public class PlayerApproachesModStructureEvent extends Event {
+public class PlayerApproachesStructureEvent extends Event {
 
     private final ServerLevel level;
     private final ServerPlayer player;
     private final ResourceLocation templateId;
     private final ServerSubLevel subLevel;
 
-    public PlayerApproachesModStructureEvent(ServerLevel level, ServerPlayer player,
-                                              ResourceLocation templateId, ServerSubLevel subLevel) {
+    public PlayerApproachesStructureEvent(ServerLevel level, ServerPlayer player,
+                                          ResourceLocation templateId, ServerSubLevel subLevel) {
         this.level = level;
         this.player = player;
         this.templateId = templateId;
