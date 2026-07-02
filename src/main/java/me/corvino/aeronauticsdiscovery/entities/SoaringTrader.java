@@ -21,6 +21,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.goal.UseItemGoal;
 import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -234,6 +235,12 @@ public class SoaringTrader extends WanderingTrader {
                 new ItemStack(randomClockOrToolbox(), 1),
                 2, 0, 0.0F
         ));
+    }
+
+    @Override
+    protected void registerGoals() {
+        super.registerGoals();
+        this.goalSelector.removeAllGoals(goal -> goal instanceof UseItemGoal);
     }
 
     @Override
