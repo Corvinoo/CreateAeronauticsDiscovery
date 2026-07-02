@@ -10,8 +10,15 @@ import net.minecraft.core.Vec3i;
 public class ChunkLoadingHelper {
 
     public static ChunkBounds calculateChunkBounds(AssemblyContext ctx) {
-        assert ctx.template != null;
-        Vec3i size = ctx.template.getSize();
+        Vec3i size;
+        if (ctx.template != null) {
+            size = ctx.template.getSize();
+        } else {
+            // After world reload: template is null (not persisted), but
+            // templateSize survives reload via AssemblyEntrySerializer.
+            size = ctx.templateSize;
+            if (size == null) return new ChunkBounds(0, 0, 0, 0);
+        }
         BlockPos anchor = ctx.anchor;
         assert anchor != null;
 

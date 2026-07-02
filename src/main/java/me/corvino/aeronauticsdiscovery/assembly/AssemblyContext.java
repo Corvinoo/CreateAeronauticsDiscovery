@@ -4,6 +4,7 @@ import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Rotation;
@@ -31,7 +32,9 @@ public class AssemblyContext {
     public boolean registerAsFlyover;
 
     @Nullable public StructureTemplate template;
+    @Nullable public Vec3i templateSize;
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
+    @Nullable public UUID subLevelId;
     public boolean seatsPopulated;
 
     public UUID entryId = UUID.randomUUID();
