@@ -28,8 +28,8 @@ public class Config {
 
     private static final ModConfigSpec.BooleanValue FLYOVER_OBSTACLE_AVOIDANCE = BUILDER
             .comment("When enabled, flyovers try to avoid spawning position where a block wall exists between "
-                    + "the spawn point and the player")
-            .define("flyover.obstacleCheck", true);
+                    + "the spawn point and the player. May introduce a minor performance overhead")
+            .define("flyover.obstacleCheck", false);
 
     static final ModConfigSpec SPEC = BUILDER.build();
 
