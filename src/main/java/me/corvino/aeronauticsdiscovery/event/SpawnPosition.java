@@ -148,7 +148,7 @@ public final class SpawnPosition {
             SpawnPosition last = null;
 
             for (int i = 0; i < maxAttempts; i++) {
-                RetryStrategy.Attempt attempt = new RetryStrategy.Attempt(0, baseAltitude, i, maxAttempts, random);
+                RetryStrategy.Attempt attempt = new RetryStrategy.Attempt(random.nextDouble() * 2 * Math.PI, baseAltitude, i, maxAttempts, random); //todo default angle should now be random
                 if (strategy != null) strategy.prepare(attempt);
                 int dx = (int) (Math.cos(attempt.angle) * horizontalDistance);
                 int dz = (int) (Math.sin(attempt.angle) * horizontalDistance);
