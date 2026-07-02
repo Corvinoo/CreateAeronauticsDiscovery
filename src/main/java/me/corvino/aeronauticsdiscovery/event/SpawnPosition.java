@@ -36,6 +36,27 @@ public final class SpawnPosition {
         boolean test(BlockPos pos, double yawRadians, ServerLevel level);
     }
 
+    @FunctionalInterface
+    public interface RetryStrategy {
+        void prepare(Attempt attempt);
+
+        final class Attempt {
+            public double angle;
+            public int altitude;
+            public final int index;
+            public final int maxAttempts;
+            public final Random random;
+
+            Attempt(double angle, int altitude, int index, int maxAttempts, Random random) {
+                this.angle = angle;
+                this.altitude = altitude;
+                this.index = index;
+                this.maxAttempts = maxAttempts;
+                this.random = random;
+            }
+        }
+    }
+
     // direction vector from Aeronautics yaw convention (Z-negated vs Minecraft)
     private static Vec3 dirFromYaw(double yawRadians) {
         return new Vec3(-Math.sin(yawRadians), 0, -Math.cos(yawRadians));
@@ -91,6 +112,7 @@ public final class SpawnPosition {
         private int horizontalDistance;
         private BlockPos facingTarget;
         private int maxAttempts = 10;
+        private RetryStrategy strategy = ctx -> ctx.angle = ctx.random.nextDouble() * 2 * Math.PI;
         private final List<Constraint> constraints = new ArrayList<>();
 
         private Builder() {}
@@ -107,6 +129,8 @@ public final class SpawnPosition {
 
         public Builder maxAttempts(int attempts) { this.maxAttempts = attempts; return this; }
 
+        public Builder retryStrategy(RetryStrategy strategy) { this.strategy = strategy; return this; }
+
         public Builder constrain(Constraint constraint) {
             constraints.add(constraint);
             return this;
@@ -115,20 +139,21 @@ public final class SpawnPosition {
         public SpawnPosition build(ServerLevel level, Random random) {
             if (center == null) throw new IllegalStateException("center is required");
 
-            int altitude = maxAltitude > minAltitude
+            int baseAltitude = maxAltitude > minAltitude
                     ? minAltitude + random.nextInt(maxAltitude - minAltitude)
                     : minAltitude;
 
             SpawnPosition last = null;
 
             for (int i = 0; i < maxAttempts; i++) {
-                double angle = random.nextDouble() * 2 * Math.PI;
-                int dx = (int) (Math.cos(angle) * horizontalDistance);
-                int dz = (int) (Math.sin(angle) * horizontalDistance);
+                RetryStrategy.Attempt attempt = new RetryStrategy.Attempt(0, baseAltitude, i, maxAttempts, random);
+                strategy.prepare(attempt);
+                int dx = (int) (Math.cos(attempt.angle) * horizontalDistance);
+                int dz = (int) (Math.sin(attempt.angle) * horizontalDistance);
 
                 BlockPos candidate = new BlockPos(
                         center.getX() + dx,
-                        altitude,
+                        attempt.altitude,
                         center.getZ() + dz
                 );
 
