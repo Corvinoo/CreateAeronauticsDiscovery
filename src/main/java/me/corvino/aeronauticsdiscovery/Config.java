@@ -26,12 +26,18 @@ public class Config {
                     + "Set to 0 to despawn exactly at render distance edge.")
             .defineInRange("flyover.maxUnloadDistance", 64, 0, 1024);
 
+    private static final ModConfigSpec.BooleanValue FLYOVER_OBSTACLE_AVOIDANCE = BUILDER
+            .comment("When enabled, flyovers try to avoid spawning position where a block wall exists between "
+                    + "the spawn point and the player")
+            .define("flyover.obstacleCheck", true);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
     public static int flyoverCooldownTicks;
     public static int macroChunkSize;
     public static int flyoverMaxUnloadDistance;
+    public static boolean flyoverObstacleCheck;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -39,5 +45,6 @@ public class Config {
         flyoverCooldownTicks = FLYOVER_COOLDOWN.get();
         macroChunkSize = MACRO_CHUNK_SIZE.get();
         flyoverMaxUnloadDistance = FLYOVER_MAX_UNLOAD_DISTANCE.get();
+        flyoverObstacleCheck = FLYOVER_OBSTACLE_AVOIDANCE.get();
     }
 }
