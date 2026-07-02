@@ -121,8 +121,8 @@ public final class BuoyancyStabilizationManager {
             balloon = findBalloon(subLevel);
             stabilizer.balloon = balloon;
             if (balloon == null) {
-                CreateAeronauticsDiscovery.LOGGER.info("[BUOYANCY] {} substep {:.1f}s — still no balloon found",
-                        subLevel.getUniqueId(), stabilizer.elapsedSeconds);
+                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} substep {:.1f}s - still no balloon found",
+                        subLevel.getUniqueId());
             }
         }
         if (balloon != null) {
@@ -156,8 +156,8 @@ public final class BuoyancyStabilizationManager {
 
         if (reachedStability || timedOut) {
             if (timedOut && !reachedStability) {
-                CreateAeronauticsDiscovery.LOGGER.warn(
-                        "[BUOYANCY] {} released after {}s without reaching stable lift - check burner count/config",
+                CreateAeronauticsDiscovery.LOGGER.debug(
+                        "[BUOYANCY] {} released after {}s without reaching stable lift",
                         subLevel.getUniqueId(), stabilizer.config.maxHoldSeconds());
             }
             releaseCleanly(handle);
