@@ -1,10 +1,14 @@
 package me.corvino.aeronauticsdiscovery.physics;
 
+import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.Balloon;
+import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.map.BalloonMap;
+import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.physics.force.ForceGroup;
 import dev.ryanhcode.sable.api.physics.force.QueuedForceGroup;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
@@ -50,6 +54,27 @@ public final class BuoyancyStabilizationManager {
         active.put(subLevel.getUniqueId(), new Stabilizer(subLevel, config));
     }
 
+    private Balloon findBalloon(ServerSubLevel subLevel) {
+        BalloonMap balloonMap = BalloonMap.MAP.get(level);
+        int totalBalloons = 0;
+        for (Balloon balloon : balloonMap.getBalloons()) {
+            totalBalloons++;
+            SubLevel balloonSubLevel = Sable.HELPER.getContaining(level, balloon.getControllerPos());
+            if (balloonSubLevel == null) {
+                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] balloon {} has null sublevel at {}", balloon.getControllerPos(), level.dimension().location());
+                continue;
+            }
+            if (balloonSubLevel.getUniqueId().equals(subLevel.getUniqueId())) {
+                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] found balloon {} (heaters={}, isValid={}) for sublevel {}",
+                        balloon.getControllerPos(), balloon.getHeaters().size(), balloon.isValid(), subLevel.getUniqueId());
+                return balloon;
+            }
+        }
+        CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] findBalloon: scanned {} balloon(s) in map, found NONE for sublevel {}",
+                totalBalloons, subLevel.getUniqueId());
+        return null;
+    }
+
     /**
      * Consumes the "stabilized" flag; true exactly once, the first time it's
      * observed after release
@@ -89,6 +114,34 @@ public final class BuoyancyStabilizationManager {
         if (handle == null || !handle.isValid()) {
             active.remove(subLevel.getUniqueId());
             return;
+        }
+
+        Balloon balloon = stabilizer.balloon;
+        if (balloon == null) {
+            balloon = findBalloon(subLevel);
+            stabilizer.balloon = balloon;
+            if (balloon == null) {
+                CreateAeronauticsDiscovery.LOGGER.info("[BUOYANCY] {} substep {:.1f}s — still no balloon found",
+                        subLevel.getUniqueId(), stabilizer.elapsedSeconds);
+            }
+        }
+        if (balloon != null) {
+            int heaterCount = balloon.getHeaters().size();
+            if (stabilizer.lastHeaterCount >= 0 && heaterCount < stabilizer.lastHeaterCount) {
+                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} heaters dropped from {} to {} - releasing",
+                        subLevel.getUniqueId(), stabilizer.lastHeaterCount, heaterCount);
+                releaseCleanly(handle);
+                stabilizer.stabilized = true;
+                return;
+            }
+            stabilizer.lastHeaterCount = Math.max(stabilizer.lastHeaterCount, heaterCount);
+            if (!balloon.isValid()) {
+                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} balloon invalid (heaters={}) - releasing",
+                        subLevel.getUniqueId(), heaterCount);
+                releaseCleanly(handle);
+                stabilizer.stabilized = true;
+                return;
+            }
         }
 
         double weightImpulse = subLevel.getMassTracker().getMass() * gravityMagnitude * timeStep;
@@ -163,6 +216,8 @@ public final class BuoyancyStabilizationManager {
     private static final class Stabilizer {
         final ServerSubLevel subLevel;
         final BuoyancyStabilizationConfig config;
+        Balloon balloon;
+        int lastHeaterCount = -1;
         int consecutiveQualifyingSubsteps = 0;
         double elapsedSeconds = 0;
         boolean stabilized = false;
