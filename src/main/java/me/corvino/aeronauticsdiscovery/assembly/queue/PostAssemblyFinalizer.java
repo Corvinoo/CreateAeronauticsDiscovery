@@ -5,10 +5,10 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
-import net.minecraft.nbt.CompoundTag;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
@@ -22,7 +22,8 @@ import org.joml.Vector3d;
  */
 final class PostAssemblyFinalizer {
 
-    private PostAssemblyFinalizer() {}
+    private PostAssemblyFinalizer() {
+    }
 
     static void run(ServerLevel level, AssemblyContext ctx) {
         ServerSubLevel subLevel = resolveSubLevel(ctx);
@@ -31,7 +32,9 @@ final class PostAssemblyFinalizer {
         RigidBodyHandle handle = RigidBodyHandle.of(subLevel);
         if (handle == null || !handle.isValid()) return;
 
-        teleportToYaw(ctx, handle);
+//        teleportToYaw(ctx, handle); moved into a step
+
+        // maybe this one too should be into a step
         applyInitialVelocity(ctx, handle);
         nameSubLevel(ctx, subLevel);
         tagSublevel(subLevel, ctx);
