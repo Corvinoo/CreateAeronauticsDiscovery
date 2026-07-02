@@ -46,7 +46,7 @@ public class PlaceBlocksStep extends AssemblyStep {
         }
 
         placeSucceeded = ctx.template.placeInWorld(
-                ctx.level, ctx.anchor, ctx.anchor, settings, ctx.level.getRandom(), 4);
+                ctx.level, ctx.anchor, ctx.anchor, settings, ctx.level.getRandom(), 2);
     }
 
     @Override
