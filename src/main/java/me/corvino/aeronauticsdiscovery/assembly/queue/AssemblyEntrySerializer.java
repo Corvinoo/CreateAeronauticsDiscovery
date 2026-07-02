@@ -39,6 +39,14 @@ final class AssemblyEntrySerializer {
             tag.putString("SubLevelName", ctx.subLevelName);
         }
         tag.putBoolean("RegisterAsFlyover", ctx.registerAsFlyover);
+        if (ctx.subLevelId != null) {
+            tag.putUUID("subLevelId", ctx.subLevelId);
+        }
+        if (ctx.templateSize != null) {
+            tag.putInt("TemplateSizeX", ctx.templateSize.getX());
+            tag.putInt("TemplateSizeY", ctx.templateSize.getY());
+            tag.putInt("TemplateSizeZ", ctx.templateSize.getZ());
+        }
         tag.putUUID("entryId", ctx.entryId);
         tag.putInt("CurrentStepIndex", ctx.currentStepIndex);
         return tag;
@@ -64,6 +72,15 @@ final class AssemblyEntrySerializer {
                 ctx.subLevelName = tag.getString("SubLevelName");
             }
             ctx.registerAsFlyover = tag.getBoolean("RegisterAsFlyover");
+            if (tag.contains("subLevelId")) {
+                ctx.subLevelId = tag.getUUID("subLevelId");
+            }
+            if (tag.contains("TemplateSizeX")) {
+                ctx.templateSize = new net.minecraft.core.Vec3i(
+                        tag.getInt("TemplateSizeX"),
+                        tag.getInt("TemplateSizeY"),
+                        tag.getInt("TemplateSizeZ"));
+            }
             ctx.entryId = tag.getUUID("entryId");
             ctx.currentStepIndex = tag.getInt("CurrentStepIndex");
             ctx.steps = pipeline.createSteps();

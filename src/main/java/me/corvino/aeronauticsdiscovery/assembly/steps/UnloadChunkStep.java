@@ -11,7 +11,8 @@ public class UnloadChunkStep extends AssemblyStep {
 
     @Override
     protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.template == null || ctx.level == null || ctx.anchor == null) return AssemblyResult.FAIL;
+        if (ctx.level == null || ctx.anchor == null) return AssemblyResult.FAIL;
+        if (ctx.template == null && ctx.templateSize == null) return AssemblyResult.FAIL;
 
         ChunkLoadingHelper.ChunkBounds bounds = ChunkLoadingHelper.calculateChunkBounds(ctx);
         for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++)

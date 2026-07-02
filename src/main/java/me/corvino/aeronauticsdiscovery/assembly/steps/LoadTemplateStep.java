@@ -12,6 +12,7 @@ public class LoadTemplateStep extends AssemblyStep {
     protected AssemblyResult tick(AssemblyContext ctx) {
         if (ctx.level == null) return AssemblyResult.FAIL;
         ctx.template = PrefabService.loadPrefab(ctx.level, ctx.templateId);
+        ctx.templateSize = ctx.template != null ? ctx.template.getSize() : null;
 
         delay.start(2);
         if (delay.isWaiting()) return AssemblyResult.WAITING;
