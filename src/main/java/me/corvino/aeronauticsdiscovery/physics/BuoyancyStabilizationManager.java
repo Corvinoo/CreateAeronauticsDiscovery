@@ -1,6 +1,7 @@
 package me.corvino.aeronauticsdiscovery.physics;
 
 import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.Balloon;
+import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.ServerBalloon;
 import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.map.BalloonMap;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.physics.force.ForceGroup;
@@ -30,7 +31,6 @@ import java.util.WeakHashMap;
  *
  * <p>One instance per level. Registered against {@link BuoyancyStabilizationEvents}.</p>
  */
-//todo: check if there is cleaner way to detect ruptures
 public final class BuoyancyStabilizationManager {
 
     private static final Map<ServerLevel, BuoyancyStabilizationManager> INSTANCES = new WeakHashMap<>();
@@ -122,23 +122,27 @@ public final class BuoyancyStabilizationManager {
             balloon = findBalloon(subLevel);
             stabilizer.balloon = balloon;
             if (balloon == null) {
-                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} substep {:.1f}s - still no balloon found",
-                        subLevel.getUniqueId());
+                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} substep {}s - still no balloon found",
+                        subLevel.getUniqueId(), (int) stabilizer.elapsedSeconds);
             }
         }
         if (balloon != null) {
-            int heaterCount = balloon.getHeaters().size();
-            if (stabilizer.lastHeaterCount >= 0 && heaterCount < stabilizer.lastHeaterCount) {
-                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} heaters dropped from {} to {} - releasing",
-                        subLevel.getUniqueId(), stabilizer.lastHeaterCount, heaterCount);
-                releaseCleanly(handle);
-                stabilizer.stabilized = true;
-                return;
+            if (balloon instanceof ServerBalloon serverBalloon) {
+                double target = serverBalloon.getTotalTargetVolume();
+                if (target > stabilizer.peakTargetVolume) {
+                    stabilizer.peakTargetVolume = target;
+                }
+                if (stabilizer.peakTargetVolume > 0.05 && target <= 0.05) {
+                    CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} target volume dropped from {} to {} - releasing",
+                            subLevel.getUniqueId(), String.format("%.2f", stabilizer.peakTargetVolume), String.format("%.2f", target));
+                    releaseCleanly(handle);
+                    stabilizer.stabilized = true;
+                    return;
+                }
             }
-            stabilizer.lastHeaterCount = Math.max(stabilizer.lastHeaterCount, heaterCount);
             if (!balloon.isValid()) {
-                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} balloon invalid (heaters={}) - releasing",
-                        subLevel.getUniqueId(), heaterCount);
+                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} balloon invalid - releasing",
+                        subLevel.getUniqueId());
                 releaseCleanly(handle);
                 stabilizer.stabilized = true;
                 return;
@@ -218,7 +222,7 @@ public final class BuoyancyStabilizationManager {
         final ServerSubLevel subLevel;
         final BuoyancyStabilizationConfig config;
         Balloon balloon;
-        int lastHeaterCount = -1;
+        double peakTargetVolume;
         int consecutiveQualifyingSubsteps = 0;
         double elapsedSeconds = 0;
         boolean stabilized = false;
