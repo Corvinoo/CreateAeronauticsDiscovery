@@ -55,6 +55,8 @@ public final class SpawnPosition {
                 this.random = random;
             }
         }
+
+        RetryStrategy CHANGE_ANGLE = attempt -> attempt.angle = attempt.random.nextDouble() * 2 * Math.PI;
     }
 
     // direction vector from Aeronautics yaw convention (Z-negated vs Minecraft)
@@ -112,7 +114,7 @@ public final class SpawnPosition {
         private int horizontalDistance;
         private BlockPos facingTarget;
         private int maxAttempts = 10;
-        private RetryStrategy strategy = ctx -> ctx.angle = ctx.random.nextDouble() * 2 * Math.PI;
+        private RetryStrategy strategy;
         private final List<Constraint> constraints = new ArrayList<>();
 
         private Builder() {}
