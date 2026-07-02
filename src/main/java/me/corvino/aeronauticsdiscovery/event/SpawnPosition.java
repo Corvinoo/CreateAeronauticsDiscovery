@@ -149,7 +149,7 @@ public final class SpawnPosition {
 
             for (int i = 0; i < maxAttempts; i++) {
                 RetryStrategy.Attempt attempt = new RetryStrategy.Attempt(0, baseAltitude, i, maxAttempts, random);
-                strategy.prepare(attempt);
+                if (strategy != null) strategy.prepare(attempt);
                 int dx = (int) (Math.cos(attempt.angle) * horizontalDistance);
                 int dz = (int) (Math.sin(attempt.angle) * horizontalDistance);
 

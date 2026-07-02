@@ -30,6 +30,7 @@ import java.util.WeakHashMap;
  *
  * <p>One instance per level. Registered against {@link BuoyancyStabilizationEvents}.</p>
  */
+//todo: check if there is cleaner way to detect ruptures
 public final class BuoyancyStabilizationManager {
 
     private static final Map<ServerLevel, BuoyancyStabilizationManager> INSTANCES = new WeakHashMap<>();
