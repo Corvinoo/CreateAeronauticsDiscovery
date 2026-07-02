@@ -15,43 +15,45 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 public class PlaceBlocksStep extends AssemblyStep {
-    private final TickDelay postPlaceDelay = newDelay();
-    private boolean placed = false;
+    private boolean placeSucceeded = false;
 
     @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.assemblerPos != null) return AssemblyResult.SUCCESS;
-        if (ctx.template == null || ctx.anchor == null || ctx.level == null) return AssemblyResult.FAIL;
+    protected void build(Sequence seq) {
+        seq.completeIf(ctx -> ctx.assemblerPos != null)
+                .require(ctx -> ctx.template != null,
+                        "template missing")
+                .require(ctx -> ctx.anchor != null,
+                        "anchor missing")
+                .require(ctx -> ctx.level != null,
+                        "level is missing")
+                .run(this::placeStructure)
+                .require(ctx -> placeSucceeded, "could not place the structure!")
+                .delay(1)
+                .run(this::forceEntityUpdate);
+    }
 
-        if (!placed) {
-            Rotation rot = ctx.rotationTemplate != null ? ctx.rotationTemplate : Rotation.NONE;
-            StructurePlaceSettings settings = new StructurePlaceSettings()
-                    .setMirror(Mirror.NONE)
-                    .setRotation(rot);
+    private void placeStructure(AssemblyContext ctx) {
+        assert ctx.template != null;
+        assert ctx.anchor != null;
+        assert ctx.level != null;
+        Rotation rot = ctx.rotationTemplate != null ? ctx.rotationTemplate : Rotation.NONE;
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setMirror(Mirror.NONE)
+                .setRotation(rot);
 
-            if (ctx.bounds == null)
-                ctx.bounds = ctx.template.getBoundingBox(settings, ctx.anchor);
-
-            if (!ctx.template.placeInWorld(ctx.level, ctx.anchor, ctx.anchor, settings, ctx.level.getRandom(), 4))
-                return AssemblyResult.FAIL;
-
-            placed = true;
+        if (ctx.bounds == null) {
+            ctx.bounds = ctx.template.getBoundingBox(settings, ctx.anchor);
         }
 
-        postPlaceDelay.start(1); // delays this since the template can be pretty big and potentially strain the server
-        if (postPlaceDelay.isWaiting()) return AssemblyResult.WAITING;
-
-        this.forceEntityUpdate(ctx);
-
-        return AssemblyResult.SUCCESS;
+        placeSucceeded = ctx.template.placeInWorld(
+                ctx.level, ctx.anchor, ctx.anchor, settings, ctx.level.getRandom(), 4);
     }
 
     @Override
     protected void onAbort(AssemblyContext ctx) {
-        placed = false;
+        placeSucceeded = false;
         removeBlocks(ctx);
     }
-
 
     private void removeBlocks(AssemblyContext ctx) {
         if (ctx.bounds == null || ctx.level == null) return;
@@ -61,5 +63,4 @@ public class PlaceBlocksStep extends AssemblyStep {
             ctx.level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
     }
 }
-
 
