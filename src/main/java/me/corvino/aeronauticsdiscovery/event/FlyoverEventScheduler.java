@@ -42,14 +42,16 @@ public final class FlyoverEventScheduler {
             ServerLevel level, FlyoverEventConfig config, ServerPlayer player, Random random
     ) {
         final int MaxAttempt = 5;
-        SpawnPosition spawnPos = SpawnPosition.builder()
+        SpawnPosition.Builder builder = SpawnPosition.builder()
                 .center(player.blockPosition())
                 .altitudeRange(config.minAltitude(), config.maxAltitude())
                 .horizontalDistance(offsetFromViewDistance(level))
                 .facing(player.blockPosition())
-                .maxAttempts(MaxAttempt)
-                .constrain(SpawnPosition.noObstaclesInFront(offsetFromViewDistance(level) * 2))
-                .build(level, random);
+                .maxAttempts(MaxAttempt);
+        if (Config.flyoverObstacleCheck) {
+            builder.constrain(SpawnPosition.noObstaclesInFront(offsetFromViewDistance(level) * 2));
+        }
+        SpawnPosition spawnPos = builder.build(level, random);
 
         
         if(spawnPos != null) {
