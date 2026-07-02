@@ -1,6 +1,10 @@
 package me.corvino.aeronauticsdiscovery.assembly.steps;
 
+import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.Balloon;
+import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.map.BalloonMap;
+import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import me.corvino.aeronauticsdiscovery.physics.BuoyancyStabilizationConfig;
@@ -37,11 +41,20 @@ public class StabilizeBuoyancyStep extends AssemblyStep {
     }
 
     private static ServerSubLevel resolveSubLevel(AssemblyContext ctx) {
-        if (ctx.assemblyResult == null) throw new IllegalStateException("Critical error, assembly result can't be null!");
-        var subLevel = ctx.assemblyResult.subLevel();
-        if (!(subLevel instanceof ServerSubLevel)) {
-            throw new IllegalStateException("Critical error, sublevel is not server sided!");
+        if (ctx.assemblyResult != null) {
+            return ctx.assemblyResult.subLevel() instanceof ServerSubLevel subLevel ? subLevel : null;
         }
-        return (ServerSubLevel) subLevel;
+        // Recovery after world reload: assemblyResult is not persisted, but
+        // subLevelId is. Find the sublevel by iterating the BalloonMap; each
+        // balloon's controller position is in plot-grid space
+        if (ctx.subLevelId != null && ctx.level != null) {
+            for (Balloon balloon : BalloonMap.MAP.get(ctx.level).getBalloons()) {
+                SubLevel subLevel = Sable.HELPER.getContaining(ctx.level, balloon.getControllerPos());
+                if (subLevel != null && subLevel.getUniqueId().equals(ctx.subLevelId)) {
+                    return subLevel instanceof ServerSubLevel serverSubLevel ? serverSubLevel : null;
+                }
+            }
+        }
+        return null;
     }
 }

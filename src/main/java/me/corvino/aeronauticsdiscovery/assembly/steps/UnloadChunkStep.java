@@ -2,14 +2,15 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
-import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 
 
 public class UnloadChunkStep extends AssemblyStep {
     @Override
     protected void build(Sequence seq) {
-        seq.require(ctx -> ctx.template != null, "Template missing")
+        seq.require(ctx -> ctx.template != null || ctx.templateSize, "Template or size missing")
                 .require(ctx -> ctx.level != null, "Level missing")
                 .require(ctx -> ctx.anchor != null, "Anchor missing")
                 .run(this::unloadChunks);

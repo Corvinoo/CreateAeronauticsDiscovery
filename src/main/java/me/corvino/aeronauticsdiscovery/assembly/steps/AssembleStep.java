@@ -71,6 +71,7 @@ public class AssembleStep extends AssemblyStep {
                 .forEach(e -> e.getPersistentData().putUUID(FLYOVER_ID_TAG, result.subLevel().getUniqueId()));
 
         ctx.assemblyResult = result;
+        ctx.subLevelId = result.subLevel().getUniqueId();
     }
 
     @Override

@@ -12,6 +12,7 @@ public class LoadTemplateStep extends AssemblyStep {
                 .run(ctx -> {
                     assert ctx.level != null;
                     ctx.template = PrefabService.loadPrefab(ctx.level, ctx.templateId);
+                    ctx.templateSize = ctx.template != null ? ctx.template.getSize() : null;
                 })
                 .delay(2);
     }

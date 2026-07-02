@@ -1,19 +1,16 @@
 package me.corvino.aeronauticsdiscovery.event;
 
-import dev.eriksonn.aeronautics.Aeronautics;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import org.jetbrains.annotations.Debug;
 
 import java.util.Random;
 
@@ -42,14 +39,17 @@ public final class FlyoverEventScheduler {
             ServerLevel level, FlyoverEventConfig config, ServerPlayer player, Random random
     ) {
         final int MaxAttempt = 5;
-        SpawnPosition spawnPos = SpawnPosition.builder()
+        SpawnPosition.Builder builder = SpawnPosition.builder()
                 .center(player.blockPosition())
                 .altitudeRange(config.minAltitude(), config.maxAltitude())
                 .horizontalDistance(offsetFromViewDistance(level))
                 .facing(player.blockPosition())
-                .maxAttempts(MaxAttempt)
-                .constrain(SpawnPosition.noObstaclesInFront(offsetFromViewDistance(level) * 2))
-                .build(level, random);
+                .maxAttempts(MaxAttempt);
+        if (Config.flyoverObstacleCheck) {
+            builder.constrain(SpawnPosition.noObstaclesInFront(offsetFromViewDistance(level) * 2)); 
+            builder.retryStrategy(SpawnPosition.RetryStrategy.CHANGE_ANGLE);
+        }
+        SpawnPosition spawnPos = builder.build(level, random);
 
         
         if(spawnPos != null) {
