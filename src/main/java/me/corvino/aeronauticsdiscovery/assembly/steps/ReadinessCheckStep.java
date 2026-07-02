@@ -15,30 +15,27 @@ import java.util.Optional;
 import java.util.function.BiPredicate;
 
 public class ReadinessCheckStep extends AssemblyStep {
-    //TODO Maybe this should check if all the contraption entities are present? in a rare case it happened that the flyover spawned with some missing rudders
-
-    @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.bounds == null) return AssemblyResult.FAIL;
-
-        Optional<String> failing = firstFailing(ctx.level, ctx.bounds);
-        if (failing.isEmpty()) return AssemblyResult.SUCCESS;
-
-        CreateAeronauticsDiscovery.LOGGER.debug(
-                "[ReadinessCheckStep] '{}' is not ready, missing: {}",
-                ctx.templateId, failing.get());
-        return AssemblyResult.WAITING;
-    }
-
     private record Check(String name, BiPredicate<ServerLevel, BoundingBox> test) {
         boolean passes(ServerLevel level, BoundingBox bounds) { return test.test(level, bounds); }
     }
 
     private static final ResourceLocation HONEY_GLUE_ID = ResourceLocation.parse("simulated:honey_glue");
-
     private static final List<Check> ALL = List.of(
             new Check("honey_glue_present", ReadinessCheckStep::hasHoneyGlueEntity)
     );
+
+    @Override
+    protected void build(Sequence seq) {
+        seq.require(ctx -> ctx.bounds != null, "bounds are missing!")
+                .waitUntil(this::allChecksPass);
+    }
+
+    private boolean allChecksPass(AssemblyContext ctx) {
+        Optional<String> failing = firstFailing(ctx.level, ctx.bounds);
+        failing.ifPresent(name -> CreateAeronauticsDiscovery.LOGGER.debug(
+                "[ReadinessCheckStep] '{}' is not ready, missing: {}", ctx.templateId, name));
+        return failing.isEmpty();
+    }
 
     private static Optional<String> firstFailing(ServerLevel level, BoundingBox bounds) {
         for (Check c : ALL) if (!c.passes(level, bounds)) return Optional.of(c.name());

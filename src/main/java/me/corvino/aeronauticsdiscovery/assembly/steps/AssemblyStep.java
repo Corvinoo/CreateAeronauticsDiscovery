@@ -7,130 +7,196 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public abstract class AssemblyStep {
-    //TODO: Implement a more declarative builder for step parts
-    private final List<TickDelay> delays = new ArrayList<>();
-    private final List<Guard> guards = new ArrayList<>();
-
+    private final List<Op> ops = new ArrayList<>();
+    private boolean built = false;
+    private int cursor = 0;
+    private int waitTicksRemaining = 0;
     private long maxTickOfExecution = -1;
 
-    /**
-     * Process function that will be ticked until a SUCCESS o FAIL is returned.
-     * @apiNote Returning {@link AssemblyResult#WAITING} will make the pipeline wait for this task to end.
-     */
-    protected abstract AssemblyResult tick(AssemblyContext ctx);
+    protected abstract void build(Sequence seq);
 
-    /**
-     * Timeout in ticks before the step is considered automatically failed.
-     * @apiNote Default: 200 tick, and can be overridden.
-     */
-    protected int timeoutTicks() { return 200; }
-    //TODO: probably this should be configurable per step? allowing for people to control this to manage unpredictable cases
+    protected int timeoutTicks() {
+        return 200;
+    }
 
-    /**
-     * This is called when step is interrupted before its completion
-     * @apiNote This is useful to release stale resources
-     */
-    protected void onAbort(AssemblyContext ctx) {}
-
+    protected void onAbort(AssemblyContext ctx) {
+    }
 
     public final AssemblyResult execute(AssemblyContext ctx) {
-        if (maxTickOfExecution < 0) {
-            maxTickOfExecution = ctx.currentTick + timeoutTicks();
-        }
+        if (maxTickOfExecution < 0) maxTickOfExecution = ctx.currentTick + timeoutTicks();
 
         if (ctx.currentTick > maxTickOfExecution) {
             CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[{}] Step using '{}' timeout after {} tick(s), attempting a rollback..",
+                    "[{}] Step '{}' timeout after {} tick(s), rollback..",
                     getClass().getSimpleName(), ctx.templateId, timeoutTicks());
             onAbort(ctx);
             return AssemblyResult.FAIL;
         }
-
         return tick(ctx);
+    }
+
+    private AssemblyResult tick(AssemblyContext ctx) {
+        if (!built) {
+            build(new Sequence(ops));
+            built = true;
+        }
+
+        while (cursor < ops.size()) {
+            if (waitTicksRemaining > 0) {
+                waitTicksRemaining--;
+                return AssemblyResult.WAITING;
+            }
+
+            OpResult result = ops.get(cursor).execute(ctx);
+            switch (result) {
+                case OpResult.Complete c -> {
+                    return AssemblyResult.SUCCESS;
+                }
+                case OpResult.Continue c -> cursor++;
+                case OpResult.Wait w -> {
+                    return AssemblyResult.WAITING;
+                }
+                case OpResult.Delay d -> {
+                    waitTicksRemaining = d.ticks();
+                    cursor++;
+                    return AssemblyResult.WAITING;
+                }
+                case OpResult.Skip s -> cursor += s.count();
+                case OpResult.Fail f -> {
+                    CreateAeronauticsDiscovery.LOGGER.warn(
+                            "[{}] Sequence failed at operation {}: {}",
+                            getClass().getSimpleName(), cursor, f.reason());
+                    return AssemblyResult.FAIL;
+                }
+            }
+        }
+        return AssemblyResult.SUCCESS;
     }
 
     public final void abort(AssemblyContext ctx) {
         onAbort(ctx);
-        delays.forEach(TickDelay::reset);
-        guards.forEach(Guard::reset);
+        cursor = 0;
+        waitTicksRemaining = 0;
         maxTickOfExecution = -1;
     }
 
-    /**
-     * Creates a tick delayer and each one you make is independent of each other.
-     * @return Ready to use tick delay, that MUST be started!
-     */
-    protected final TickDelay newDelay() {
-        TickDelay delay = new TickDelay();
-        delays.add(delay);
-        return delay;
-    }
-
-    /**
-     * Creates a single value flag and each one you make is independent of each other.
-     * The {@link Guard} is very useful to have one-shots or for keeping tack of some simple boolean conditions.
-     */
-    protected final Guard newGuard() {
-        var flag = new Guard();
-        guards.add(flag);
-        return flag;
-    }
-
-    /**
-     * Forces entities to tick
-     * @apiNote This is very useful, since placing entities in each step will not tick them right away,
-     * and coupled with a {@link me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep.TickDelay}
-     * can let you control more easily entities lifecycles that won't update right when constructed.
-     */
     protected void forceEntityUpdate(AssemblyContext ctx) {
         if (ctx.bounds == null || ctx.level == null) return;
-
-        AABB searchBox = new AABB(
-                ctx.bounds.minX(), ctx.bounds.minY(), ctx.bounds.minZ(),
-                ctx.bounds.maxX(), ctx.bounds.maxY(), ctx.bounds.maxZ()
-        );
-
-        ctx.level.getEntities(
-                (Entity) null,
-                searchBox,
-                entity -> true
-        ).forEach(Entity::tick);
+        AABB box = new AABB(ctx.bounds.minX(), ctx.bounds.minY(), ctx.bounds.minZ(),
+                ctx.bounds.maxX(), ctx.bounds.maxY(), ctx.bounds.maxZ());
+        ctx.level.getEntities((Entity) null, box, e -> true).forEach(Entity::tick);
     }
 
-    protected static final class TickDelay {
-        /**
-         * @apiNote Do not use this constructor, use the managed {@link AssemblyStep#newDelay()} instead.
-         */
-        private TickDelay() {};
-
-        private int remaining = 0;
-
-        public void start(int ticks) {
-            if (remaining == 0) remaining = ticks;
-        }
-
-
-        public boolean isWaiting() {
-            if (remaining <= 0) return false;
-            remaining--;
-            return remaining > 0;
-        }
-
-        public void reset() { remaining = 0; }
+    @FunctionalInterface
+    protected interface Op {
+        OpResult execute(AssemblyContext ctx);
     }
 
-    protected static final class Guard {
-        /**
-         * @apiNote Do not use this constructor, use the managed {@link AssemblyStep#newGuard()} instead.
-         */
-        private Guard() {};
-        private boolean value = false;
+    protected sealed interface OpResult {
+        OpResult CONTINUE = new Continue();
+        OpResult COMPLETE = new Complete();
+        OpResult WAIT = new Wait();
 
-        public boolean isSet() { return value; }
-        public void set() { value = true; }
-        public void reset() { value = false; }
+        record Continue() implements OpResult {
+        }
+
+        record Wait() implements OpResult {
+        }
+
+        record Complete() implements OpResult {
+        }
+
+        record Delay(int ticks) implements OpResult {
+        }
+
+        record Skip(int count) implements OpResult {
+        }
+
+        record Fail(String reason) implements OpResult {
+        }
+
+        static OpResult delay(int ticks) {
+            return new Delay(ticks);
+        }
+
+        static OpResult fail(String reason) {
+            return new Fail(reason);
+        }
+    }
+
+    protected static final class Sequence {
+        private final List<Op> ops;
+
+        private Sequence(List<Op> ops) {
+            this.ops = ops;
+        }
+
+        public Sequence completeIf(Predicate<AssemblyContext> condition) {
+            ops.add(ctx -> condition.test(ctx) ? OpResult.COMPLETE : OpResult.CONTINUE);
+            return this;
+        }
+
+        public Sequence run(Consumer<AssemblyContext> action) {
+            ops.add(ctx -> {
+                action.accept(ctx);
+                return OpResult.CONTINUE;
+            });
+            return this;
+        }
+
+        public Sequence delay(int ticks) {
+            ops.add(ctx -> OpResult.delay(ticks));
+            return this;
+        }
+
+        public Sequence waitUntil(Predicate<AssemblyContext> condition) {
+            ops.add(ctx -> condition.test(ctx) ? OpResult.CONTINUE : OpResult.WAIT);
+            return this;
+        }
+
+        public Sequence require(Predicate<AssemblyContext> condition, String failMessage) {
+            ops.add(ctx -> condition.test(ctx) ? OpResult.CONTINUE : OpResult.fail(failMessage));
+            return this;
+        }
+
+        public Sequence step(Function<AssemblyContext, AssemblyResult> subStep) {
+            ops.add(ctx -> switch (subStep.apply(ctx)) {
+                case SUCCESS -> OpResult.CONTINUE;
+                case WAITING -> OpResult.WAIT;
+                case FAIL -> OpResult.fail("sub-step FAIL");
+            });
+            return this;
+        }
+
+        public Sequence onlyIf(Predicate<AssemblyContext> condition, Consumer<Sequence> branch) {
+            int markerIndex = ops.size();
+            ops.add(ctx -> OpResult.CONTINUE);
+            int before = ops.size();
+            branch.accept(this);
+            int branchLength = ops.size() - before;
+            ops.set(markerIndex, ctx -> condition.test(ctx)
+                    ? OpResult.CONTINUE
+                    : new OpResult.Skip(branchLength));
+            return this;
+        }
+
+        public Sequence retry(int maxAttempts, int delayTicks,
+                              Function<AssemblyContext, Boolean> attempt, String giveUpMessage) {
+            int[] attemptsLeft = {maxAttempts};
+            ops.add(ctx -> {
+                if (attempt.apply(ctx)) return OpResult.CONTINUE;
+                attemptsLeft[0]--;
+                if (attemptsLeft[0] <= 0) return OpResult.fail(giveUpMessage);
+                return OpResult.delay(delayTicks);
+            });
+            return this;
+        }
     }
 }

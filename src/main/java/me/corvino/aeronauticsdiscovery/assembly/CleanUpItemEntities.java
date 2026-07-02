@@ -8,13 +8,14 @@ import net.minecraft.world.entity.item.ItemEntity;
 public class CleanUpItemEntities extends AssemblyStep {
 
     @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.assemblyResult == null) return AssemblyResult.FAIL;
-        if (!(ctx.assemblyResult.subLevel() instanceof ServerSubLevel serverSubLevel))
-            return AssemblyResult.FAIL;
-
-        FlyoverUtils.removeAllEntitiesInSublevel(
-                serverSubLevel, true, entity -> entity instanceof ItemEntity, false);
-        return AssemblyResult.SUCCESS;
+    protected void build(Sequence seq) {
+        seq
+                .require(ctx -> ctx.assemblyResult != null, "Assembly result was null!")
+                .run(ctx-> {
+                    assert ctx.assemblyResult != null;
+                    var serverSubLevel = ctx.assemblyResult.subLevel();
+                    FlyoverUtils.removeAllEntitiesInSublevel(
+                            (ServerSubLevel) serverSubLevel, true, entity -> entity instanceof ItemEntity, false);
+                });
     }
 }

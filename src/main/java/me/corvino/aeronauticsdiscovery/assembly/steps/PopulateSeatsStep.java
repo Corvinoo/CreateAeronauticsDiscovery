@@ -8,25 +8,20 @@ import me.corvino.aeronauticsdiscovery.seat.SeatPopulator;
 import net.minecraft.world.entity.Mob;
 
 public class PopulateSeatsStep extends AssemblyStep {
-    private final Guard entitiesSpawned = newGuard();
-    private final TickDelay settleDelay = newDelay();
-
     @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.assemblyResult == null || ctx.seatsPopulated) return AssemblyResult.SUCCESS;
-
-        if (!entitiesSpawned.isSet()) {
-            SeatPopulator.spawnTraders(ctx.assemblyResult.subLevel());
-            entitiesSpawned.set();
-        }
-
-        settleDelay.start(1);
-        if (settleDelay.isWaiting()) return AssemblyResult.WAITING;
-        this.forceEntityUpdate(ctx);
-
-        SeatPopulator.sitTraders(ctx.assemblyResult.subLevel());
-        ctx.seatsPopulated = true;
-        return AssemblyResult.SUCCESS;
+    protected void build(Sequence seq) {
+        seq.completeIf(ctx -> ctx.assemblyResult == null || ctx.seatsPopulated)
+                .run(ctx -> {
+                    assert ctx.assemblyResult != null;
+                    SeatPopulator.spawnTraders(ctx.assemblyResult.subLevel());
+                })
+                .delay(1)
+                .run(this::forceEntityUpdate)
+                .run(ctx -> {
+                    assert ctx.assemblyResult != null;
+                    SeatPopulator.sitTraders(ctx.assemblyResult.subLevel());
+                    ctx.seatsPopulated = true;
+                });
     }
 
     @Override

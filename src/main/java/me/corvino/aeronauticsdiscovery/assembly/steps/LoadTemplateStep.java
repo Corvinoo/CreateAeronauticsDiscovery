@@ -6,16 +6,14 @@ import me.corvino.aeronauticsdiscovery.assembly.PrefabService;
 
 
 public class LoadTemplateStep extends AssemblyStep {
-    private final TickDelay delay = newDelay();
-
     @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.level == null) return AssemblyResult.FAIL;
-        ctx.template = PrefabService.loadPrefab(ctx.level, ctx.templateId);
-
-        delay.start(2);
-        if (delay.isWaiting()) return AssemblyResult.WAITING;
-        return AssemblyResult.SUCCESS;
+    protected void build(Sequence seq) {
+        seq.require(ctx -> ctx.level != null, "level not found")
+                .run(ctx -> {
+                    assert ctx.level != null;
+                    ctx.template = PrefabService.loadPrefab(ctx.level, ctx.templateId);
+                })
+                .delay(2);
     }
 
     @Override

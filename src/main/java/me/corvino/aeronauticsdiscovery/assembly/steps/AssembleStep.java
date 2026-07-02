@@ -28,57 +28,49 @@ import java.util.Objects;
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
 
 public class AssembleStep extends AssemblyStep {
-    private final Guard assembled = newGuard();
-    private final TickDelay postAssembleDelay = newDelay();
+    @Override
+    protected int timeoutTicks() { return Integer.MAX_VALUE; }
 
     @Override
-    protected int timeoutTicks() {
-        return Integer.MAX_VALUE;
+    protected void build(Sequence seq) {
+        seq.run(this::doAssemble)
+                .require(ctx -> ctx.assemblyResult != null, "Assembly failed or got AssemblyException")
+                .delay(1);
     }
 
-    @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
+    private void doAssemble(AssemblyContext ctx) {
         assert ctx.level != null;
-        if (ctx.assemblerPos == null) return AssemblyResult.FAIL;
-
         BlockPos pos = ctx.assemblerPos;
-        var bounds = ctx.bounds;
-        assert bounds != null;
-
-        if (!assembled.isSet()) {
-            var blockState = ctx.level.getBlockState(pos);
-            BlockPos toAssemble = pos;
-            if (blockState.getBlock() instanceof PhysicsAssemblerBlock) {
-                Direction stickyFacing = PhysicsAssemblerBlock.getStickyFacing(blockState);
-                toAssemble = pos.relative(stickyFacing);
-            }
-
-            SimAssemblyHelper.AssemblyResult result;
-            try {
-                result = SimAssemblyHelper.assembleFromSingleBlock(ctx.level, pos, toAssemble, true, true);
-            } catch (AssemblyException e) {
-                CreateAeronauticsDiscovery.LOGGER.warn("[AssembleStep] AssemblyException for '{}' from pos {}: {}",
-                        ctx.templateId, toAssemble, e.getMessage());
-                return AssemblyResult.FAIL;
-            }
-
-            if (result == null) {
-                CreateAeronauticsDiscovery.LOGGER.warn("[AssembleStep] Simulated could not assemble '{}' at {}",
-                        ctx.templateId, toAssemble);
-                return AssemblyResult.FAIL;
-            }
-
-            var plotAABB = result.subLevel().getPlot().getBoundingBox().toAABB();
-            ctx.level.getEntities((Entity) null, plotAABB, e -> !(e instanceof ServerPlayer))
-                    .forEach(e -> e.getPersistentData().putUUID(FLYOVER_ID_TAG, result.subLevel().getUniqueId()));
-
-            ctx.assemblyResult = result;
-            assembled.set();
-            postAssembleDelay.start(1);
+        assert pos != null;
+        var blockState = ctx.level.getBlockState(pos);
+        BlockPos toAssemble = pos;
+        if (blockState.getBlock() instanceof PhysicsAssemblerBlock) {
+            Direction stickyFacing = PhysicsAssemblerBlock.getStickyFacing(blockState);
+            toAssemble = pos.relative(stickyFacing);
         }
-        if (postAssembleDelay.isWaiting()) return AssemblyResult.WAITING;
 
-        return AssemblyResult.SUCCESS;
+        SimAssemblyHelper.AssemblyResult result;
+        try {
+            result = SimAssemblyHelper.assembleFromSingleBlock(ctx.level, pos, toAssemble, true, true);
+        } catch (AssemblyException e) {
+            CreateAeronauticsDiscovery.LOGGER.warn(
+                    "[AssembleStep] AssemblyException for '{}' at pos {}: {}",
+                    ctx.templateId, toAssemble, e.getMessage());
+            return;
+        }
+
+        if (result == null) {
+            CreateAeronauticsDiscovery.LOGGER.warn(
+                    "[AssembleStep] Simulated could not assemble '{}' at {}", ctx.templateId, toAssemble);
+            return;
+        }
+
+        //TODO: better entity tagging
+        var plotAABB = result.subLevel().getPlot().getBoundingBox().toAABB();
+        ctx.level.getEntities((Entity) null, plotAABB, e -> !(e instanceof ServerPlayer))
+                .forEach(e -> e.getPersistentData().putUUID(FLYOVER_ID_TAG, result.subLevel().getUniqueId()));
+
+        ctx.assemblyResult = result;
     }
 
     @Override
@@ -86,14 +78,10 @@ public class AssembleStep extends AssemblyStep {
         if (ctx.assemblyResult == null) return;
         SubLevel subLevel = ctx.assemblyResult.subLevel();
         if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
-
         FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
         SubLevelContainer container = SubLevelContainer.getContainer(ctx.level);
-        if (container != null) {
-            container.removeSubLevel(serverSubLevel, SubLevelRemovalReason.REMOVED);
-        }
+        if (container != null) container.removeSubLevel(serverSubLevel, SubLevelRemovalReason.REMOVED);
         ctx.assemblyResult = null;
     }
 }
-
 

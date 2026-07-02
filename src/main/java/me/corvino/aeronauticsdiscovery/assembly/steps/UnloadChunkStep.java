@@ -2,26 +2,31 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
 
 
 public class UnloadChunkStep extends AssemblyStep {
-
     @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.template == null || ctx.level == null || ctx.anchor == null) return AssemblyResult.FAIL;
+    protected void build(Sequence seq) {
+        seq.require(ctx -> ctx.template != null, "Template missing")
+                .require(ctx -> ctx.level != null, "Level missing")
+                .require(ctx -> ctx.anchor != null, "Anchor missing")
+                .run(this::unloadChunks);
+    }
+
+    private void unloadChunks(AssemblyContext ctx) {
+        assert ctx.anchor != null;
+        assert ctx.level != null;
 
         ChunkLoadingHelper.ChunkBounds bounds = ChunkLoadingHelper.calculateChunkBounds(ctx);
         for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++)
-            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++)
+            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
                 FlyoverManager.ticketController.forceChunk(ctx.level, ctx.anchor, cx, cz, false, true);
+            }
 
         CreateAeronauticsDiscovery.LOGGER.info("[UnloadChunkStep] Unloaded {} chunks for '{}'",
                 (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1),
                 ctx.templateId);
-
-        return AssemblyResult.SUCCESS;
     }
 }

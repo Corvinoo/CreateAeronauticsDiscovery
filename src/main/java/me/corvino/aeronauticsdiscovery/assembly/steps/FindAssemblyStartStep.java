@@ -7,12 +7,18 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
 public class FindAssemblyStartStep extends AssemblyStep {
-
     @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.assemblerPos != null) return AssemblyResult.SUCCESS;
-        if (ctx.level == null || ctx.bounds == null) return AssemblyResult.FAIL;
+    protected void build(Sequence seq) {
+        seq.completeIf(ctx -> ctx.assemblerPos != null)
+                .require(ctx -> ctx.level != null, "level is somehow missing")
+                .require(ctx -> ctx.bounds != null, "bounds is somehow missing")
+                .run(this::findAssemblerPos)
+                .require(ctx -> ctx.assemblerPos != null, "No valid blocks found in bounds!");
+    }
 
+    private void findAssemblerPos(AssemblyContext ctx) {
+        assert ctx.level != null;
+        assert ctx.bounds != null;
         BlockPos found = null;
         BlockPos firstNonAir = null;
 
@@ -35,14 +41,6 @@ public class FindAssemblyStartStep extends AssemblyStep {
             }
         }
 
-        if (found != null) {
-            ctx.assemblerPos = found;
-        } else if (firstNonAir != null) {
-            ctx.assemblerPos = firstNonAir;
-        } else {
-            return AssemblyResult.FAIL;
-        }
-
-        return AssemblyResult.SUCCESS;
+        ctx.assemblerPos = found != null ? found : firstNonAir;
     }
 }

@@ -8,25 +8,30 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 public class RotateSubLevelStep extends AssemblyStep {
+    private RigidBodyHandle cachedHandle;
 
     @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        if (ctx.yawRadians == 0.0 || ctx.bounds == null) return AssemblyResult.SUCCESS;
-        if (ctx.assemblyResult == null) return AssemblyResult.FAIL;
+    protected void build(Sequence seq) {
+        seq.completeIf(ctx -> ctx.yawRadians == 0.0 || ctx.bounds == null)
+                .require(ctx -> ctx.assemblyResult != null
+                                && ctx.assemblyResult.subLevel() instanceof ServerSubLevel,
+                        "assembly result missing or something strange happened with the sublevel")
+                .waitUntil(this::handleBecomesValid)
+                .run(this::rotate);
+    }
 
-        ServerSubLevel subLevel = ctx.assemblyResult.subLevel() instanceof ServerSubLevel sl ? sl : null;
-        if (subLevel == null) return AssemblyResult.FAIL;
+    private boolean handleBecomesValid(AssemblyContext ctx) {
+        assert ctx.assemblyResult != null;
+        cachedHandle = RigidBodyHandle.of((ServerSubLevel) ctx.assemblyResult.subLevel());
+        return cachedHandle.isValid();
+    }
 
-        RigidBodyHandle handle = RigidBodyHandle.of(subLevel);
-        if (!handle.isValid()) return AssemblyResult.WAITING;
-
+    private void rotate(AssemblyContext ctx) {
         Vector3d bodyPos = new Vector3d(
                 ctx.bounds.minX() + (ctx.bounds.maxX() - ctx.bounds.minX() + 1) / 2.0,
                 ctx.bounds.minY() + (ctx.bounds.maxY() - ctx.bounds.minY() + 1) / 2.0,
                 ctx.bounds.minZ() + (ctx.bounds.maxZ() - ctx.bounds.minZ() + 1) / 2.0
         );
-        handle.teleport(bodyPos, new Quaterniond().rotationY(ctx.yawRadians));
-
-        return AssemblyResult.SUCCESS;
+        cachedHandle.teleport(bodyPos, new Quaterniond().rotationY(ctx.yawRadians));
     }
 }

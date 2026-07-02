@@ -11,42 +11,37 @@ import me.corvino.aeronauticsdiscovery.physics.BuoyancyStabilizationManager;
  * produces enough lift to support its weight, then releases it.
  */
 public class StabilizeBuoyancyStep extends AssemblyStep {
-
     @Override
-    protected AssemblyResult tick(AssemblyContext ctx) {
-        ServerSubLevel subLevel = resolveSubLevel(ctx);
-        if (subLevel == null) return AssemblyResult.FAIL;
-
-        BuoyancyStabilizationManager manager = BuoyancyStabilizationManager.get(ctx.level);
-
-        if (!manager.isTracking(subLevel.getUniqueId())) {
-            manager.beginStabilizing(subLevel, BuoyancyStabilizationConfig.DEFAULT);
-            return AssemblyResult.WAITING;
-        }
-
-        return manager.pollStabilized(subLevel.getUniqueId())
-                ? AssemblyResult.SUCCESS
-                : AssemblyResult.WAITING;
+    protected int timeoutTicks() {
+        return (int) (BuoyancyStabilizationConfig.DEFAULT.maxHoldSeconds() * 20) + 100;
     }
 
     @Override
-    protected int timeoutTicks() {
-        // Comfortably above the manager's own maxHoldSeconds safety valve. The
-        // manager's graceful timeout-release should always win first. This is
-        // only a true last-resort guard against the manager itself misbehaving.
-        return (int) (BuoyancyStabilizationConfig.DEFAULT.maxHoldSeconds() * 20) + 100;
+    protected void build(Sequence seq) {
+        seq.require(ctx -> {
+                    resolveSubLevel(ctx);
+                    return true;
+                }, "subLevel can't be resolved")
+                .run(ctx -> {
+                    BuoyancyStabilizationManager.get(ctx.level)
+                            .beginStabilizing(resolveSubLevel(ctx), BuoyancyStabilizationConfig.DEFAULT);
+                })
+                .waitUntil(ctx -> BuoyancyStabilizationManager.get(ctx.level)
+                        .pollStabilized(resolveSubLevel(ctx).getUniqueId()));
     }
 
     @Override
     protected void onAbort(AssemblyContext ctx) {
         ServerSubLevel subLevel = resolveSubLevel(ctx);
-        if (subLevel != null) {
-            BuoyancyStabilizationManager.get(ctx.level).cancel(subLevel.getUniqueId());
-        }
+        BuoyancyStabilizationManager.get(ctx.level).cancel(subLevel.getUniqueId());
     }
 
     private static ServerSubLevel resolveSubLevel(AssemblyContext ctx) {
-        if (ctx.assemblyResult == null) return null;
-        return ctx.assemblyResult.subLevel() instanceof ServerSubLevel subLevel ? subLevel : null;
+        if (ctx.assemblyResult == null) throw new IllegalStateException("Critical error, assembly result can't be null!");
+        var subLevel = ctx.assemblyResult.subLevel();
+        if (!(subLevel instanceof ServerSubLevel)) {
+            throw new IllegalStateException("Critical error, sublevel is not server sided!");
+        }
+        return (ServerSubLevel) subLevel;
     }
 }
