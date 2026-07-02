@@ -114,9 +114,11 @@ class SpawnPositionTest {
     }
 
     @Test
-    void nullStrategyThrowsNpe() {
-        assertThrows(NullPointerException.class,
-                () -> SpawnPosition.builder().center(CENTER).build(null, new Random(SEED)));
+    void nullStrategyRetriesSamePosition() {
+        SpawnPosition sp = SpawnPosition.builder().center(CENTER).build(null, new Random(SEED));
+        assertNotNull(sp);
+        assertEquals(CENTER.getX(), sp.pos().getX());
+        assertEquals(CENTER.getZ(), sp.pos().getZ());
     }
 
     // ---------------------------------------------------------------
