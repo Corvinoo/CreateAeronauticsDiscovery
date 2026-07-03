@@ -69,8 +69,11 @@ public final class FlyoverEventScheduler {
             return;
         }
 
-        AssemblyContext ctx = AssemblyContext.builder(level, config.template(), AssemblySource.FLYOVER)
+        AssemblyContext ctx = AssemblyContext.builder()
+                .level(level)
                 .anchor(spawnPos.pos())
+                .templateId(config.template())
+                .source(AssemblySource.FLYOVER)
                 .rotationTemplate(Rotation.NONE)
                 .setYaw(spawnPos.yawRadians())
                 .overrideVelocity(config.velocity())

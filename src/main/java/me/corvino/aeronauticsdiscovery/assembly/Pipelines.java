@@ -11,7 +11,6 @@ public final class Pipelines {
     private static final Map<String, AssemblyPipeline> REGISTRY = new HashMap<>();
 
     public static final AssemblyPipeline FLYOVER = register(new AssemblyPipeline("flyover", () -> List.of(
-            new LoadTemplateStep(),
             new LoadChunkStep(),
             new PlaceBlocksStep(),
             new FindAssemblyStartStep(),
@@ -26,7 +25,6 @@ public final class Pipelines {
     )));
 
     public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", () -> List.of(
-            new LoadTemplateStep(),
             new LoadChunkStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
@@ -35,7 +33,6 @@ public final class Pipelines {
     )));
 
     public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", () -> List.of(
-            new LoadTemplateStep(),
             new LoadChunkStep(),
             new PlaceBlocksStep(),
             new FindAssemblyStartStep(),

@@ -2,7 +2,6 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -11,12 +10,15 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiPredicate;
 
 public class ReadinessCheckStep extends AssemblyStep {
+    private String failing = "";
+
     private record Check(String name, BiPredicate<ServerLevel, BoundingBox> test) {
-        boolean passes(ServerLevel level, BoundingBox bounds) { return test.test(level, bounds); }
+        boolean passes(ServerLevel level, BoundingBox bounds) {
+            return test.test(level, bounds);
+        }
     }
 
     private static final ResourceLocation HONEY_GLUE_ID = ResourceLocation.parse("simulated:honey_glue");
@@ -26,21 +28,25 @@ public class ReadinessCheckStep extends AssemblyStep {
 
     @Override
     protected void build(Sequence seq) {
-        seq.require(ctx -> ctx.bounds != null, "bounds are missing!")
-                .waitUntil(this::allChecksPass);
+        seq.waitUntil(this::allChecksPass);
+    }
+
+    @Override
+    protected void onAbort(AssemblyContext ctx) {
+        if (failing != null) {
+            CreateAeronauticsDiscovery.LOGGER.debug(
+                    "[ReadinessCheckStep] '{}' is not ready, missing: {}", ctx.templateId, failing);
+        }
     }
 
     private boolean allChecksPass(AssemblyContext ctx) {
-        Optional<String> failing = firstFailing(ctx.level, ctx.bounds);
-        //TODO: logging needs a rework, maybe adding a gate that's configurable would do?
-        failing.ifPresent(name -> CreateAeronauticsDiscovery.LOGGER.debug(
-                "[ReadinessCheckStep] '{}' is not ready, missing: {}", ctx.templateId, name));
+        failing = firstFailing(ctx.level, ctx.templateBounds());
         return failing.isEmpty();
     }
 
-    private static Optional<String> firstFailing(ServerLevel level, BoundingBox bounds) {
-        for (Check c : ALL) if (!c.passes(level, bounds)) return Optional.of(c.name());
-        return Optional.empty();
+    private static String firstFailing(ServerLevel level, BoundingBox bounds) {
+        for (Check c : ALL) if (!c.passes(level, bounds)) return c.name();
+        return "";
     }
 
     private static boolean hasHoneyGlueEntity(ServerLevel level, BoundingBox bounds) {

@@ -11,9 +11,9 @@ public class RotateSubLevelStep extends AssemblyStep {
 
     @Override
     protected void build(Sequence seq) {
-        seq.completeIf(ctx -> ctx.yawRadians == 0.0 || ctx.bounds == null)
-                .require(ctx -> ctx.assemblyResult != null
-                                && ctx.assemblyResult.subLevel() instanceof ServerSubLevel,
+        seq
+                .completeIf(ctx-> ctx.yawRadians == 0.0)
+                .require(ctx -> ctx.assemblyResult != null,
                         "assembly result missing or something strange happened with the sublevel")
                 .waitUntil(this::handleBecomesValid)
                 .run(this::rotate)
@@ -28,9 +28,9 @@ public class RotateSubLevelStep extends AssemblyStep {
 
     private void rotate(AssemblyContext ctx) {
         Vector3d bodyPos = new Vector3d(
-                ctx.bounds.minX() + (ctx.bounds.maxX() - ctx.bounds.minX() + 1) / 2.0,
-                ctx.bounds.minY() + (ctx.bounds.maxY() - ctx.bounds.minY() + 1) / 2.0,
-                ctx.bounds.minZ() + (ctx.bounds.maxZ() - ctx.bounds.minZ() + 1) / 2.0
+                ctx.templateBounds().minX() + (ctx.templateBounds().maxX() - ctx.templateBounds().minX() + 1) / 2.0,
+                ctx.templateBounds().minY() + (ctx.templateBounds().maxY() - ctx.templateBounds().minY() + 1) / 2.0,
+                ctx.templateBounds().minZ() + (ctx.templateBounds().maxZ() - ctx.templateBounds().minZ() + 1) / 2.0
         );
         cachedHandle.teleport(bodyPos, new Quaterniond().rotationY(ctx.yawRadians));
     }

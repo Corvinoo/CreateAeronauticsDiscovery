@@ -7,7 +7,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -88,9 +87,8 @@ public abstract class AssemblyStep {
     }
 
     protected void forceEntityUpdate(AssemblyContext ctx) {
-        if (ctx.bounds == null || ctx.level == null) return;
-        AABB box = new AABB(ctx.bounds.minX(), ctx.bounds.minY(), ctx.bounds.minZ(),
-                ctx.bounds.maxX(), ctx.bounds.maxY(), ctx.bounds.maxZ());
+        AABB box = new AABB(ctx.templateBounds().minX(), ctx.templateBounds().minY(), ctx.templateBounds().minZ(),
+                ctx.templateBounds().maxX(), ctx.templateBounds().maxY(), ctx.templateBounds().maxZ());
         ctx.level.getEntities((Entity) null, box, e -> true).forEach(Entity::tick);
     }
 

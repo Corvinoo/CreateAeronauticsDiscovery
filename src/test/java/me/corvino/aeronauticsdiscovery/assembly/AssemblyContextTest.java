@@ -39,7 +39,7 @@ class AssemblyContextTest {
         assertEquals(anchor, ctx.anchor);
         assertEquals(templatePos, ctx.templatePos);
         assertEquals(rotation, ctx.rotationTemplate);
-        assertEquals(bounds, ctx.bounds);
+        assertEquals(bounds, ctx.templateBounds);
         assertEquals(99, ctx.maxRetries);
         assertEquals(anchor, ctx.assemblerPos);
     }
@@ -52,7 +52,7 @@ class AssemblyContextTest {
         assertNull(ctx.assemblerPos);
         assertNull(ctx.templatePos);
         assertNull(ctx.rotationTemplate);
-        assertNull(ctx.bounds);
+        assertNull(ctx.templateBounds);
         assertEquals(60, ctx.maxRetries);
         assertNull(ctx.template);
         assertNull(ctx.assemblyResult);

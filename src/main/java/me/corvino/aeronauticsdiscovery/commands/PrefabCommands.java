@@ -66,8 +66,11 @@ public final class PrefabCommands {
         BlockPos finalPos = pos;
 
         try {
-            AssemblyContext ctx = AssemblyContext.builder(level, finalId, AssemblySource.COMMAND)
+            AssemblyContext ctx = AssemblyContext.builder()
+                    .level(level)
                     .anchor(finalPos)
+                    .templateId(finalId)
+                    .source(AssemblySource.COMMAND)
                     .maxRetries(5)
                     .build();
 

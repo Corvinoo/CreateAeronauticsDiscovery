@@ -17,9 +17,7 @@ public class LoadChunkStep extends AssemblyStep {
 
     @Override
     protected void build(Sequence seq) {
-        seq.require(ctx -> ctx.template != null, "Template missing")
-                .require(ctx -> ctx.level != null, "Level missing")
-                .require(ctx -> ctx.anchor != null, "Anchor missing")
+        seq
                 .run(this::computeBoundsAndForceTickets)
                 .waitUntil(this::allChunksTicking)
                 .run(ctx -> CreateAeronauticsDiscovery.LOGGER.info(
@@ -64,7 +62,6 @@ public class LoadChunkStep extends AssemblyStep {
     }
 
     private void releaseTickets(AssemblyContext ctx) {
-        if (ctx.template == null || ctx.level == null || ctx.anchor == null) return;
         forceTickets(ctx, bounds, false);
     }
 }
