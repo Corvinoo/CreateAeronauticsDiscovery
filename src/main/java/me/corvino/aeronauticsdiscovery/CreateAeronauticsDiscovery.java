@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import me.corvino.aeronauticsdiscovery.benchmark.BenchmarkCommand;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
+import me.corvino.aeronauticsdiscovery.commands.CleanChildSubLevelsCommand;
 import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
 import me.corvino.aeronauticsdiscovery.commands.PipelineDebugCommand;
 import me.corvino.aeronauticsdiscovery.commands.PrefabCommands;
@@ -118,6 +119,7 @@ public class CreateAeronauticsDiscovery {
         FlyoverCommands.register(event.getDispatcher());
         DebugCommands.register(event.getDispatcher());
         PipelineDebugCommand.register(event.getDispatcher());
+        CleanChildSubLevelsCommand.register(event.getDispatcher());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
