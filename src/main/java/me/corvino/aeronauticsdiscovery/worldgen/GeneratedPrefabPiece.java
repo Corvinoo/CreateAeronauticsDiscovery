@@ -107,11 +107,12 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
             if (state.getBlock() instanceof PhysicsAssemblerBlock) {
                 assemblerCount++;
                 queue.enqueue(Pipelines.WORLDGEN,
-                        AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
-                                .anchor(firstNonAir) // todo: change initialization of anchor (should not be nullable)
-                                .templatePos(this.templatePosition)
+                        AssemblyContext.builder()
+                                .level(serverLevel)
+                                .anchor(firstNonAir)
+                                .templateId(templateId)
+                                .source(AssemblySource.WORLDGEN)
                                 .rotationTemplate(this.placeSettings.getRotation())
-                                .bounds(templateBounds)
                                 .assemblerPos(worldPos)
                                 .build());
 
@@ -124,11 +125,12 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
             CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
                     templateId, firstNonAir);
             queue.enqueue(Pipelines.WORLDGEN, //todo merge two queue into single branch for clarity, probably we do not necessarily need assembler
-                    AssemblyContext.builder(serverLevel, templateId, AssemblySource.WORLDGEN)
+                    AssemblyContext.builder()
+                            .level(serverLevel)
                             .anchor(firstNonAir)
-                            .templatePos(this.templatePosition)
+                            .templateId(templateId)
+                            .source(AssemblySource.WORLDGEN)
                             .rotationTemplate(this.placeSettings.getRotation())
-                            .bounds(templateBounds)
                             .assemblerPos(firstNonAir)
                             .build());
         } else if (assemblerCount == 0) {

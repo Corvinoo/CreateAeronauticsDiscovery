@@ -7,72 +7,115 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.*;
 
 public class AssemblyContext {
-    @Nullable public ServerLevel level;
+    //specification
+    public ServerLevel level;
     public final ResourceLocation templateId;
     public final AssemblySource source;
-
-    @Nullable public final BlockPos anchor;
-    @Nullable public BlockPos assemblerPos;
-    @Nullable public final BlockPos templatePos;
-    @Nullable public final Rotation rotationTemplate;
-    @Nullable public BoundingBox bounds;
-    public final int maxRetries;
-
-    @Nullable public InitialVelocity velocityOverride;
-    public double yawRadians;
-    @Nullable public String subLevelName;
+    public final BlockPos anchor;
     public boolean registerAsFlyover;
+    public final int maxRetries;
+    public double yawRadians;
+    @Nullable public final Rotation rotationTemplate;
+    @Nullable public InitialVelocity velocityOverride;
+    @Nullable public String subLevelName;
+    public UUID entryId = UUID.randomUUID();
 
-    @Nullable public StructureTemplate template;
-    @Nullable public Vec3i templateSize;
+    //runtime
+    @Nullable public BlockPos assemblerPos;
+
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
     @Nullable public UUID subLevelId;
-    public boolean seatsPopulated;
 
-    public UUID entryId = UUID.randomUUID();
+    //runtime tracker
     public int currentStepIndex = 0;
 
     public List<AssemblyStep> steps;
     public long currentTick;
 
-    AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,
-                    BlockPos anchor, BlockPos templatePos,
-                    Rotation rotationTemplate, BoundingBox bounds,
+    //caches
+    transient private BoundingBox cachedTemplateBounds;
+
+    //contextual getters
+    public @NotNull StructureTemplate structureTemplate() {
+        return PrefabService.loadPrefab(this.level, this.templateId);
+    }
+
+    public @NotNull BoundingBox templateBounds() {
+        if (cachedTemplateBounds != null) {
+            return cachedTemplateBounds;
+        }
+
+        Rotation rot = this.rotationTemplate != null ? this.rotationTemplate : Rotation.NONE;
+        StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setRotation(rot);
+
+        this.cachedTemplateBounds = structureTemplate().getBoundingBox(settings, this.anchor);
+        return this.cachedTemplateBounds;
+    }
+
+    public @NotNull StructurePlaceSettings defaultPlacementSettings() {
+        Rotation rot = this.rotationTemplate != null ? this.rotationTemplate : Rotation.NONE;
+        return new StructurePlaceSettings().setMirror(Mirror.NONE).setRotation(rot);
+    }
+
+    private AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,
+                    BlockPos anchor,
+                    Rotation rotationTemplate,
                     int maxRetries) {
         this.level = level;
         this.templateId = templateId;
         this.source = source;
         this.anchor = anchor;
-        this.templatePos = templatePos;
         this.rotationTemplate = rotationTemplate;
-        this.bounds = bounds;
         this.maxRetries = maxRetries;
     }
 
-    void injectLevel(ServerLevel level) {
-        this.level = level;
+    public static LevelStep builder() {
+        return new Builder();
     }
 
-    public static Builder builder(ServerLevel level, ResourceLocation templateId, AssemblySource source) {
-        return new Builder(level, templateId, source);
+    public interface LevelStep {
+        AnchorStep level(ServerLevel level);
     }
 
-    public static class Builder {
-        private final ServerLevel level;
-        private final ResourceLocation templateId;
-        private final AssemblySource source;
+    public interface AnchorStep {
+        TemplateIdStep anchor(BlockPos anchor);
+    }
+
+    public interface TemplateIdStep {
+        SourceStep templateId(ResourceLocation templateId);
+    }
+
+    public interface SourceStep {
+        BuilderOptions source(AssemblySource source);
+    }
+
+    public interface BuilderOptions {
+        BuilderOptions rotationTemplate(Rotation rotation);
+        BuilderOptions maxRetries(int maxRetries);
+        BuilderOptions assemblerPos(BlockPos assemblerPos);
+        BuilderOptions setYaw(double yawRadians);
+        BuilderOptions overrideVelocity(InitialVelocity velocity);
+        BuilderOptions setName(String name);
+        BuilderOptions registerFlyover();
+        AssemblyContext build();
+    }
+    private static class Builder implements LevelStep, AnchorStep, TemplateIdStep, SourceStep, BuilderOptions {
+        private ServerLevel level;
         private BlockPos anchor;
-        private BlockPos templatePos;
+        private ResourceLocation templateId;
+        private AssemblySource source;
         private Rotation rotationTemplate;
-        private BoundingBox bounds;
         private int maxRetries = 60;
         private BlockPos assemblerPos;
         private double yawRadians;
@@ -80,26 +123,57 @@ public class AssemblyContext {
         private String subLevelName;
         private boolean registerAsFlyover;
 
-        Builder(ServerLevel level, ResourceLocation templateId, AssemblySource source) {
-            this.level = level;
-            this.templateId = templateId;
-            this.source = source;
+        private Builder() {}
+
+        @Override
+        public AnchorStep level(ServerLevel level) {
+            this.level = Objects.requireNonNull(level, "Level cannot be null");
+            return this;
         }
 
-        public Builder anchor(BlockPos anchor) { this.anchor = anchor; return this; }
-        public Builder templatePos(BlockPos templatePos) { this.templatePos = templatePos; return this; }
-        public Builder rotationTemplate(Rotation rotation) { this.rotationTemplate = rotation; return this; }
-        public Builder bounds(BoundingBox bounds) { this.bounds = bounds; return this; }
-        public Builder maxRetries(int maxRetries) { this.maxRetries = maxRetries; return this; }
-        public Builder assemblerPos(BlockPos assemblerPos) { this.assemblerPos = assemblerPos; return this; }
-        public Builder setYaw(double yawRadians) { this.yawRadians = yawRadians; return this; }
-        public Builder overrideVelocity(InitialVelocity velocity) { this.velocityOverride = velocity; return this; }
-        public Builder setName(String name) { this.subLevelName = name; return this; }
-        public Builder registerFlyover() { this.registerAsFlyover = true; return this; }
+        @Override
+        public TemplateIdStep anchor(BlockPos anchor) {
+            this.anchor = Objects.requireNonNull(anchor, "Anchor cannot be null");
+            return this;
+        }
 
+        @Override
+        public SourceStep templateId(ResourceLocation templateId) {
+            this.templateId = Objects.requireNonNull(templateId, "TemplateId cannot be null");
+            return this;
+        }
+
+        @Override
+        public BuilderOptions source(AssemblySource source) {
+            this.source = Objects.requireNonNull(source, "AssemblySource cannot be null");
+            return this;
+        }
+
+        @Override
+        public BuilderOptions rotationTemplate(Rotation rotation) { this.rotationTemplate = rotation; return this; }
+
+        @Override
+        public BuilderOptions maxRetries(int maxRetries) { this.maxRetries = maxRetries; return this; }
+
+        @Override
+        public BuilderOptions assemblerPos(BlockPos assemblerPos) { this.assemblerPos = assemblerPos; return this; }
+
+        @Override
+        public BuilderOptions setYaw(double yawRadians) { this.yawRadians = yawRadians; return this; }
+
+        @Override
+        public BuilderOptions overrideVelocity(InitialVelocity velocity) { this.velocityOverride = velocity; return this; }
+
+        @Override
+        public BuilderOptions setName(String name) { this.subLevelName = name; return this; }
+
+        @Override
+        public BuilderOptions registerFlyover() { this.registerAsFlyover = true; return this; }
+
+        @Override
         public AssemblyContext build() {
-            AssemblyContext ctx = new AssemblyContext(level, templateId, source, anchor, templatePos,
-                    rotationTemplate, bounds, maxRetries);
+            AssemblyContext ctx = new AssemblyContext(level, templateId, source, anchor,
+                    rotationTemplate, maxRetries);
             ctx.assemblerPos = this.assemblerPos;
             ctx.yawRadians = this.yawRadians;
             ctx.velocityOverride = this.velocityOverride;

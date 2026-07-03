@@ -101,7 +101,7 @@ class AssemblyEntrySerializerTest {
             assertEquals(new BlockPos(101, 64, 201), ctx.assemblerPos);
             assertEquals(new BlockPos(10, 20, 30), ctx.templatePos);
             assertEquals(Rotation.CLOCKWISE_90, ctx.rotationTemplate);
-            assertBoundsEquals(new BoundingBox(0, 40, 0, 16, 60, 16), ctx.bounds);
+            assertBoundsEquals(new BoundingBox(0, 40, 0, 16, 60, 16), ctx.templateBounds);
             assertEquals(99, ctx.maxRetries);
             assertEquals(1.57079632679, ctx.yawRadians, 1e-8);
             assertEquals("test_flyover", ctx.subLevelName);
@@ -162,7 +162,7 @@ class AssemblyEntrySerializerTest {
             assertNull(ctx.assemblerPos);
             assertNull(ctx.templatePos);
             assertNull(ctx.rotationTemplate);
-            assertNull(ctx.bounds);
+            assertNull(ctx.templateBounds);
             assertEquals(60, ctx.maxRetries);
             assertEquals(0.0, ctx.yawRadians, 1e-8);
             assertNull(ctx.subLevelName);
@@ -278,7 +278,7 @@ class AssemblyEntrySerializerTest {
             AssemblyQueue.Entry loaded = AssemblyEntrySerializer.load(tag)
                     .orElseThrow(() -> new AssertionError("Load returned empty"));
 
-            assertNull(loaded.context().bounds);
+            assertNull(loaded.context().templateBounds);
         }
 
         @Test

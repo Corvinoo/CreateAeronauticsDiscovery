@@ -111,8 +111,11 @@ public final class FlyoverTestHelper {
     }
 
     public static AssemblyContext buildContext(ServerLevel level, BlockPos anchor) {
-        return AssemblyContext.builder(level, TEMPLATE_ID, AssemblySource.FLYOVER)
+        return AssemblyContext.builder()
+                .level(level)
                 .anchor(anchor)
+                .templateId(TEMPLATE_ID)
+                .source(AssemblySource.FLYOVER)
                 .rotationTemplate(Rotation.NONE)
                 .setYaw(0.0)
                 .overrideVelocity(InitialVelocity.NONE)

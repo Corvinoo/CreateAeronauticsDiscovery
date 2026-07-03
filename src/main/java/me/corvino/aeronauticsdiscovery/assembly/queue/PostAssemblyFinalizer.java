@@ -47,11 +47,11 @@ final class PostAssemblyFinalizer {
     }
 
     private static void teleportToYaw(AssemblyContext ctx, RigidBodyHandle handle) {
-        if (ctx.yawRadians == 0.0 || ctx.bounds == null) return;
+        if (ctx.yawRadians == 0.0) return;
         Vector3d bodyPos = new Vector3d(
-                ctx.bounds.minX() + (ctx.bounds.maxX() - ctx.bounds.minX() + 1) / 2.0,
-                ctx.bounds.minY() + (ctx.bounds.maxY() - ctx.bounds.minY() + 1) / 2.0,
-                ctx.bounds.minZ() + (ctx.bounds.maxZ() - ctx.bounds.minZ() + 1) / 2.0
+                ctx.templateBounds().minX() + (ctx.templateBounds().maxX() - ctx.templateBounds().minX() + 1) / 2.0,
+                ctx.templateBounds().minY() + (ctx.templateBounds().maxY() - ctx.templateBounds().minY() + 1) / 2.0,
+                ctx.templateBounds().minZ() + (ctx.templateBounds().maxZ() - ctx.templateBounds().minZ() + 1) / 2.0
         );
         handle.teleport(bodyPos, new Quaterniond().rotationY(ctx.yawRadians));
     }

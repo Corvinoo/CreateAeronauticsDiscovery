@@ -9,6 +9,7 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverData;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
