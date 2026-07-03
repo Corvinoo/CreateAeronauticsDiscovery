@@ -1,5 +1,7 @@
 package me.corvino.aeronauticsdiscovery.event;
 
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder;
 import dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot;
@@ -19,6 +21,7 @@ import net.minecraft.world.level.entity.EntitySectionStorage;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -28,6 +31,20 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOV
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.ticketController;
 
 public class FlyoverUtils {
+    public static final String PARENT_SUBLEVEL_ID_TAG = "parent_sublevel_id";
+
+    public static List<ServerSubLevel> getChildSubLevels(SubLevelContainer container, UUID parentId) {
+        return container.getAllSubLevels().stream()
+                .filter(sl -> sl instanceof ServerSubLevel)
+                .map(sl -> (ServerSubLevel) sl)
+                .filter(sl -> {
+                    CompoundTag tag = sl.getUserDataTag();
+                    return tag != null && tag.hasUUID(PARENT_SUBLEVEL_ID_TAG)
+                            && tag.getUUID(PARENT_SUBLEVEL_ID_TAG).equals(parentId);
+                })
+                .toList();
+    }
+
     public static void removeAllEntitiesInSublevel(ServerSubLevel subLevel, boolean forceLoadChunks) {
         removeAllEntitiesInSublevel(subLevel, forceLoadChunks, null, true);
     }

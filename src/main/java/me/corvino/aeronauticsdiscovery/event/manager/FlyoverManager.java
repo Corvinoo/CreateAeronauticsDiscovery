@@ -9,6 +9,7 @@ import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
+import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -213,6 +214,12 @@ public class FlyoverManager extends SavedData {
                     subLevel.getUniqueId());
             return;
         }
+
+        for (ServerSubLevel child : FlyoverUtils.getChildSubLevels(container, subLevel.getUniqueId())) {
+            FlyoverUtils.removeAllEntitiesInSublevel(child, false);
+            container.removeSubLevel(child, SubLevelRemovalReason.REMOVED);
+        }
+
         container.removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
         removeForceTicket(subLevel);
     }
