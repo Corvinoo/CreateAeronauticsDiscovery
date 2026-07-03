@@ -215,9 +215,12 @@ public class FlyoverManager extends SavedData {
             return;
         }
 
+        AABB parentBounds = subLevel.boundingBox().toMojang();
         for (ServerSubLevel child : FlyoverUtils.getChildSubLevels(container, subLevel.getUniqueId())) {
-            FlyoverUtils.removeAllEntitiesInSublevel(child, false);
-            container.removeSubLevel(child, SubLevelRemovalReason.REMOVED);
+            if (parentBounds.intersects(child.boundingBox().toMojang())) {
+                FlyoverUtils.removeAllEntitiesInSublevel(child, false);
+                container.removeSubLevel(child, SubLevelRemovalReason.REMOVED);
+            }
         }
 
         container.removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
