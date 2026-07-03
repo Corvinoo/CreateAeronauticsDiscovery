@@ -32,6 +32,7 @@ public class ReadinessCheckStep extends AssemblyStep {
 
     private boolean allChecksPass(AssemblyContext ctx) {
         Optional<String> failing = firstFailing(ctx.level, ctx.bounds);
+        //TODO: logging needs a rework, maybe adding a gate that's configurable would do?
         failing.ifPresent(name -> CreateAeronauticsDiscovery.LOGGER.debug(
                 "[ReadinessCheckStep] '{}' is not ready, missing: {}", ctx.templateId, name));
         return failing.isEmpty();

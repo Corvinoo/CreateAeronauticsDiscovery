@@ -1,24 +1,28 @@
 package me.corvino.aeronauticsdiscovery.event;
 
-import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
-import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder;
+import dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import me.corvino.aeronauticsdiscovery.mixin.accessor.LevelAccessor;
+import me.corvino.aeronauticsdiscovery.mixin.accessor.PersistentEntitySectionManagerAccessor;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
-import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.entity.EntitySection;
+import net.minecraft.world.level.entity.EntitySectionStorage;
+import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.ticketController;
@@ -35,65 +39,78 @@ public class FlyoverUtils {
             boolean onlyOwnedBySubLevel) {
 
         ServerLevel level = subLevel.getLevel();
-        UUID subLevelId   = subLevel.getUniqueId();
-        AABB bb           = subLevel.boundingBox().toMojang();
+        UUID subLevelId = subLevel.getUniqueId();
+        var bounds = ChunkLoadingHelper.calculateChunkBounds(subLevel);
 
         Predicate<Entity> effectiveFilter = buildEntityFilter(subLevelId, filter, onlyOwnedBySubLevel);
+        LongSet chunkKeys = getSubLevelChunkKeys(subLevel);
 
-        int minCX = SectionPos.blockToSectionCoord((int) bb.minX);
-        int minCZ = SectionPos.blockToSectionCoord((int) bb.minZ);
-        int maxCX = SectionPos.blockToSectionCoord((int) bb.maxX);
-        int maxCZ = SectionPos.blockToSectionCoord((int) bb.maxZ);
+        if (forceLoadChunks) {
+            forEachChunk(level, subLevelId, bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ(), true);
+        }
 
-        if (forceLoadChunks) forEachChunk(level, subLevelId, minCX, minCZ, maxCX, maxCZ, true);
-        removeMatchingEntities(level, bb, subLevelId, effectiveFilter);
-        if (forceLoadChunks) forEachChunk(level, subLevelId, minCX, minCZ, maxCX, maxCZ, false);
+        removeEntitiesInChunks(level, chunkKeys, effectiveFilter);
+
+        if (forceLoadChunks) {
+            forEachChunk(level, subLevelId, bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ(), false);
+        }
     }
 
     private static Predicate<Entity> buildEntityFilter(
             UUID subLevelId,
             @Nullable Predicate<Entity> extraFilter,
             boolean onlyOwnedBySubLevel) {
+
         return entity -> {
-            if (entity instanceof ServerPlayer) return false;
+            if (entity instanceof Player) return false;
             if (extraFilter != null && !extraFilter.test(entity)) return false;
             if (!onlyOwnedBySubLevel) return true;
+
             CompoundTag data = entity.getPersistentData();
             return data.hasUUID(FLYOVER_ID_TAG) && data.getUUID(FLYOVER_ID_TAG).equals(subLevelId);
         };
     }
 
-    private static void removeMatchingEntities(
-            ServerLevel level,
-            AABB bb,
-            UUID subLevelId,
-            Predicate<Entity> filter) {
+    private static LongSet getSubLevelChunkKeys(ServerSubLevel subLevel) {
+        ServerLevelPlot plot = subLevel.getPlot();
+        LongSet chunkKeys = new LongOpenHashSet();
 
-        List<Entity> toRemove = new ArrayList<>();
+        for (PlotChunkHolder holder : plot.getLoadedChunks()) {
+            chunkKeys.add(holder.getPos().toLong());
+        }
 
-        // Pass 1: entities Sable knows belong to this SubLevel
-        level.getAllEntities().forEach(entity -> {
-            if (entity == null || !filter.test(entity)) return;
-            SubLevel containing = Sable.HELPER.getContaining(entity);
-            if (containing == null || !containing.getUniqueId().equals(subLevelId)) return;
-            collectWithPassengers(entity, filter, toRemove);
-        });
+        var bounds = ChunkLoadingHelper.calculateChunkBounds(subLevel);
+        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
+            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
+                chunkKeys.add(ChunkPos.asLong(cx, cz));
+            }
+        }
 
-        // Pass 2: spatial sweep for anything that slipped through Sable tracking
-        level.getEntities((Entity) null, bb, filter)
-                .forEach(entity -> collectWithPassengers(entity, filter, toRemove));
-
-        toRemove.forEach(e -> e.remove(Entity.RemovalReason.DISCARDED));
+        return chunkKeys;
     }
 
-    private static void collectWithPassengers(Entity entity, Predicate<Entity> filter, List<Entity> out) {
-        entity.getPassengers().forEach(passenger -> {
-            if (filter.test(passenger)) {
-                passenger.stopRiding();
-                out.add(passenger);
+    private static void removeEntitiesInChunks(ServerLevel level, LongSet chunkKeys, Predicate<Entity> filter) {
+        PersistentEntitySectionManager<Entity> manager =
+                ((LevelAccessor) level).getEntityManager();
+
+        @SuppressWarnings("unchecked")
+        EntitySectionStorage<Entity> sectionStorage =
+                ((PersistentEntitySectionManagerAccessor<Entity>) manager).getSectionStorage();
+
+        for (long chunkKey : chunkKeys) {
+            Stream<EntitySection<Entity>> sections = sectionStorage.getExistingSectionsInChunk(chunkKey);
+            for (EntitySection<Entity> section : sections.toList()) {
+                for (Entity entity : section.getEntities().toList()) {
+                    if (filter.test(entity)) {
+                        entity.stopRiding();
+                        entity.ejectPassengers();
+
+                        entity.remove(Entity.RemovalReason.DISCARDED);
+                        section.remove(entity);
+                    }
+                }
             }
-        });
-        out.add(entity);
+        }
     }
 
     private static void forEachChunk(
@@ -131,6 +148,5 @@ public class FlyoverUtils {
 
         return result.whenComplete((v, ex) ->
                 forEachChunk(level, subLevelId, bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ(), false));
-
     }
 }

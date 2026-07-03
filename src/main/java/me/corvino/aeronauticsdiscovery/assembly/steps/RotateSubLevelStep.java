@@ -3,7 +3,6 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
@@ -17,7 +16,8 @@ public class RotateSubLevelStep extends AssemblyStep {
                                 && ctx.assemblyResult.subLevel() instanceof ServerSubLevel,
                         "assembly result missing or something strange happened with the sublevel")
                 .waitUntil(this::handleBecomesValid)
-                .run(this::rotate);
+                .run(this::rotate)
+                .delay(1);
     }
 
     private boolean handleBecomesValid(AssemblyContext ctx) {
