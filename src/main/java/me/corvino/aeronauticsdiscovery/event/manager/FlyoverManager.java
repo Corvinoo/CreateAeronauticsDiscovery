@@ -9,8 +9,6 @@ import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
-import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
-import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -42,8 +40,6 @@ public class FlyoverManager extends SavedData {
 
     final Map<UUID, FlyoverData> flyovers = new LinkedHashMap<>();
     private final Queue<UUID> externalRemovalQueue = new LinkedList<>();
-
-    private final Set<UUID> despawning = new HashSet<>();
 
     private ServerLevel level;
     private boolean observerRegistered = false;
@@ -196,26 +192,8 @@ public class FlyoverManager extends SavedData {
 
     private void beginDespawn(FlyoverData entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
         UUID id = entry.subLevelId();
-        if (!despawning.add(id)) return;
-
         LOGGER.info("[FLYOVER] Despawning {} ('{}') - {}", id, entry.templateId(), reason.describe());
-
-        FlyoverUtils.removeAllEntitiesInSublevelAwaitingChunks(subLevel)
-                .thenCompose(v -> TaskScheduler.getInstance().runSyncLater(() -> {}, 1))
-                .thenRun(() -> {
-                    ServerSubLevel freshSubLevel = getSubLevel(id);
-                    if (freshSubLevel != null && !freshSubLevel.isRemoved()) {
-                        removeSubLevelFromWorld(freshSubLevel);
-                    }
-                    despawning.remove(id);
-                })
-                .exceptionally(ex -> {
-                    LOGGER.error("[FLYOVER] Despawn sequence failed for {}", id, ex);
-                    despawning.remove(id);
-                    removeForceTicket(subLevel);
-                    enqueueExternalRemoval(id);
-                    return null;
-                });
+        removeSubLevelFromWorld(subLevel);
     }
 
     private void removeForceTicket(ServerSubLevel subLevel) {
@@ -236,7 +214,7 @@ public class FlyoverManager extends SavedData {
             return;
         }
         container.removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
-        container.removeForceLoadTicket(subLevel, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+        removeForceTicket(subLevel);
     }
 
     private boolean isPlayerNearSubLevel(SubLevel subLevel) {
@@ -259,7 +237,7 @@ public class FlyoverManager extends SavedData {
         double cx = (bb.minX + bb.maxX) / 2.0;
         double cz = (bb.minZ + bb.maxZ) / 2.0;
         int viewDist = level.getServer().getPlayerList().getViewDistance();
-        double despawnRadius   = viewDist * 16.0 + Config.flyoverMaxUnloadDistance;
+        double despawnRadius = viewDist * 16.0 + Config.flyoverMaxUnloadDistance;
         double despawnRadiusSq = despawnRadius * despawnRadius;
         for (ServerPlayer player : level.players()) {
             double dx = cx - player.getX();
@@ -268,7 +246,7 @@ public class FlyoverManager extends SavedData {
         }
         return true;
     }
-    
+
 
     @Override
     public @NotNull CompoundTag save(CompoundTag tag, HolderLookup.@NotNull Provider provider) {

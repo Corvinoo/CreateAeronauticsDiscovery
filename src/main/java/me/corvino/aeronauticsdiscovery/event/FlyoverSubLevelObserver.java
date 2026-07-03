@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.event;
 
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
 import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
@@ -17,6 +18,8 @@ import net.minecraft.world.level.ChunkPos;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
+import static me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER;
+
 public class FlyoverSubLevelObserver implements SubLevelObserver {
     private final FlyoverManager manager;
 
@@ -27,8 +30,9 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
     @Override
     public void onSubLevelRemoved(SubLevel subLevel, SubLevelRemovalReason reason) {
         if (!reason.equals(SubLevelRemovalReason.REMOVED)) return;
-        if (!(subLevel instanceof ServerSubLevel)) return;
+        if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
         if (subLevel.getName() == null || !subLevel.getName().contains("flyover")) return;
+        FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
         manager.enqueueExternalRemoval(subLevel.getUniqueId());
     }
 }

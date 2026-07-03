@@ -34,8 +34,7 @@ public class AssembleStep extends AssemblyStep {
     @Override
     protected void build(Sequence seq) {
         seq.run(this::doAssemble)
-                .require(ctx -> ctx.assemblyResult != null, "Assembly failed or got AssemblyException")
-                .delay(1);
+                .require(ctx -> ctx.assemblyResult != null, "Assembly failed or got AssemblyException");
     }
 
     private void doAssemble(AssemblyContext ctx) {
