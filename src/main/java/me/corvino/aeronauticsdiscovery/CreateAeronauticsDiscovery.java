@@ -8,6 +8,7 @@ import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.commands.CleanChildSubLevelsCommand;
 import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
+import me.corvino.aeronauticsdiscovery.commands.MarkerTestCommand;
 import me.corvino.aeronauticsdiscovery.commands.MarkerWandCommand;
 import me.corvino.aeronauticsdiscovery.commands.PipelineDebugCommand;
 import me.corvino.aeronauticsdiscovery.commands.PrefabCommands;
@@ -136,6 +137,7 @@ public class CreateAeronauticsDiscovery {
         PipelineDebugCommand.register(event.getDispatcher());
         CleanChildSubLevelsCommand.register(event.getDispatcher());
         MarkerWandCommand.register(event.getDispatcher());
+        MarkerTestCommand.register(event.getDispatcher());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
