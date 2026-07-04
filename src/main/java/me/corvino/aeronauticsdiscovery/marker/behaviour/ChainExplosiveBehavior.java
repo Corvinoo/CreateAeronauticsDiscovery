@@ -38,7 +38,8 @@ public record ChainExplosiveBehavior(float power, double chainRadius, double pro
                     new ConfigField("chain_radius", "Chain Radius", ConfigField.FieldType.DOUBLE, 10.0),
                     new ConfigField("propagation_speed", "Propagation Speed", ConfigField.FieldType.DOUBLE, 5.0),
                     new ConfigField("max_chain_depth", "Max Chain Depth", ConfigField.FieldType.INTEGER, 10)
-            )
+            ),
+            0x80FF4040
     );
 
     @Override

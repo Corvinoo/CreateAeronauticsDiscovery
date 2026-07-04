@@ -3,7 +3,7 @@ package me.corvino.aeronauticsdiscovery;
 import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import me.corvino.aeronauticsdiscovery.benchmark.BenchmarkCommand;
-import me.corvino.aeronauticsdiscovery.client.renderer.MarkerNoopRenderer;
+import me.corvino.aeronauticsdiscovery.client.renderer.MarkerEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.commands.CleanChildSubLevelsCommand;
@@ -148,7 +148,7 @@ public class CreateAeronauticsDiscovery {
         @SubscribeEvent
         public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(EntityRegistry.SOARING_TRADER.get(), SoaringTraderRenderer::new);
-            event.registerEntityRenderer(EntityRegistry.MARKER.get(), MarkerNoopRenderer::new);
+            event.registerEntityRenderer(EntityRegistry.MARKER.get(), MarkerEntityRenderer::new);
         }
     }
 }
