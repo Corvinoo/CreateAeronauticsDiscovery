@@ -56,10 +56,7 @@ public class AssemblyContext {
             return cachedTemplateBounds;
         }
 
-        Rotation rot = this.rotationTemplate != null ? this.rotationTemplate : Rotation.NONE;
-        StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setRotation(rot);
-
-        this.cachedTemplateBounds = structureTemplate().getBoundingBox(settings, this.anchor);
+        this.cachedTemplateBounds = structureTemplate().getBoundingBox(defaultPlacementSettings(), this.anchor);
         return this.cachedTemplateBounds;
     }
 
