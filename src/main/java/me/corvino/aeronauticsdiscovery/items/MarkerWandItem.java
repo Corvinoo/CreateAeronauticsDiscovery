@@ -5,6 +5,7 @@ import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.ConfigField;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
@@ -21,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -54,6 +56,14 @@ public class    MarkerWandItem extends Item {
         Player player = context.getPlayer();
         if (player == null) return InteractionResult.FAIL;
 
+        BlockPos pos = context.getClickedPos();
+
+        MarkerEntity existing = findMarkerAt(level, pos);
+        if (existing != null) {
+            player.sendSystemMessage(buildMarkerInfoUI(existing));
+            return InteractionResult.CONSUME;
+        }
+
         initConfig(stack);
         CompoundTag tag = getDataTag(stack);
         String behaviorIdStr = tag.getString(TAG_BEHAVIOR_ID);
@@ -63,17 +73,65 @@ public class    MarkerWandItem extends Item {
         if (behaviorId == null) return InteractionResult.FAIL;
 
         CompoundTag config = tag.getCompound(TAG_CONFIG);
-        Vec3 pos = Vec3.atBottomCenterOf(context.getClickedPos());
+        Vec3 epos = Vec3.atBottomCenterOf(pos);
 
         MarkerEntity marker = new MarkerEntity(EntityRegistry.MARKER.get(), level);
-        marker.setPos(pos.x, pos.y, pos.z);
+        marker.setPos(epos.x, epos.y, epos.z);
         marker.setBehavior(behaviorId, config);
         level.addFreshEntity(marker);
 
         player.sendSystemMessage(Component.literal(
                 "§8[§6✧§8] §aPlaced §f" + behaviorId.getPath() + " §aat " +
-                        Math.round(pos.x) + " " + Math.round(pos.y) + " " + Math.round(pos.z)));
+                        Math.round(epos.x) + " " + Math.round(epos.y) + " " + Math.round(epos.z)));
         return InteractionResult.CONSUME;
+    }
+
+    public static MarkerEntity findMarkerAt(Level level, BlockPos pos) {
+        for (MarkerEntity marker : level.getEntitiesOfClass(MarkerEntity.class, new AABB(pos).inflate(0.01))) {
+            if (marker.blockPosition().equals(pos)) {
+                return marker;
+            }
+        }
+        return null;
+    }
+
+    public static Component buildMarkerInfoUI(MarkerEntity marker) {
+        ResourceLocation id = marker.getBehaviorId();
+        if (id == null) {
+            return Component.literal("§c[Marker] No behavior configured on this entity");
+        }
+
+        MarkerBehaviorType<?> type = MarkerBehaviorTypes.byId(id);
+        CompoundTag config = marker.getConfig();
+        BlockPos pos = marker.blockPosition();
+
+        MutableComponent msg = Component.literal("");
+        msg.append(Component.literal("§8[§6- Marker Info - §f" + id.getPath() + "§8]\n"));
+        msg.append(Component.literal("  §7Position: §f" + pos.getX() + " " + pos.getY() + " " + pos.getZ() + "\n"));
+
+        if (type != null) {
+            List<ConfigField> fields = type.configFields();
+            if (!fields.isEmpty()) {
+                msg.append(Component.literal("  §7Config:\n"));
+                for (ConfigField field : fields) {
+                    String valueStr = readConfigValue(config, field);
+                    msg.append(Component.literal("    §7" + field.label() + ": §f" + valueStr + "\n"));
+                }
+            }
+        }
+
+        msg.append(Component.literal("  §7Bound: §" + (marker.isBound() ? "aYes" : "cNo") + "\n"));
+
+        MutableComponent removeBtn = Component.literal("§8[§c✕ Remove§8]")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(RUN_COMMAND,
+                                "/markerwand remove " + pos.getX() + " " + pos.getY() + " " + pos.getZ()))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("§cRemove this marker"))));
+        msg.append(Component.literal("  "));
+        msg.append(removeBtn);
+
+        return msg;
     }
 
     public static Component buildConfigUI(ItemStack stack) {

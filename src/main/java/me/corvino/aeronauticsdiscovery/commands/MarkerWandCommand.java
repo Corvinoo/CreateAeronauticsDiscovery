@@ -4,16 +4,20 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.items.MarkerWandItem;
+import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.ConfigField;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +39,9 @@ public final class MarkerWandCommand {
                                         .executes(ctx -> set(ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "key"),
                                                 StringArgumentType.getString(ctx, "value"))))))
+                .then(Commands.literal("remove")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(ctx -> remove(ctx.getSource(), BlockPosArgument.getBlockPos(ctx, "pos")))))
         );
     }
 
@@ -123,6 +130,22 @@ public final class MarkerWandCommand {
         MarkerWandItem.setDataTag(stack, tag);
 
         player.sendSystemMessage(MarkerWandItem.buildConfigUI(stack));
+        return 1;
+    }
+
+    private static int remove(CommandSourceStack source, BlockPos pos) {
+        Player player = requirePlayer(source);
+        if (player == null) return 0;
+
+        Level level = player.level();
+        MarkerEntity marker = MarkerWandItem.findMarkerAt(level, pos);
+        if (marker == null) {
+            source.sendFailure(Component.literal("No marker found at " + pos.getX() + " " + pos.getY() + " " + pos.getZ()));
+            return 0;
+        }
+
+        marker.discard();
+        source.sendSuccess(() -> Component.literal("§8[§6✧§8] §aRemoved marker at " + pos.getX() + " " + pos.getY() + " " + pos.getZ()), true);
         return 1;
     }
 
