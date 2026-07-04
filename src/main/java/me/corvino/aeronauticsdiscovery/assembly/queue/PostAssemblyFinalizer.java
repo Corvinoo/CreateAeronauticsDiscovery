@@ -30,7 +30,7 @@ final class PostAssemblyFinalizer {
         if (subLevel == null) return;
 
         RigidBodyHandle handle = RigidBodyHandle.of(subLevel);
-        if (handle == null || !handle.isValid()) return;
+        if (!handle.isValid()) return;
 
 //        teleportToYaw(ctx, handle); moved into a step
 
