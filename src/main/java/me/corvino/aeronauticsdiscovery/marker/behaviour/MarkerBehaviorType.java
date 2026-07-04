@@ -13,10 +13,10 @@ import java.util.List;
  *
  * @param configFields metadata used by the Marker Wand's chat UI to generate parameter editing buttons
  */
-public record MarkerBehaviorType<T extends MarkerBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields) {
+public record MarkerBehaviorType<T extends MarkerBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color) {
 
-    public MarkerBehaviorType(ResourceLocation id, Codec<T> codec) {
-        this(id, codec, List.of());
+    public MarkerBehaviorType(ResourceLocation id, Codec<T> codec, int color) {
+        this(id, codec, List.of(), color);
     }
 
     public CompoundTag defaultConfig() {

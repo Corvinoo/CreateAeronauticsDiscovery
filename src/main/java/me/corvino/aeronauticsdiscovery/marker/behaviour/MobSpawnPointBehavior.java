@@ -24,7 +24,8 @@ public record MobSpawnPointBehavior(ResourceLocation mobId) implements MarkerBeh
             ).apply(instance, MobSpawnPointBehavior::new)),
             List.of(
                     new ConfigField("mob_id", "Mob ID", ConfigField.FieldType.RESOURCE_LOCATION, ResourceLocation.parse("minecraft:pillager"))
-            )
+            ),
+            0x804040FF
     );
 
     @Override
