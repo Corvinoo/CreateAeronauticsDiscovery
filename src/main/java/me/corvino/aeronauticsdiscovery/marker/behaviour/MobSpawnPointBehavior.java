@@ -8,6 +8,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 
+import java.util.List;
+
 /**
  * Spawns one instance of {@code mobId} at this marker's position when the flyover assembles
  *
@@ -19,7 +21,10 @@ public record MobSpawnPointBehavior(ResourceLocation mobId) implements MarkerBeh
             "mob_spawn_point",
             RecordCodecBuilder.create(instance -> instance.group(
                     ResourceLocation.CODEC.fieldOf("mob_id").forGetter(MobSpawnPointBehavior::mobId)
-            ).apply(instance, MobSpawnPointBehavior::new))
+            ).apply(instance, MobSpawnPointBehavior::new)),
+            List.of(
+                    new ConfigField("mob_id", "Mob ID", ConfigField.FieldType.RESOURCE_LOCATION, ResourceLocation.parse("minecraft:pillager"))
+            )
     );
 
     @Override

@@ -44,7 +44,7 @@ public class PipelineDebugCommand {
                 .forEach(p -> {
                     int count = p.createSteps().size();
                     source.sendSuccess(() -> Component.literal(
-                            "  §e" + p.name() + "§r — " + count + " step(s)"), false);
+                            "  §e" + p.name() + "§r - " + count + " step(s)"), false);
                 });
 
         source.sendSuccess(() -> Component.literal("§7Use /pipelinedebug steps <name> for details§r"), false);

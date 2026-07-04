@@ -10,6 +10,8 @@ import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
+import java.util.List;
+
 /**
  * Explodes at this marker's position and hands the trigger off to {@link MarkerNetwork} so nearby bound
  * markers on the same flyover explode in sequence, delayed by distance - a chain reaction, without this
@@ -30,7 +32,13 @@ public record ChainExplosiveBehavior(float power, double chainRadius, double pro
                     Codec.DOUBLE.fieldOf("chain_radius").forGetter(ChainExplosiveBehavior::chainRadius),
                     Codec.DOUBLE.fieldOf("propagation_speed").forGetter(ChainExplosiveBehavior::propagationSpeed),
                     Codec.INT.fieldOf("max_chain_depth").forGetter(ChainExplosiveBehavior::maxChainDepth)
-            ).apply(instance, ChainExplosiveBehavior::new))
+            ).apply(instance, ChainExplosiveBehavior::new)),
+            List.of(
+                    new ConfigField("power", "Power", ConfigField.FieldType.FLOAT, 4.0f),
+                    new ConfigField("chain_radius", "Chain Radius", ConfigField.FieldType.DOUBLE, 10.0),
+                    new ConfigField("propagation_speed", "Propagation Speed", ConfigField.FieldType.DOUBLE, 5.0),
+                    new ConfigField("max_chain_depth", "Max Chain Depth", ConfigField.FieldType.INTEGER, 10)
+            )
     );
 
     @Override

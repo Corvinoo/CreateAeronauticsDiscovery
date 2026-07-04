@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class MarkerBehaviorTypes {
@@ -14,8 +15,12 @@ public final class MarkerBehaviorTypes {
     private MarkerBehaviorTypes() {}
 
     public static <T extends MarkerBehavior<T>> MarkerBehaviorType<T> register(String path, Codec<T> codec) {
+        return register(path, codec, List.of());
+    }
+
+    public static <T extends MarkerBehavior<T>> MarkerBehaviorType<T> register(String path, Codec<T> codec, List<ConfigField> configFields) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(CreateAeronauticsDiscovery.MODID, path);
-        MarkerBehaviorType<T> type = new MarkerBehaviorType<>(id, codec);
+        MarkerBehaviorType<T> type = new MarkerBehaviorType<>(id, codec, configFields);
         if (REGISTRY.put(id, type) != null) {
             throw new IllegalStateException("Duplicate marker behavior registration: " + id);
         }

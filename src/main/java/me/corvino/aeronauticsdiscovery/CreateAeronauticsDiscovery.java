@@ -3,12 +3,16 @@ package me.corvino.aeronauticsdiscovery;
 import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import me.corvino.aeronauticsdiscovery.benchmark.BenchmarkCommand;
+import me.corvino.aeronauticsdiscovery.client.renderer.MarkerNoopRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
+import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.commands.CleanChildSubLevelsCommand;
 import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
+import me.corvino.aeronauticsdiscovery.commands.MarkerWandCommand;
 import me.corvino.aeronauticsdiscovery.commands.PipelineDebugCommand;
 import me.corvino.aeronauticsdiscovery.commands.PrefabCommands;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
+import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
 import me.corvino.aeronauticsdiscovery.event.FlyoverCommands;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventRegistry;
@@ -19,7 +23,9 @@ import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -35,6 +41,7 @@ import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
 
@@ -53,6 +60,16 @@ public class CreateAeronauticsDiscovery {
     // Create a Deferred Register to hold Items which will all be registered under the "aeronauticsdiscovery" namespace
     // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "aeronauticsdiscovery" namespace
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+
+//    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN_TAB =
+//            CREATIVE_MODE_TABS.register("main", () -> CreativeModeTab.builder()
+//                    .title(Component.translatable("itemGroup." + MODID + ".main"))
+//                    .icon(() -> new ItemStack(ItemRegistry.MARKER_WAND.get()))
+//                    .displayItems((params, output) -> {
+//                        output.accept(ItemRegistry.MARKER_WAND.get());
+//                        output.accept(ItemRegistry.SOARING_TRADER_SPAWN_EGG.get());
+//                    })
+//                    .build());
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
@@ -84,9 +101,6 @@ public class CreateAeronauticsDiscovery {
         TaskScheduler.setup();
 
         modEventBus.addListener(this::onTicketControllerRegister);
-
-        // Register the item to a creative tab
-        modEventBus.addListener(this::addCreative);
 
         // Register entity attributes
         modEventBus.addListener(EntityRegistry::RegisterEntityAttributes);
@@ -121,6 +135,7 @@ public class CreateAeronauticsDiscovery {
         DebugCommands.register(event.getDispatcher());
         PipelineDebugCommand.register(event.getDispatcher());
         CleanChildSubLevelsCommand.register(event.getDispatcher());
+        MarkerWandCommand.register(event.getDispatcher());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
@@ -133,6 +148,7 @@ public class CreateAeronauticsDiscovery {
         @SubscribeEvent
         public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(EntityRegistry.SOARING_TRADER.get(), SoaringTraderRenderer::new);
+            event.registerEntityRenderer(EntityRegistry.MARKER.get(), MarkerNoopRenderer::new);
         }
     }
 }
