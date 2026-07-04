@@ -2,9 +2,11 @@ package me.corvino.aeronauticsdiscovery.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -83,6 +85,9 @@ public class MarkerEntityRenderer extends EntityRenderer<MarkerEntity> {
 
     @Override
     public boolean shouldRender(MarkerEntity entity, Frustum camera, double camX, double camY, double camZ) {
-        return true;
+        var player = Minecraft.getInstance().player;
+        if (player == null) return false;
+        var wand = ItemRegistry.MARKER_WAND.get();
+        return player.getMainHandItem().is(wand) || player.getOffhandItem().is(wand);
     }
 }
