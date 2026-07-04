@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -29,7 +30,6 @@ public class AssemblyContext {
     @Nullable public final Rotation rotationTemplate;
     @Nullable public InitialVelocity velocityOverride;
     @Nullable public String subLevelName;
-    public UUID entryId = UUID.randomUUID();
 
     //runtime
     @Nullable public BlockPos assemblerPos;
@@ -40,7 +40,7 @@ public class AssemblyContext {
     //runtime tracker
     public int currentStepIndex = 0;
 
-    public List<AssemblyStep> steps;
+    @NotNull public List<AssemblyStep> steps = new ArrayList<>();
     public long currentTick;
 
     //caches
@@ -66,6 +66,15 @@ public class AssemblyContext {
     public @NotNull StructurePlaceSettings defaultPlacementSettings() {
         Rotation rot = this.rotationTemplate != null ? this.rotationTemplate : Rotation.NONE;
         return new StructurePlaceSettings().setMirror(Mirror.NONE).setRotation(rot);
+    }
+
+    public void resetRuntimeState() {
+        this.steps.clear();
+        this.currentTick = 0;
+        this.currentStepIndex = 0;
+        this.subLevelId = null;
+        this.assemblyResult = null;
+        this.assemblerPos = null;
     }
 
     private AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,

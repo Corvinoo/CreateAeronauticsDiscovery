@@ -70,7 +70,6 @@ public class AssemblyQueue extends SavedData {
     }
 
     public void enqueue(AssemblyPipeline pipeline, AssemblyContext ctx) {
-        ctx.steps = pipeline.createSteps();
         Entry entry = new Entry(ctx.templateId, pipeline, ctx, 0);
         if (processing) {
             pendingAdd.add(entry);
@@ -147,8 +146,6 @@ public class AssemblyQueue extends SavedData {
             case FAIL -> {
                 CreateAeronauticsDiscovery.LOGGER.warn("[QUEUE] FAIL: '{}' (src={}, attempt {}/{})",
                         ctx.templateId, ctx.source, entry.retryCount() + 1, ctx.maxRetries);
-                // Reset internal steps state!!
-                ctx.steps = entry.pipeline().createSteps();
                 it.set(entry.withRetryCount(entry.retryCount() + 1));
                 setDirty();
             }
