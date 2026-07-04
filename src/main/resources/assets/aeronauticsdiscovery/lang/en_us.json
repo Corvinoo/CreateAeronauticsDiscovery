@@ -1,6 +1,8 @@
 {
   "entity.aeronauticsdiscovery.soaring_trader": "Soaring Trader",
   "item.aeronauticsdiscovery.soaring_trader_spawn_egg": "Soaring Trader Spawn Egg",
+  "item.aeronauticsdiscovery.marker_wand": "Marker Wand",
+  "itemGroup.aeronauticsdiscovery.main": "Create Aeronautics: Discovery",
   "filled_map.village_plains": "Plains Village Map",
   "filled_map.village_desert": "Desert Village Map",
   "filled_map.village_savanna": "Savanna Village Map",

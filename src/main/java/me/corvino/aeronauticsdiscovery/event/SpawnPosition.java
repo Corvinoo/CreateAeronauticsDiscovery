@@ -100,7 +100,7 @@ public final class SpawnPosition {
                     from, to,
                     String.format("%.2f", dir.x), String.format("%.2f", dir.z),
                     miss ? "MISS" : "HIT",
-                    miss ? "—" : hit.getBlockPos()
+                    miss ? "-" : hit.getBlockPos()
             );
 
             return miss;
