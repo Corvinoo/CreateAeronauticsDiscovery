@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.entities;
 
+import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -27,5 +28,13 @@ public class EntityRegistry {
                 .add(Attributes.MOVEMENT_SPEED, 0.5D)
                 .build());
     }
-    
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MarkerEntity>> MARKER = ENTITIES.register("marker",
+            () -> EntityType.Builder.of(MarkerEntity::new, MobCategory.MISC)
+                    .noSummon()
+                    .sized(0.0F, 0.0F)
+                    .eyeHeight(0.0F)
+                    .clientTrackingRange(8)
+                    .updateInterval(Integer.MAX_VALUE) // we drive our own position updates; no need to resync every tick
+                    .build("marker"));
 }

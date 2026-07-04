@@ -9,6 +9,7 @@ import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
 import me.corvino.aeronauticsdiscovery.commands.PipelineDebugCommand;
 import me.corvino.aeronauticsdiscovery.commands.PrefabCommands;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
+import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
 import me.corvino.aeronauticsdiscovery.event.FlyoverCommands;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventScheduler;
@@ -99,7 +100,7 @@ public class CreateAeronauticsDiscovery {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-
+        MarkerBehaviorTypes.bootstrap();
     }
 
 
