@@ -8,6 +8,8 @@ import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
 import me.corvino.aeronauticsdiscovery.mixinterface.EntityStickAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -32,6 +34,9 @@ public class MarkerEntity extends Entity {
     private static final String TAG_CONFIG = "Config";
     private static final String TAG_PLOT_POS = "PlotPos";
 
+    private static final EntityDataAccessor<String> DATA_BEHAVIOR_ID =
+            SynchedEntityData.defineId(MarkerEntity.class, EntityDataSerializers.STRING);
+
     @Nullable private ResourceLocation behaviorId;
     private CompoundTag config = new CompoundTag();
 
@@ -45,6 +50,7 @@ public class MarkerEntity extends Entity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_BEHAVIOR_ID, "");
     }
 
     /**
@@ -69,11 +75,18 @@ public class MarkerEntity extends Entity {
     public void setBehavior(ResourceLocation behaviorId, CompoundTag config) {
         this.behaviorId = behaviorId;
         this.config = config.copy();
-        this.behavior = null; // force re-resolution against the (possibly new) registry entry
+        this.behavior = null;
+        this.entityData.set(DATA_BEHAVIOR_ID, behaviorId.toString());
     }
 
     @Nullable
     public ResourceLocation getBehaviorId() {
+        if (this.behaviorId == null) {
+            String id = this.entityData.get(DATA_BEHAVIOR_ID);
+            if (!id.isEmpty()) {
+                this.behaviorId = ResourceLocation.tryParse(id);
+            }
+        }
         return this.behaviorId;
     }
 
@@ -118,6 +131,7 @@ public class MarkerEntity extends Entity {
     protected void readAdditionalSaveData(CompoundTag tag) {
         if (tag.contains(TAG_BEHAVIOR_ID)) {
             this.behaviorId = ResourceLocation.tryParse(tag.getString(TAG_BEHAVIOR_ID));
+            this.entityData.set(DATA_BEHAVIOR_ID, tag.getString(TAG_BEHAVIOR_ID));
         }
         this.config = tag.getCompound(TAG_CONFIG);
         this.behavior = null;

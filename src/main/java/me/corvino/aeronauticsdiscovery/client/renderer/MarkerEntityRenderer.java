@@ -14,7 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MarkerEntityRenderer extends EntityRenderer<MarkerEntity> {
 
-    private static final ResourceLocation TEXTURE = ResourceLocation.withDefaultNamespace("textures/particle/white.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("aeronauticsdiscovery", "textures/entity/marker.png");
 
     public MarkerEntityRenderer(EntityRendererProvider.Context context) {
         super(context);
