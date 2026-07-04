@@ -46,7 +46,6 @@ final class AssemblyEntrySerializer {
         if (ctx.subLevelId != null) {
             tag.putUUID("subLevelId", ctx.subLevelId);
         }
-        tag.putUUID("entryId", ctx.entryId);
         tag.putInt("CurrentStepIndex", ctx.currentStepIndex);
         return tag;
     }
@@ -87,7 +86,6 @@ final class AssemblyEntrySerializer {
             if (tag.contains("subLevelId")) {
                 ctx.subLevelId = tag.getUUID("subLevelId");
             }
-            ctx.entryId = tag.getUUID("entryId");
             ctx.currentStepIndex = tag.getInt("CurrentStepIndex");
             ctx.steps = pipeline.createSteps();
 

@@ -12,6 +12,9 @@ public record AssemblyPipeline(String name, Supplier<List<AssemblyStep>> stepsFa
     }
 
     public AssemblyResult execute(AssemblyContext ctx, long currentTick) {
+        if (ctx.steps.isEmpty()) {
+            ctx.steps = createSteps();
+        }
         ctx.currentTick = currentTick;
 
         while (ctx.currentStepIndex < ctx.steps.size()) {
@@ -58,7 +61,8 @@ public record AssemblyPipeline(String name, Supplier<List<AssemblyStep>> stepsFa
                         name, ctx.steps.get(i).getClass().getSimpleName(), e);
             }
         }
-        // after cleanup of all the asssemblysteps then the currentstep index should be 0
-        ctx.currentStepIndex = 0;
+
+        // Clean every possible stale state, both tracking and runtime; in this way the state should be consistent between each retrial
+        ctx.resetRuntimeState();
     }
 }
