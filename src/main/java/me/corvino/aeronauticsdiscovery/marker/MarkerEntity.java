@@ -1,12 +1,9 @@
 package me.corvino.aeronauticsdiscovery.marker;
 
-import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
-import me.corvino.aeronauticsdiscovery.mixinterface.EntityStickAccess;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -15,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 
@@ -23,7 +19,6 @@ public class MarkerEntity extends Entity {
 
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
-    private static final String TAG_PLOT_POS = "PlotPos";
 
     private static final EntityDataAccessor<String> DATA_BEHAVIOR_ID =
             SynchedEntityData.defineId(MarkerEntity.class, EntityDataSerializers.STRING);
@@ -43,16 +38,10 @@ public class MarkerEntity extends Entity {
         builder.define(DATA_BEHAVIOR_ID, "");
     }
 
-    public void bindToSubLevel(SubLevel subLevel, Vec3 plotPos) {
-        EntityStickAccess.setPlotPosition(this, plotPos);
-    }
-
-    public void unbindFromSubLevel() {
-        EntityStickAccess.clearPlotPosition(this);
-    }
 
     public boolean isBound() {
-        return EntityStickAccess.getPlotPosition(this) != null;
+        //todo: check if on a sublevel 
+        return false;
     }
 
     public void setBehavior(ResourceLocation behaviorId, CompoundTag config) {
@@ -62,20 +51,6 @@ public class MarkerEntity extends Entity {
         this.entityData.set(DATA_BEHAVIOR_ID, behaviorId.toString());
     }
 
-    int lazyTickRate = 0;
-
-    @Override
-    public void tick() {
-        lazyTickRate++;
-        if (lazyTickRate % 40 == 0) {
-            this.level().addParticle(
-                    ParticleTypes.LARGE_SMOKE, this.position().x, this.position().y, this.position().z, 0.0, 0.0, 0.0
-            );
-            lazyTickRate = 0;
-        }
-
-        super.tick();
-    }
 
     @Nullable
     public ResourceLocation getBehaviorId() {

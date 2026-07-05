@@ -2,13 +2,9 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
-import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.List;
@@ -17,8 +13,6 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOV
 
 
 public class RegisterMarkersStep extends AssemblyStep {
-
-    private record MarkerSpec(Vec3 pos, ResourceLocation behaviorId, CompoundTag config) {}
 
     @Override
     protected void build(Sequence seq) {
@@ -35,26 +29,10 @@ public class RegisterMarkersStep extends AssemblyStep {
         AABB searchBounds = new AABB(bounds.minX(), bounds.minY(), bounds.minZ(),
                 bounds.maxX(), bounds.maxY(), bounds.maxZ()).inflate(1.0);
 
-        List<MarkerEntity> originals = ctx.level.getEntitiesOfClass(MarkerEntity.class, searchBounds, m -> true);
+        List<MarkerEntity> markers = ctx.level.getEntitiesOfClass(MarkerEntity.class, searchBounds, m -> true);
 
-        // Capture data + discard the originals
-        List<MarkerSpec> specs = new java.util.ArrayList<>();
-        for (MarkerEntity original : originals) {
-            ResourceLocation behaviorId = original.getBehaviorId();
-            if (behaviorId != null) {
-                specs.add(new MarkerSpec(original.position(), behaviorId, original.getConfig()));
-            }
-            original.discard();
-        }
-
-        for (MarkerSpec spec : specs) {
-            MarkerEntity marker = new MarkerEntity(EntityRegistry.MARKER.get(), ctx.level);
-            marker.setPos(spec.pos().x, spec.pos().y, spec.pos().z);
-            marker.setBehavior(spec.behaviorId(), spec.config());
-            ctx.level.addFreshEntity(marker);
-
+        for (MarkerEntity marker : markers) {
             marker.getPersistentData().putUUID(FLYOVER_ID_TAG, ctx.subLevelId);
-
             MarkerBehavior<?> behavior = marker.resolveBehavior();
             if (behavior != null) {
                 try {
@@ -68,8 +46,8 @@ public class RegisterMarkersStep extends AssemblyStep {
         }
 
         CreateAeronauticsDiscovery.LOGGER.debug(
-                "[RegisterMarkersStep] Replaced {} marker(s) for sub-level {} for template '{}'",
-                specs.size(), ctx.subLevelId, ctx.templateId);
+                "[RegisterMarkersStep] Placed {} marker(s) for sub-level {} for template '{}'",
+                markers.size(), ctx.subLevelId, ctx.templateId);
     }
 
     @Override
