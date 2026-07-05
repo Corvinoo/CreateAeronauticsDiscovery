@@ -21,6 +21,7 @@ public final class Pipelines {
             new ConvertPhysicsBarrelStep(),
             new CleanUpItemEntities(),
             new PopulateSeatsStep(),
+            new RegisterMarkersStep(),
             new UnloadChunkStep()
     )));
 
@@ -43,6 +44,7 @@ public final class Pipelines {
             new ConvertPhysicsBarrelStep(),
             new CleanUpItemEntities(),
             new PopulateSeatsStep(),
+            new RegisterMarkersStep(),
             new UnloadChunkStep()
     )));
 
