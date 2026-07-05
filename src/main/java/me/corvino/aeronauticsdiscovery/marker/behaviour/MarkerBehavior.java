@@ -19,7 +19,7 @@ public interface MarkerBehavior<T extends MarkerBehavior<T>> {
 
     /**
      * Called once, right after this marker has been bound to a freshly-assembled sub-level
-     * (see {@code RegisterMarkersStep})
+     * (see {@code AssembleStep})
      */
     default void onAssembled(MarkerEntity self) {
     }
