@@ -34,7 +34,5 @@ public class EntityRegistry {
                     .noSummon()
                     .sized(0.0F, 0.0F)
                     .eyeHeight(0.0F)
-                    .clientTrackingRange(8)
-                    .updateInterval(Integer.MAX_VALUE) // we drive our own position updates; no need to resync every tick
                     .build("marker"));
 }

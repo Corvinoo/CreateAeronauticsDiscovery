@@ -6,8 +6,8 @@ import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
 import me.corvino.aeronauticsdiscovery.mixinterface.EntityStickAccess;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -62,6 +62,21 @@ public class MarkerEntity extends Entity {
         this.entityData.set(DATA_BEHAVIOR_ID, behaviorId.toString());
     }
 
+    int lazyTickRate = 0;
+
+    @Override
+    public void tick() {
+        lazyTickRate++;
+        if (lazyTickRate % 40 == 0) {
+            this.level().addParticle(
+                    ParticleTypes.LARGE_SMOKE, this.position().x, this.position().y, this.position().z, 0.0, 0.0, 0.0
+            );
+            lazyTickRate = 0;
+        }
+
+        super.tick();
+    }
+
     @Nullable
     public ResourceLocation getBehaviorId() {
         if (this.behaviorId == null) {
@@ -114,12 +129,6 @@ public class MarkerEntity extends Entity {
         }
         this.config = tag.getCompound(TAG_CONFIG);
         this.behavior = null;
-
-        if (tag.contains(TAG_PLOT_POS, Tag.TAG_COMPOUND)) {
-            CompoundTag posTag = tag.getCompound(TAG_PLOT_POS);
-            Vec3 plotPos = new Vec3(posTag.getDouble("x"), posTag.getDouble("y"), posTag.getDouble("z"));
-            EntityStickAccess.setPlotPosition(this, plotPos);
-        }
     }
 
     @Override
@@ -128,15 +137,6 @@ public class MarkerEntity extends Entity {
             tag.putString(TAG_BEHAVIOR_ID, this.behaviorId.toString());
         }
         tag.put(TAG_CONFIG, this.config);
-
-        Vec3 plotPos = EntityStickAccess.getPlotPosition(this);
-        if (plotPos != null) {
-            CompoundTag posTag = new CompoundTag();
-            posTag.putDouble("x", plotPos.x);
-            posTag.putDouble("y", plotPos.y);
-            posTag.putDouble("z", plotPos.z);
-            tag.put(TAG_PLOT_POS, posTag);
-        }
     }
 
     @Override
