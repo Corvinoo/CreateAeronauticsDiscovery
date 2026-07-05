@@ -19,15 +19,6 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 
-/**
- * Generic data-carrying marker entity that tracks sub-level movement via Sable's built-in
- * {@code EntityStickExtension} mixin. After assembly, {@link #bindToSubLevel(SubLevel)} stores
- * the marker's plot-local position; Sable's per-tick mixin then transforms it to world space
- * each tick so the marker follows the sub-level automatically.
- * <p>
- * The plot-local position is persisted to NBT so the marker survives server restarts without
- * losing its attachment to the sub-level.
- */
 public class MarkerEntity extends Entity {
 
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
@@ -39,7 +30,6 @@ public class MarkerEntity extends Entity {
 
     @Nullable private ResourceLocation behaviorId;
     private CompoundTag config = new CompoundTag();
-
     @Nullable private MarkerBehavior<?> behavior;
 
     public MarkerEntity(EntityType<? extends MarkerEntity> type, Level level) {
@@ -53,21 +43,14 @@ public class MarkerEntity extends Entity {
         builder.define(DATA_BEHAVIOR_ID, "");
     }
 
-    /**
-     * Stores the marker's plot-local position into Sable's tracking mixin so the entity
-     * follows the sub-level every tick. Called by {@code RegisterMarkersStep} after assembly.
-     */
-    public void bindToSubLevel(SubLevel subLevel) {
-        Vec3 plotPos = subLevel.logicalPose().transformPositionInverse(this.position());
+    public void bindToSubLevel(SubLevel subLevel, Vec3 plotPos) {
         EntityStickAccess.setPlotPosition(this, plotPos);
     }
 
-    /** Stops sub-level tracking. The marker stays wherever it currently sits. */
     public void unbindFromSubLevel() {
         EntityStickAccess.clearPlotPosition(this);
     }
 
-    /** True if this marker is currently tracking a sub-level. */
     public boolean isBound() {
         return EntityStickAccess.getPlotPosition(this) != null;
     }
@@ -94,10 +77,6 @@ public class MarkerEntity extends Entity {
         return this.config;
     }
 
-    /**
-     * Lazily resolves and caches the behaviour instance for this marker's configured type. Returns null if
-     * no behaviour is configured, or if the configured id/config no longer decodes (e.g. mod update).
-     */
     @Nullable
     public MarkerBehavior<?> resolveBehavior() {
         if (this.behavior != null) {
