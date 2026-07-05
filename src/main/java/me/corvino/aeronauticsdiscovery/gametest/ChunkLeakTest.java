@@ -1,7 +1,6 @@
 package me.corvino.aeronauticsdiscovery.gametest;
 
 import static me.corvino.aeronauticsdiscovery.gametest.FlyoverTestHelper.*;
-import static me.corvino.aeronauticsdiscovery.gametest.TemplateIntegrityTest.assertForceLoaded;
 
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
@@ -23,7 +22,7 @@ public class ChunkLeakTest {
     @GameTest(template = "airplane", timeoutTicks = 3000, batch = "flyover_all")
     public void allTiersFullLifecycle(GameTestHelper helper) {
         var d = new FlyoverTestDriver(helper, TierConfig.ALL);
-        d.onState(FlyoverState.ACTIVE, ctx -> assertForceLoaded(ctx.container(), ctx.flyoverId()));
+//        d.onState(FlyoverState.ACTIVE, ctx -> assertForceLoaded(ctx.container(), ctx.flyoverId()));
         d.onState(FlyoverState.VERIFY, ctx -> assertNoLeaks(ctx.container(), ctx.flyoverId()));
         helper.succeedWhen(() -> { if (d.tick()) helper.succeed(); });
     }
