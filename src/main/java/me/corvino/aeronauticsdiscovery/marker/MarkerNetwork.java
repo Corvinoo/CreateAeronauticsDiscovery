@@ -8,11 +8,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
 
@@ -74,18 +70,27 @@ public final class MarkerNetwork {
     public static void tickAll(long currentTick) {
         if (PENDING.isEmpty()) return;
 
+        List<Runnable> due = new ArrayList<>();
         for (List<ScheduledTask> tasks : PENDING.values()) {
-            tasks.removeIf(scheduled -> {
-                if (scheduled.targetTick() > currentTick) return false;
-                try {
-                    scheduled.task().run();
-                } catch (Exception e) {
-                    CreateAeronauticsDiscovery.LOGGER.error("[MarkerNetwork] Delayed trigger task failed", e);
+            Iterator<ScheduledTask> it = tasks.iterator();
+            while (it.hasNext()) {
+                ScheduledTask scheduled = it.next();
+                if (scheduled.targetTick() <= currentTick) {
+                    due.add(scheduled.task());
+                    it.remove();
                 }
-                return true;
-            });
+            }
         }
         PENDING.values().removeIf(List::isEmpty);
+
+        // Run only after we're fully done reading/mutating PENDING above
+        for (Runnable task : due) {
+            try {
+                task.run();
+            } catch (Exception e) {
+                CreateAeronauticsDiscovery.LOGGER.error("[MarkerNetwork] Delayed trigger task failed", e);
+            }
+        }
     }
 
     /** Clears any pending delayed triggers for a sub-level. Does not affect world-bound pending tasks. */
