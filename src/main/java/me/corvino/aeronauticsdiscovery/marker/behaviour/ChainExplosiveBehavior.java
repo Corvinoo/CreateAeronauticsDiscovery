@@ -5,10 +5,13 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
 import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
+import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
+import java.util.UUID;
 
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
 
@@ -51,25 +54,34 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
     public void onTrigger(MarkerEntity self, MarkerTrigger trigger) {
         if (!(self.level() instanceof ServerLevel serverLevel)) return;
 
-        serverLevel.explode(
-                null,                              
-                null,                                     
-                null,                                     
-                self.getX(),                              
-                self.getY(),                              
-                self.getZ(),                              
-                this.power,                               
-                true,                                     
-                Level.ExplosionInteraction.TNT,           
-                net.minecraft.core.particles.ParticleTypes.EXPLOSION,       
-                net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER,
-                net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE            
-        );
+        CompoundTag data = self.getPersistentData();
+        UUID subLevelId = data.contains(FLYOVER_ID_TAG) ? data.getUUID(FLYOVER_ID_TAG) : null;
 
+        double x = self.getX();
+        double y = self.getY();
+        double z = self.getZ();
+        float pwr = this.power;
+        double rad = this.radius;
+        double propSpeed = this.propagationSpeed;
+        int maxDepth = this.maxChainDepth;
+        net.minecraft.world.phys.Vec3 pos = self.position();
 
-        MarkerTrigger propagated = new MarkerTrigger(MarkerTrigger.Kind.EXPLOSION, self.position(), trigger.chainDepth());
-        MarkerNetwork.notifyTrigger(serverLevel, self.getPersistentData().getUUID(FLYOVER_ID_TAG), propagated,
-                this.radius, this.propagationSpeed, serverLevel.getGameTime(), this.maxChainDepth);
+        // Schedule explosion 1 tick later so Sable's SubLevelHeatMapManager finishes its current tick before blocks are destroyed 
+        TaskScheduler.getInstance().runSyncLater(() -> {
+            serverLevel.explode(
+                    null, null, null,
+                    x, y, z, pwr, true,
+                    Level.ExplosionInteraction.MOB,
+                    net.minecraft.core.particles.ParticleTypes.EXPLOSION,
+                    net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER,
+                    net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE
+            );
+
+            MarkerTrigger propagated = new MarkerTrigger(
+                    MarkerTrigger.Kind.EXPLOSION, pos, trigger.chainDepth());
+            MarkerNetwork.notifyTrigger(serverLevel, subLevelId, propagated,
+                    rad, propSpeed, serverLevel.getGameTime(), maxDepth);
+        }, 1);
     }
 
 }
