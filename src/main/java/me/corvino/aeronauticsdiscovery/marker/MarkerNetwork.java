@@ -47,7 +47,7 @@ public final class MarkerNetwork {
      * grouping.
      */
     public static void notifyTrigger(ServerLevel level, UUID subLevelId, MarkerTrigger trigger,
-                                     double searchRadius, double immediateRadius, double propagationBlocksPerTick,
+                                     double searchRadius, double propagationBlocksPerTick,
                                      long currentTick, int maxChainDepth) {
         if (trigger.chainDepth() > maxChainDepth) return;
 
@@ -56,9 +56,9 @@ public final class MarkerNetwork {
         for (MarkerEntity marker : resolveBoundMarkers(level, key, trigger.originWorldPos(), searchRadius)) {
             double distance = marker.position().distanceTo(trigger.originWorldPos());
 
-            if (distance <= immediateRadius) {
+            if (propagationBlocksPerTick <= 0) {
                 fire(marker, trigger);
-            } else if (propagationBlocksPerTick > 0) {
+            } else {
                 long delayTicks = (long) Math.ceil(distance / propagationBlocksPerTick);
                 schedule(key, currentTick + delayTicks, () -> fire(marker, trigger.withDepth(trigger.chainDepth() + 1)));
             }
