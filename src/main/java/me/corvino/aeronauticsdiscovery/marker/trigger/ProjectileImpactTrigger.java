@@ -19,7 +19,7 @@ public final class ProjectileImpactTrigger {
         if (!(marker.level() instanceof ServerLevel serverLevel)) return;
         if (!marker.isAlive() || !marker.isBound()) return;
 
-        MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.PROJECTILE, marker.position(), 0);
+        MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.PROJECTILE, marker.position());
         MarkerNetwork.triggerDirect(marker, trigger);
         event.setCanceled(true);
     }

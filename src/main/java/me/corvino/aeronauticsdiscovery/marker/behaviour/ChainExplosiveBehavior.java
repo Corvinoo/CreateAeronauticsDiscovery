@@ -23,10 +23,9 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOV
  * @param power              explosion power, same scale as vanilla {@code Level#explode}
  * @param propagationSpeed   blocks/tick the reaction travels outward; < 0 fires every marker in range instantly
  * @param radius             world-space search radius for discovering other markers
- * @param maxChainDepth      safety cap on propagation hops
  */
 public record ChainExplosiveBehavior(float power, double propagationSpeed,
-                                     double radius, int maxChainDepth)
+                                     double radius)
         implements MarkerBehavior<ChainExplosiveBehavior> {
 
     public static final MarkerBehaviorType<ChainExplosiveBehavior> TYPE = MarkerBehaviorTypes.<ChainExplosiveBehavior>register(
@@ -34,14 +33,12 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
             RecordCodecBuilder.create(instance -> instance.group(
                     Codec.FLOAT.fieldOf("power").forGetter(ChainExplosiveBehavior::power),
                     Codec.DOUBLE.fieldOf("propagation_speed").forGetter(ChainExplosiveBehavior::propagationSpeed),
-                    Codec.DOUBLE.fieldOf("radius").forGetter(ChainExplosiveBehavior::radius),
-                    Codec.INT.fieldOf("max_chain_depth").forGetter(ChainExplosiveBehavior::maxChainDepth)
+                    Codec.DOUBLE.fieldOf("radius").forGetter(ChainExplosiveBehavior::radius)
             ).apply(instance, ChainExplosiveBehavior::new)),
             List.of(
                     new ConfigField("power", "Power", ConfigField.FieldType.FLOAT, 4.0f),
                     new ConfigField("propagation_speed", "Propagation Speed", ConfigField.FieldType.DOUBLE, 5.0),
-                    new ConfigField("radius", "Radius", ConfigField.FieldType.DOUBLE, 100.0),
-                    new ConfigField("max_chain_depth", "Max Chain Depth", ConfigField.FieldType.INTEGER, 10)
+                    new ConfigField("radius", "Radius", ConfigField.FieldType.DOUBLE, 100.0)
             ),
             0x80FF4040
     );
@@ -63,7 +60,6 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
         float pwr = this.power;
         double rad = this.radius;
         double propSpeed = this.propagationSpeed;
-        int maxDepth = this.maxChainDepth;
         net.minecraft.world.phys.Vec3 pos = self.position();
 
         // Schedule explosion 1 tick later so Sable's SubLevelHeatMapManager finishes its current tick before blocks are destroyed 
@@ -78,9 +74,9 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
             );
 
             MarkerTrigger propagated = new MarkerTrigger(
-                    MarkerTrigger.Kind.EXPLOSION, pos, trigger.chainDepth());
+                    MarkerTrigger.Kind.EXPLOSION, pos);
             MarkerNetwork.notifyTrigger(serverLevel, subLevelId, propagated,
-                    rad, propSpeed, serverLevel.getGameTime(), maxDepth);
+                    rad, propSpeed, serverLevel.getGameTime());
         }, 1);
     }
 
