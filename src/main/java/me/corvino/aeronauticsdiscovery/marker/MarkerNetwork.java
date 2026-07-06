@@ -106,6 +106,7 @@ public final class MarkerNetwork {
 
     private static void fire(MarkerEntity marker, MarkerTrigger trigger) {
         if (!marker.isAlive() || !marker.isBound()) return;
+        marker.discard();
         MarkerBehavior<?> behavior = marker.resolveBehavior();
         if (behavior != null) {
             behavior.onTrigger(marker, trigger);

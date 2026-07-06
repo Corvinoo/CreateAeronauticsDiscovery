@@ -57,6 +57,8 @@ public final class MarkerTestCommand {
 
         behavior.onAssembled(marker);
 
+        marker.discard();
+
         MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.PLAYER_PROXIMITY, marker.position(), 0);
         behavior.onTrigger(marker, trigger);
 
