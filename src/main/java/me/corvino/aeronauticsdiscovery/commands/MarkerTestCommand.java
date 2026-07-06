@@ -59,7 +59,7 @@ public final class MarkerTestCommand {
 
         marker.discard();
 
-        MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.PLAYER_PROXIMITY, marker.position(), 0);
+        MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.PLAYER_PROXIMITY, marker.position());
         behavior.onTrigger(marker, trigger);
 
         source.sendSuccess(() -> Component.literal("§8[§6✧§8] §aTriggered §f" + marker.getBehaviorId().getPath() + " §aat " + pos.getX() + " " + pos.getY() + " " + pos.getZ()), true);
