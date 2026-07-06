@@ -39,6 +39,7 @@ public final class MarkerBehaviorTypes {
     public static void bootstrap() {
         touch(ChainExplosiveBehavior.TYPE);
         touch(MobSpawnPointBehavior.TYPE);
+        touch(SeatMobBehavior.TYPE);
     }
 
     private static void touch(MarkerBehaviorType<?> type) {

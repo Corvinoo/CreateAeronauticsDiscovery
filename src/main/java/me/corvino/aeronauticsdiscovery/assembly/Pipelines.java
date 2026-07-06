@@ -20,7 +20,7 @@ public final class Pipelines {
             new AddForceLoadTicketStep(),
             new ConvertPhysicsBarrelStep(),
             new CleanUpItemEntities(),
-            new PopulateSeatsStep(),
+//            new PopulateSeatsStep(),
             new RegisterMarkersStep(),
             new UnloadChunkStep()
     )));
@@ -43,7 +43,7 @@ public final class Pipelines {
             new AddForceLoadTicketStep(),
             new ConvertPhysicsBarrelStep(),
             new CleanUpItemEntities(),
-            new PopulateSeatsStep(),
+//            new PopulateSeatsStep(),
             new RegisterMarkersStep(),
             new UnloadChunkStep()
     )));
