@@ -32,7 +32,7 @@ public class EntityRegistry {
     public static final DeferredHolder<EntityType<?>, EntityType<MarkerEntity>> MARKER = ENTITIES.register("marker",
             () -> EntityType.Builder.of(MarkerEntity::new, MobCategory.MISC)
                     .noSummon()
-                    .sized(0.0F, 0.0F)
+                    .sized(1.0F, 1.0F)
                     .eyeHeight(0.0F)
                     .build("marker"));
 }

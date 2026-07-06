@@ -94,6 +94,11 @@ public final class MarkerNetwork {
         }
     }
 
+    /** Public entry point for triggering a single specific marker from external systems (projectile, collision, etc.). */
+    public static void triggerDirect(MarkerEntity marker, MarkerTrigger trigger) {
+        fire(marker, trigger);
+    }
+
     /** Clears any pending delayed triggers for a sub-level. Does not affect world-bound pending tasks. */
     public static void clear(UUID subLevelId) {
         PENDING.remove(subLevelId);

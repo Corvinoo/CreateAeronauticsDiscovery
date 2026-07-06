@@ -13,6 +13,7 @@ public record MarkerTrigger(Kind kind, Vec3 originWorldPos, int chainDepth) {
         PLAYER_PROXIMITY,
         EXTERNAL_FORCE,
         EXPLOSION,
+        PROJECTILE,
     }
 
     public MarkerTrigger withDepth(int newDepth) {
