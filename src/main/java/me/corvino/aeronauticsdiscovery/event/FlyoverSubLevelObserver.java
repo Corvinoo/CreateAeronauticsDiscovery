@@ -9,6 +9,7 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -32,6 +33,7 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
         if (!reason.equals(SubLevelRemovalReason.REMOVED)) return;
         if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
         if (subLevel.getName() == null || !subLevel.getName().contains("flyover")) return;
+        MarkerNetwork.clear(subLevel.getUniqueId());
         FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
         manager.enqueueExternalRemoval(subLevel.getUniqueId());
     }

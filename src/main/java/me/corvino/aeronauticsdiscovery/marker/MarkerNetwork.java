@@ -1,10 +1,12 @@
 package me.corvino.aeronauticsdiscovery.marker;
 
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,42 +28,43 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOV
  *   sub-level's {@link me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager#FLYOVER_ID_TAG},
  *   exactly the same convention {@code SeatPopulator} already uses for traders.</li>
  *   <li>A trigger (explosion, external force, proximity) is posted once via {@link #notifyTrigger}, which
- *   does a single distance pass over that flyover's markers and schedules delayed callbacks for the ones
+ *   does a single distance pass over the relevant markers and schedules delayed callbacks for the ones
  *   that should react - rather than each marker polling its surroundings every tick.</li>
  * </ul>
- * Once a marker is bound via {@link MarkerEntity#bindToSubLevel}, Sable's own tracking keeps its
- * {@code position()} correctly updated in real world space every tick (see that method's javadoc), so
- * ordinary world-space distances between markers stay correct through the sub-level's motion/rotation -
- * there's no need to work in plot-local space for this.
+ * Markers without a sub-level tag (world-bound markers, e.g. placed manually with the wand on a normal
+ * block) are grouped under {@link #WORLD_BOUND_KEY} internally. Their triggers propagate spatially within
+ * the search radius, with no sub-level grouping.
  */
 public final class MarkerNetwork {
     private MarkerNetwork() {}
+
+    /** Sentinel UUID for world-bound markers (those without {@code FLYOVER_ID_TAG}). */
+    private static final UUID WORLD_BOUND_KEY = new UUID(0, 0);
 
     private record ScheduledTask(long targetTick, Runnable task) {}
 
     private static final Map<UUID, List<ScheduledTask>> PENDING = new HashMap<>();
 
     /**
-     * Posts a trigger to every marker bound to {@code subLevelId}, searched for within
-     * {@code searchRadius} world-space blocks of {@code trigger.originWorldPos()} (pass something at least
-     * as large as the flyover's own extent plus your max propagation distance). Markers within
-     * {@code immediateRadius} react immediately; every other bound marker found still gets notified, but
-     * after a delay of {@code distance / propagationSpeedPerTick} ticks - giving a natural "explosion
-     * travels outward" chain-reaction feel without any marker needing to know about any other.
+     * Posts a trigger to markers bound to a sub-level, or to world-bound markers when {@code subLevelId}
+     * is {@code null}. World-bound markers are resolved purely by spatial proximity, with no sub-level
+     * grouping.
      */
     public static void notifyTrigger(ServerLevel level, UUID subLevelId, MarkerTrigger trigger,
                                      double searchRadius, double immediateRadius, double propagationBlocksPerTick,
                                      long currentTick, int maxChainDepth) {
         if (trigger.chainDepth() > maxChainDepth) return;
 
-        for (MarkerEntity marker : resolveBoundMarkers(level, subLevelId, trigger.originWorldPos(), searchRadius)) {
+        UUID key = subLevelId != null ? subLevelId : WORLD_BOUND_KEY;
+
+        for (MarkerEntity marker : resolveBoundMarkers(level, key, trigger.originWorldPos(), searchRadius)) {
             double distance = marker.position().distanceTo(trigger.originWorldPos());
 
             if (distance <= immediateRadius) {
                 fire(marker, trigger);
             } else if (propagationBlocksPerTick > 0) {
                 long delayTicks = (long) Math.ceil(distance / propagationBlocksPerTick);
-                schedule(subLevelId, currentTick + delayTicks, () -> fire(marker, trigger.withDepth(trigger.chainDepth() + 1)));
+                schedule(key, currentTick + delayTicks, () -> fire(marker, trigger.withDepth(trigger.chainDepth() + 1)));
             }
         }
     }
@@ -85,13 +88,20 @@ public final class MarkerNetwork {
         PENDING.values().removeIf(List::isEmpty);
     }
 
-    /** Clears any pending delayed triggers for a sub-level - call this when a flyover is removed. */
+    /** Clears any pending delayed triggers for a sub-level. Does not affect world-bound pending tasks. */
     public static void clear(UUID subLevelId) {
         PENDING.remove(subLevelId);
     }
 
-    private static void schedule(UUID subLevelId, long targetTick, Runnable task) {
-        PENDING.computeIfAbsent(subLevelId, id -> new ArrayList<>()).add(new ScheduledTask(targetTick, task));
+    /** Tick listener registered in {@code CreateAeronauticsDiscovery}. */
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        if (event.getLevel() instanceof ServerLevel serverLevel) {
+            tickAll(serverLevel.getGameTime());
+        }
+    }
+
+    private static void schedule(UUID key, long targetTick, Runnable task) {
+        PENDING.computeIfAbsent(key, id -> new ArrayList<>()).add(new ScheduledTask(targetTick, task));
     }
 
     private static void fire(MarkerEntity marker, MarkerTrigger trigger) {
@@ -102,11 +112,24 @@ public final class MarkerNetwork {
         }
     }
 
-    private static List<MarkerEntity> resolveBoundMarkers(ServerLevel level, UUID subLevelId, Vec3 originWorldPos, double searchRadius) {
+    /**
+     * Resolves markers matching the given key:
+     * <ul>
+     *   <li>{@link #WORLD_BOUND_KEY} - markers without {@code FLYOVER_ID_TAG} that are {@link MarkerEntity#isBound()}</li>
+     *   <li>Any other UUID - markers whose persistent data contains a matching {@code FLYOVER_ID_TAG}</li>
+     * </ul>
+     */
+    private static List<MarkerEntity> resolveBoundMarkers(ServerLevel level, UUID key, Vec3 originWorldPos, double searchRadius) {
         AABB bounds = new AABB(
                 originWorldPos.x - searchRadius, originWorldPos.y - searchRadius, originWorldPos.z - searchRadius,
                 originWorldPos.x + searchRadius, originWorldPos.y + searchRadius, originWorldPos.z + searchRadius);
-        return level.getEntitiesOfClass(MarkerEntity.class, bounds, marker ->
-                subLevelId.equals(marker.getPersistentData().getUUID(FLYOVER_ID_TAG)) && marker.isBound());
+
+        return level.getEntitiesOfClass(MarkerEntity.class, bounds, marker -> {
+            UUID existingId = marker.getPersistentData().getUUID(FLYOVER_ID_TAG);
+            if (WORLD_BOUND_KEY.equals(key)) {
+                return existingId == null && marker.isBound();
+            }
+            return key.equals(existingId) && marker.isBound();
+        });
     }
 }
