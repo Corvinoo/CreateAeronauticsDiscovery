@@ -18,28 +18,26 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOV
  * marker knowing which (or how many) other markers exist
  *
  * @param power              explosion power, same scale as vanilla {@code Level#explode}
- * @param chainRadius        markers within this many blocks (plot-local) explode immediately
- * @param propagationSpeed   blocks/tick the reaction travels outward beyond {@code chainRadius}
+ * @param propagationSpeed   blocks/tick the reaction travels outward; < 0 fires every marker in range instantly
+ * @param radius             world-space search radius for discovering other markers
  * @param maxChainDepth      safety cap on propagation hops
  */
-public record ChainExplosiveBehavior(float power, double chainRadius, double propagationSpeed,
-                                     double searchRadius, int maxChainDepth)
+public record ChainExplosiveBehavior(float power, double propagationSpeed,
+                                     double radius, int maxChainDepth)
         implements MarkerBehavior<ChainExplosiveBehavior> {
 
     public static final MarkerBehaviorType<ChainExplosiveBehavior> TYPE = MarkerBehaviorTypes.<ChainExplosiveBehavior>register(
             "chain_explosive",
             RecordCodecBuilder.create(instance -> instance.group(
                     Codec.FLOAT.fieldOf("power").forGetter(ChainExplosiveBehavior::power),
-                    Codec.DOUBLE.fieldOf("chain_radius").forGetter(ChainExplosiveBehavior::chainRadius),
                     Codec.DOUBLE.fieldOf("propagation_speed").forGetter(ChainExplosiveBehavior::propagationSpeed),
-                    Codec.DOUBLE.optionalFieldOf("search_radius", 100.0).forGetter(ChainExplosiveBehavior::searchRadius), //todo: needs to be put inside old nbt
+                    Codec.DOUBLE.fieldOf("radius").forGetter(ChainExplosiveBehavior::radius),
                     Codec.INT.fieldOf("max_chain_depth").forGetter(ChainExplosiveBehavior::maxChainDepth)
             ).apply(instance, ChainExplosiveBehavior::new)),
             List.of(
                     new ConfigField("power", "Power", ConfigField.FieldType.FLOAT, 4.0f),
-                    new ConfigField("chain_radius", "Chain Radius", ConfigField.FieldType.DOUBLE, 10.0),
                     new ConfigField("propagation_speed", "Propagation Speed", ConfigField.FieldType.DOUBLE, 5.0),
-                    new ConfigField("search_radius", "Search Radius", ConfigField.FieldType.DOUBLE, 100.0),
+                    new ConfigField("radius", "Radius", ConfigField.FieldType.DOUBLE, 100.0),
                     new ConfigField("max_chain_depth", "Max Chain Depth", ConfigField.FieldType.INTEGER, 10)
             ),
             0x80FF4040
@@ -71,7 +69,7 @@ public record ChainExplosiveBehavior(float power, double chainRadius, double pro
 
         MarkerTrigger propagated = new MarkerTrigger(MarkerTrigger.Kind.EXPLOSION, self.position(), trigger.chainDepth());
         MarkerNetwork.notifyTrigger(serverLevel, self.getPersistentData().getUUID(FLYOVER_ID_TAG), propagated,
-                this.searchRadius, this.chainRadius, this.propagationSpeed, serverLevel.getGameTime(), this.maxChainDepth);
+                this.radius, this.propagationSpeed, serverLevel.getGameTime(), this.maxChainDepth);
     }
 
 }
