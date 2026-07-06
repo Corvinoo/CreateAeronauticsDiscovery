@@ -3,6 +3,7 @@ package me.corvino.aeronauticsdiscovery.marker;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -131,7 +132,8 @@ public final class MarkerNetwork {
                 originWorldPos.x + searchRadius, originWorldPos.y + searchRadius, originWorldPos.z + searchRadius);
 
         return level.getEntitiesOfClass(MarkerEntity.class, bounds, marker -> {
-            UUID existingId = marker.getPersistentData().getUUID(FLYOVER_ID_TAG);
+            CompoundTag data = marker.getPersistentData();
+            UUID existingId = data.contains(FLYOVER_ID_TAG) ? data.getUUID(FLYOVER_ID_TAG) : null;
             if (WORLD_BOUND_KEY.equals(key)) {
                 return existingId == null && marker.isBound();
             }
