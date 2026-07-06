@@ -1,5 +1,7 @@
 package me.corvino.aeronauticsdiscovery.items;
 
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.ConfigField;
@@ -13,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -24,6 +27,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
 
 import java.util.List;
 
@@ -78,6 +83,21 @@ public class    MarkerWandItem extends Item {
         MarkerEntity marker = new MarkerEntity(EntityRegistry.MARKER.get(), level);
         marker.setPos(epos.x, epos.y, epos.z);
         marker.setBehavior(behaviorId, config);
+
+        
+        // Putting sublevel id into marker if created inside sublevel bounds  
+        if (level instanceof ServerLevel serverLevel) {
+            var container = SubLevelContainer.getContainer(serverLevel);
+            if (container != null) {
+                for (SubLevel sl : container.getAllSubLevels()) {
+                    if (sl.boundingBox().toMojang().contains(epos)) {
+                        marker.getPersistentData().putUUID(FLYOVER_ID_TAG, sl.getUniqueId());
+                        break;
+                    }
+                }
+            }
+        }
+
         level.addFreshEntity(marker);
 
         player.sendSystemMessage(Component.literal(

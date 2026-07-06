@@ -10,6 +10,8 @@ import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
+import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
+import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -188,12 +190,15 @@ public class FlyoverManager extends SavedData {
     private void release(FlyoverData entry, ServerSubLevel subLevel) {
         LOGGER.info("[FLYOVER] Releasing {} ('{}') - player approached - handing off to Sable",
                 entry.subLevelId(), entry.templateId());
+        MarkerNetwork.clear(entry.subLevelId());
+        FlyoverUtils.removeAllEntitiesInSublevel(subLevel, false, e -> e instanceof MarkerEntity, true); //deleting markers on release
         removeForceTicket(subLevel);
     }
 
     private void beginDespawn(FlyoverData entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
         UUID id = entry.subLevelId();
         LOGGER.info("[FLYOVER] Despawning {} ('{}') - {}", id, entry.templateId(), reason.describe());
+        MarkerNetwork.clear(id);
         removeSubLevelFromWorld(subLevel);
     }
 

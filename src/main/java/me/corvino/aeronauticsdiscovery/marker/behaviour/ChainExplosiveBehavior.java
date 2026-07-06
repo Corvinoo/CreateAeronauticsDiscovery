@@ -32,7 +32,7 @@ public record ChainExplosiveBehavior(float power, double chainRadius, double pro
                     Codec.FLOAT.fieldOf("power").forGetter(ChainExplosiveBehavior::power),
                     Codec.DOUBLE.fieldOf("chain_radius").forGetter(ChainExplosiveBehavior::chainRadius),
                     Codec.DOUBLE.fieldOf("propagation_speed").forGetter(ChainExplosiveBehavior::propagationSpeed),
-                    Codec.DOUBLE.fieldOf("search_radius").forGetter(ChainExplosiveBehavior::searchRadius),
+                    Codec.DOUBLE.optionalFieldOf("search_radius", 100.0).forGetter(ChainExplosiveBehavior::searchRadius), //todo: needs to be put inside old nbt
                     Codec.INT.fieldOf("max_chain_depth").forGetter(ChainExplosiveBehavior::maxChainDepth)
             ).apply(instance, ChainExplosiveBehavior::new)),
             List.of(
