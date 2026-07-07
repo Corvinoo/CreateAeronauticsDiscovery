@@ -36,6 +36,14 @@ public class Config {
                     + "Set to 0 to fire on every collision.")
             .defineInRange("impact.strengthThreshold", 5.0, 0.0, 1000.0);
 
+    private static final ModConfigSpec.BooleanValue EXPLOSION_FIRE = BUILDER
+            .comment("Whether chain explosive markers create fire on detonation.")
+            .define("impact.explosionFire", false);
+
+    private static final ModConfigSpec.BooleanValue EXPLOSION_BLOCKS = BUILDER
+            .comment("Whether chain explosive markers actually destroys blocks on explosion.")
+            .define("impact.explosionDamage", false);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
@@ -44,6 +52,8 @@ public class Config {
     public static int flyoverMaxUnloadDistance;
     public static boolean flyoverObstacleCheck;
     public static double impactStrengthThreshold;
+    public static boolean explosionFire;
+    public static boolean explosionBlocks;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -53,5 +63,7 @@ public class Config {
         flyoverMaxUnloadDistance = FLYOVER_MAX_UNLOAD_DISTANCE.get();
         flyoverObstacleCheck = FLYOVER_OBSTACLE_AVOIDANCE.get();
         impactStrengthThreshold = IMPACT_STRENGTH_THRESHOLD.get();
+        explosionFire = EXPLOSION_FIRE.get();
+        explosionBlocks = EXPLOSION_BLOCKS.get();
     }
 }
