@@ -3,6 +3,7 @@ package me.corvino.aeronauticsdiscovery.marker.behaviour;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.ryanhcode.sable.Sable;
+import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
 import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
@@ -67,14 +68,16 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
         float pwr = this.power;
         double rad = this.radius;
         double propSpeed = this.propagationSpeed;
+        boolean fire = Config.explosionFire;
+        boolean damageBlocks = Config.explosionBlocks;
         net.minecraft.world.phys.Vec3 pos = self.position();
 
         // Schedule explosion 1 tick later so Sable's SubLevelHeatMapManager finishes its current tick before blocks are destroyed 
         TaskScheduler.getInstance().runSyncLater(() -> {
             serverLevel.explode(
                     null, null, null,
-                    x, y, z, pwr, true,
-                    Level.ExplosionInteraction.MOB,
+                    x, y, z, pwr, fire,
+                    damageBlocks ? Level.ExplosionInteraction.MOB : Level.ExplosionInteraction.NONE,
                     net.minecraft.core.particles.ParticleTypes.EXPLOSION,
                     net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER,
                     net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE
