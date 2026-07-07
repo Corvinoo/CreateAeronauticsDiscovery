@@ -7,6 +7,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import net.minecraft.server.level.ServerLevel;
@@ -50,6 +51,14 @@ public class MarkerSubLevelObserver implements SubLevelObserver {
             if (!(sl instanceof ServerSubLevel serverSL)) return;
             initializeMarkers(serverSL);
         }, 1);
+    }
+
+    @Override
+    public void onSubLevelRemoved(SubLevel subLevel, SubLevelRemovalReason reason) {
+        if (!reason.equals(SubLevelRemovalReason.REMOVED)) return;
+        if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
+        FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
+        MarkerNetwork.clear(subLevel.getUniqueId());
     }
 
     private void initializeMarkers(ServerSubLevel subLevel) {
