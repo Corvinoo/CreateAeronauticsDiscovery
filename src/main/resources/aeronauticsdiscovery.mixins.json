@@ -9,6 +9,7 @@
     "accessor.PersistentEntitySectionManagerAccessor",
     "hook.SubLevelAssemblyHelperMixin",
     "hook.ProjectileCanHitMarkerMixin",
+    "hook.BlockWithSubLevelCallbackMixin",
     "patch.AquiferMixin"
   ],
   "client": [

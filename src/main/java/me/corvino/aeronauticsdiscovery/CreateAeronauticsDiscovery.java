@@ -24,8 +24,10 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverEventScheduler;
 import me.corvino.aeronauticsdiscovery.event.StructureProximityTracker;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
+import me.corvino.aeronauticsdiscovery.physics.SubLevelImpactManager;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
+import dev.ryanhcode.sable.platform.SableEventPlatform;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -106,6 +108,9 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
         TaskScheduler.setup();
+
+        SableEventPlatform.INSTANCE.onPostPhysicsTick((system, timeStep) ->
+                SubLevelImpactManager.get(system.getLevel()).fireEvents(system.getLevel()));
 
         modEventBus.addListener(this::onTicketControllerRegister);
 
