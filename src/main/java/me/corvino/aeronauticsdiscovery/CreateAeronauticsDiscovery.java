@@ -7,6 +7,7 @@ import me.corvino.aeronauticsdiscovery.client.renderer.MarkerEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
+import me.corvino.aeronauticsdiscovery.marker.MarkerSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.marker.trigger.ProjectileImpactTrigger;
 import me.corvino.aeronauticsdiscovery.commands.CleanChildSubLevelsCommand;
 import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
@@ -98,6 +99,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(FlyoverEventScheduler::onLevelTick);
         NeoForge.EVENT_BUS.addListener(FlyoverManager::onLevelTick);
         NeoForge.EVENT_BUS.addListener(MarkerNetwork::onLevelTick);
+        NeoForge.EVENT_BUS.addListener(MarkerSubLevelObserver::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ProjectileImpactTrigger::onProjectileImpact);
 //        NeoForge.EVENT_BUS.addListener(StructureProximityTracker::onLevelTick); //disabled for now
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);

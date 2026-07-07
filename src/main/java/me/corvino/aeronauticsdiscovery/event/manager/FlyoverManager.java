@@ -33,7 +33,6 @@ import static me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER;
 
 public class FlyoverManager extends SavedData {
 
-    public static final String FLYOVER_ID_TAG = "flyover_sublevel_id";
     public static final TicketController ticketController = new TicketController(
             ResourceLocation.fromNamespaceAndPath(CreateAeronauticsDiscovery.MODID, "chunkticketmanager")
     );

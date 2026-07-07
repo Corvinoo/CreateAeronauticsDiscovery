@@ -14,7 +14,7 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 import java.util.UUID;
 
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 /**
  * Explodes at this marker's position and hands the trigger off to {@link MarkerNetwork} so nearby bound
@@ -53,7 +53,7 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
         if (!(self.level() instanceof ServerLevel serverLevel)) return;
 
         CompoundTag data = self.getPersistentData();
-        UUID subLevelId = data.contains(FLYOVER_ID_TAG) ? data.getUUID(FLYOVER_ID_TAG) : null;
+        UUID subLevelId = data.contains(SUBLEVEL_ID_TAG) ? data.getUUID(SUBLEVEL_ID_TAG) : null;
         // null fallback mechanism
         if (subLevelId == null) {
             var sl = Sable.HELPER.getContaining(serverLevel, self.position());

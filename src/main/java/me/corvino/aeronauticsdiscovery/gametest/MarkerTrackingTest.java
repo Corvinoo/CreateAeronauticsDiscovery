@@ -1,7 +1,7 @@
 package me.corvino.aeronauticsdiscovery.gametest;
 
 import static me.corvino.aeronauticsdiscovery.gametest.FlyoverTestHelper.*;
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -88,7 +88,7 @@ public class MarkerTrackingTest {
 
             AABB bb = subLevel.boundingBox().toMojang();
             List<MarkerEntity> markers = level.getEntitiesOfClass(MarkerEntity.class, bb,
-                    m -> flyoverId.equals(m.getPersistentData().getUUID(FLYOVER_ID_TAG)));
+                    m -> flyoverId.equals(m.getPersistentData().getUUID(SUBLEVEL_ID_TAG)));
 
             int bound = 0;
             for (MarkerEntity m : markers) {

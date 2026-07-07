@@ -28,7 +28,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 import java.util.List;
 
@@ -90,7 +90,7 @@ public class    MarkerWandItem extends Item {
         if (level instanceof ServerLevel serverLevel) {
             SubLevel sl = Sable.HELPER.getContaining(serverLevel, epos);
             if (sl != null) {
-                marker.getPersistentData().putUUID(FLYOVER_ID_TAG, sl.getUniqueId());
+                marker.getPersistentData().putUUID(SUBLEVEL_ID_TAG, sl.getUniqueId());
             }
         }
 

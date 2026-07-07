@@ -17,7 +17,7 @@ import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 public class MarkerEntity extends Entity {
 
@@ -45,10 +45,10 @@ public class MarkerEntity extends Entity {
 
     public boolean isBound() {
         CompoundTag data = getPersistentData();
-        if (data.hasUUID(FLYOVER_ID_TAG)) {
+        if (data.hasUUID(SUBLEVEL_ID_TAG)) {
             if (!(level() instanceof ServerLevel serverLevel)) return false;
             var container = SubLevelContainer.getContainer(serverLevel);
-            return container != null && container.getSubLevel(data.getUUID(FLYOVER_ID_TAG)) != null;
+            return container != null && container.getSubLevel(data.getUUID(SUBLEVEL_ID_TAG)) != null;
         }
         return getBehaviorId() != null;
     }

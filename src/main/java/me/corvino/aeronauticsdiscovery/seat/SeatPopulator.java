@@ -16,7 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static me.corvino.aeronauticsdiscovery.entities.EntityRegistry.SOARING_TRADER;
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 public final class SeatPopulator {
     private SeatPopulator() {}
@@ -34,7 +34,7 @@ public final class SeatPopulator {
             }
 
             trader.setPos(projected.x() + 0.5, projected.y(), projected.z() + 0.5);
-            trader.getPersistentData().putUUID(FLYOVER_ID_TAG, subLevel.getUniqueId()); 
+            trader.getPersistentData().putUUID(SUBLEVEL_ID_TAG, subLevel.getUniqueId()); 
 //            trader.setPersistenceRequired(); //fixes random despawn
 
             if (!level.addFreshEntity(trader)) {
@@ -49,7 +49,7 @@ public final class SeatPopulator {
 
 
         level.getEntitiesOfClass(SoaringTrader.class, bounds.inflate(1), trader ->
-                subLevel.getUniqueId().equals(trader.getPersistentData().getUUID(FLYOVER_ID_TAG))
+                subLevel.getUniqueId().equals(trader.getPersistentData().getUUID(SUBLEVEL_ID_TAG))
                         && !trader.isPassenger()
         ).forEach(trader -> {
             findSeatPositions(subLevel).stream()

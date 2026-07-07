@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.ticketController;
 
 public class FlyoverUtils {
@@ -84,7 +84,7 @@ public class FlyoverUtils {
             if (!onlyOwnedBySubLevel) return true;
 
             CompoundTag data = entity.getPersistentData();
-            return data.hasUUID(FLYOVER_ID_TAG) && data.getUUID(FLYOVER_ID_TAG).equals(subLevelId);
+            return data.hasUUID(SUBLEVEL_ID_TAG) && data.getUUID(SUBLEVEL_ID_TAG).equals(subLevelId);
         };
     }
 

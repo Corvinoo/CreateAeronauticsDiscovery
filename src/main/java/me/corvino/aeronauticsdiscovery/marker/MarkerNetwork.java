@@ -11,7 +11,7 @@ import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import java.util.*;
 
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 /**
  * Handles "markers aware of other markers" without ever giving one marker a direct reference to another.
@@ -22,7 +22,7 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOV
  * <ul>
  *   <li>Membership in a flyover's marker set is never stored explicitly - it's resolved on demand by
  *   querying a world-space region around the trigger for {@link MarkerEntity} instances tagged with that
- *   sub-level's {@link me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager#FLYOVER_ID_TAG},
+ *   sub-level's {@link me.corvino.aeronauticsdiscovery.util.SubLevelTags#SUBLEVEL_ID_TAG},
  *   exactly the same convention {@code SeatPopulator} already uses for traders.</li>
  *   <li>A trigger (explosion, external force, proximity) is posted once via {@link #notifyTrigger}, which
  *   does a single distance pass over the relevant markers and schedules delayed callbacks for the ones
@@ -35,7 +35,7 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOV
 public final class MarkerNetwork {
     private MarkerNetwork() {}
 
-    /** Sentinel UUID for world-bound markers (those without {@code FLYOVER_ID_TAG}). */
+    /** Sentinel UUID for world-bound markers (those without {@code SUBLEVEL_ID_TAG}). */
     private static final UUID WORLD_BOUND_KEY = new UUID(0, 0);
 
     private record ScheduledTask(long targetTick, Runnable task) {}
@@ -125,8 +125,8 @@ public final class MarkerNetwork {
     /**
      * Resolves markers matching the given key:
      * <ul>
-     *   <li>{@link #WORLD_BOUND_KEY} - markers without {@code FLYOVER_ID_TAG} that are {@link MarkerEntity#isBound()}</li>
-     *   <li>Any other UUID - markers whose persistent data contains a matching {@code FLYOVER_ID_TAG}</li>
+     *   <li>{@link #WORLD_BOUND_KEY} - markers without {@code SUBLEVEL_ID_TAG} that are {@link MarkerEntity#isBound()}</li>
+     *   <li>Any other UUID - markers whose persistent data contains a matching {@code SUBLEVEL_ID_TAG}</li>
      * </ul>
      */
     private static List<MarkerEntity> resolveBoundMarkers(ServerLevel level, UUID key, Vec3 originWorldPos, double searchRadius) {
@@ -136,7 +136,7 @@ public final class MarkerNetwork {
 
         return level.getEntitiesOfClass(MarkerEntity.class, bounds, marker -> {
             CompoundTag data = marker.getPersistentData();
-            UUID existingId = data.contains(FLYOVER_ID_TAG) ? data.getUUID(FLYOVER_ID_TAG) : null;
+            UUID existingId = data.contains(SUBLEVEL_ID_TAG) ? data.getUUID(SUBLEVEL_ID_TAG) : null;
             if (WORLD_BOUND_KEY.equals(key)) {
                 return existingId == null && marker.isBound();
             }
