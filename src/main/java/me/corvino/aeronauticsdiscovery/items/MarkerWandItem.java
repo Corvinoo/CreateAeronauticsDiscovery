@@ -1,7 +1,6 @@
 package me.corvino.aeronauticsdiscovery.items;
 
 import dev.ryanhcode.sable.Sable;
-import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
@@ -86,9 +85,8 @@ public class    MarkerWandItem extends Item {
         marker.setBehavior(behaviorId, config);
 
         
-        // Tag marker with sublevel UUID if placed inside a sublevel's world-space bounds.
-        // Uses Sable.HELPER.getContaining() which properly handles local→world coordinate transforms
-        // (sl.boundingBox() returns plot-local, not world coordinates).
+        // Tag marker with sublevel UUID if placed inside a sublevel's bounding box.
+        // Uses Sable.HELPER.getContaining() (sl.boundingBox() returns plot-local, not world coordinates).
         if (level instanceof ServerLevel serverLevel) {
             SubLevel sl = Sable.HELPER.getContaining(serverLevel, epos);
             if (sl != null) {

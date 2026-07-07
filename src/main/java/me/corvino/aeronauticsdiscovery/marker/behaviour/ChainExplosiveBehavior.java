@@ -54,7 +54,7 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
 
         CompoundTag data = self.getPersistentData();
         UUID subLevelId = data.contains(FLYOVER_ID_TAG) ? data.getUUID(FLYOVER_ID_TAG) : null;
-        // Fallback: if this marker lacks the tag (e.g. placed before the wand fix), resolve dynamically
+        // null fallback mechanism
         if (subLevelId == null) {
             var sl = Sable.HELPER.getContaining(serverLevel, self.position());
             if (sl != null) subLevelId = sl.getUniqueId();
