@@ -21,7 +21,7 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOV
  */
 public record SeatMobBehavior(ResourceLocation mobId) implements MarkerBehavior<SeatMobBehavior> {
 
-    public static final MarkerBehaviorType<SeatMobBehavior> TYPE = MarkerBehaviorTypes.register(
+    public static final MarkerBehaviorType<SeatMobBehavior> TYPE = MarkerBehaviorTypes.<SeatMobBehavior>register(
             "seat_mob",
             RecordCodecBuilder.create(instance -> instance.group(
                     ResourceLocation.CODEC.fieldOf("mob_id").forGetter(SeatMobBehavior::mobId)

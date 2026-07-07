@@ -2,6 +2,7 @@ package me.corvino.aeronauticsdiscovery.marker.behaviour;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.ryanhcode.sable.Sable;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
 import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
@@ -53,6 +54,12 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
 
         CompoundTag data = self.getPersistentData();
         UUID subLevelId = data.contains(FLYOVER_ID_TAG) ? data.getUUID(FLYOVER_ID_TAG) : null;
+        // Fallback: if this marker lacks the tag (e.g. placed before the wand fix), resolve dynamically
+        if (subLevelId == null) {
+            var sl = Sable.HELPER.getContaining(serverLevel, self.position());
+            if (sl != null) subLevelId = sl.getUniqueId();
+        }
+        final UUID resolvedSubLevelId = subLevelId;
 
         double x = self.getX();
         double y = self.getY();
@@ -75,7 +82,7 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
 
             MarkerTrigger propagated = new MarkerTrigger(
                     MarkerTrigger.Kind.EXPLOSION, pos);
-            MarkerNetwork.notifyTrigger(serverLevel, subLevelId, propagated,
+            MarkerNetwork.notifyTrigger(serverLevel, resolvedSubLevelId, propagated,
                     rad, propSpeed, serverLevel.getGameTime());
         }, 1);
     }
