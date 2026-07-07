@@ -33,8 +33,8 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
         if (!reason.equals(SubLevelRemovalReason.REMOVED)) return;
         if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
         if (subLevel.getName() == null || !subLevel.getName().contains("flyover")) return;
-        MarkerNetwork.clear(subLevel.getUniqueId());
         FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
+        MarkerNetwork.clear(subLevel.getUniqueId());
         manager.enqueueExternalRemoval(subLevel.getUniqueId());
     }
 }

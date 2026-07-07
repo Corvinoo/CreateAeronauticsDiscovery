@@ -198,7 +198,6 @@ public class FlyoverManager extends SavedData {
     private void beginDespawn(FlyoverData entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
         UUID id = entry.subLevelId();
         LOGGER.info("[FLYOVER] Despawning {} ('{}') - {}", id, entry.templateId(), reason.describe());
-        MarkerNetwork.clear(id);
         removeSubLevelFromWorld(subLevel);
     }
 
