@@ -31,6 +31,11 @@ public class Config {
                     + "the spawn point and the player. May introduce a minor performance overhead")
             .define("flyover.obstacleCheck", false);
 
+    private static final ModConfigSpec.DoubleValue IMPACT_STRENGTH_THRESHOLD = BUILDER
+            .comment("Minimum impact velocity (m/s) along the contact normal to fire a SubLevelImpactEvent. "
+                    + "Set to 0 to fire on every collision.")
+            .defineInRange("impact.strengthThreshold", 5.0, 0.0, 1000.0);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
@@ -38,6 +43,7 @@ public class Config {
     public static int macroChunkSize;
     public static int flyoverMaxUnloadDistance;
     public static boolean flyoverObstacleCheck;
+    public static double impactStrengthThreshold;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -46,5 +52,6 @@ public class Config {
         macroChunkSize = MACRO_CHUNK_SIZE.get();
         flyoverMaxUnloadDistance = FLYOVER_MAX_UNLOAD_DISTANCE.get();
         flyoverObstacleCheck = FLYOVER_OBSTACLE_AVOIDANCE.get();
+        impactStrengthThreshold = IMPACT_STRENGTH_THRESHOLD.get();
     }
 }
