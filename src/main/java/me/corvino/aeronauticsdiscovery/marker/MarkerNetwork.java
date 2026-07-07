@@ -5,7 +5,6 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
@@ -135,77 +134,13 @@ public final class MarkerNetwork {
                 originWorldPos.x - searchRadius, originWorldPos.y - searchRadius, originWorldPos.z - searchRadius,
                 originWorldPos.x + searchRadius, originWorldPos.y + searchRadius, originWorldPos.z + searchRadius);
 
-        // DEBUG: search parameters 
-        String entityGetterClass = level.getEntities().getClass().getSimpleName();
-        System.out.println("[MARKER_DEBUG] resolveBoundMarkers called"
-                + " key=" + key
-                + " origin=" + originWorldPos
-                + " radius=" + searchRadius
-                + " bounds=" + bounds
-                + " entityGetter=" + entityGetterClass);
-
-        // DEBUG: dump ALL markers in the level via getAll() 
-        int allCount = 0;
-        for (Entity e : level.getEntities().getAll()) {
-            if (e instanceof MarkerEntity m) {
-                allCount++;
-                CompoundTag d = m.getPersistentData();
-                UUID tag = d.hasUUID(FLYOVER_ID_TAG) ? d.getUUID(FLYOVER_ID_TAG) : null;
-                System.out.println("[MARKER_DEBUG] getAll: id=" + m.getBehaviorId()
-                        + " pos=" + m.position()
-                        + " level=" + m.level().getClass().getName()
-                        + " isSL=" + (m.level() instanceof ServerLevel)
-                        + " isAlive=" + m.isAlive()
-                        + " isBound=" + m.isBound()
-                        + " tag=" + tag);
-            }
-        }
-        System.out.println("[MARKER_DEBUG] getAll found " + allCount + " MarkerEntity total in level");
-
-        //  DEBUG: raw AABB query (before predicate filtering) 
-        List<MarkerEntity> rawAabb = level.getEntitiesOfClass(MarkerEntity.class, bounds, m -> true);
-        System.out.println("[MARKER_DEBUG] AABB query returned " + rawAabb.size() + " markers (unfiltered)");
-        for (MarkerEntity m : rawAabb) {
-            CompoundTag d = m.getPersistentData();
-            UUID tag = d.hasUUID(FLYOVER_ID_TAG) ? d.getUUID(FLYOVER_ID_TAG) : null;
-            System.out.println("[MARKER_DEBUG] AABB raw: id=" + m.getBehaviorId()
-                    + " pos=" + m.position()
-                    + " level=" + m.level().getClass().getName()
-                    + " isSL=" + (m.level() instanceof ServerLevel)
-                    + " isAlive=" + m.isAlive()
-                    + " isBound=" + m.isBound()
-                    + " tag=" + tag
-                    + " distance=" + m.position().distanceTo(originWorldPos));
-        }
-
-        //  DEBUG: step-by-step filtering 
-        List<MarkerEntity> results = new ArrayList<>();
-        for (MarkerEntity marker : rawAabb) {
+        return level.getEntitiesOfClass(MarkerEntity.class, bounds, marker -> {
             CompoundTag data = marker.getPersistentData();
             UUID existingId = data.contains(FLYOVER_ID_TAG) ? data.getUUID(FLYOVER_ID_TAG) : null;
-
-            boolean tagMatches;
             if (WORLD_BOUND_KEY.equals(key)) {
-                tagMatches = existingId == null;
-            } else {
-                tagMatches = key.equals(existingId);
+                return existingId == null && marker.isBound();
             }
-            boolean bound = marker.isBound();
-            boolean passes = tagMatches && bound;
-
-            System.out.println("[MARKER_DEBUG] filter: id=" + marker.getBehaviorId()
-                    + " pos=" + marker.position()
-                    + " existingId=" + existingId
-                    + " key=" + key
-                    + " tagMatches=" + tagMatches
-                    + " isBound=" + bound
-                    + " PASSES=" + passes);
-
-            if (passes) {
-                results.add(marker);
-            }
-        }
-        System.out.println("[MARKER_DEBUG] resolveBoundMarkers returning " + results.size() + " markers");
-        return results;
+            return key.equals(existingId) && marker.isBound();
+        });
     }
 }
