@@ -25,7 +25,7 @@ import net.minecraft.world.phys.AABB;
 import java.util.List;
 import java.util.Objects;
 
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 public class AssembleStep extends AssemblyStep {
     @Override
@@ -67,7 +67,7 @@ public class AssembleStep extends AssemblyStep {
         //TODO: better entity tagging
         var plotAABB = result.subLevel().getPlot().getBoundingBox().toAABB();
         ctx.level.getEntities((Entity) null, plotAABB, e -> !(e instanceof ServerPlayer))
-                .forEach(e -> e.getPersistentData().putUUID(FLYOVER_ID_TAG, result.subLevel().getUniqueId()));
+                .forEach(e -> e.getPersistentData().putUUID(SUBLEVEL_ID_TAG, result.subLevel().getUniqueId()));
 
         ctx.assemblyResult = result;
         ctx.subLevelId = result.subLevel().getUniqueId();

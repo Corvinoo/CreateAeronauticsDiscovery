@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.Block;
 
 import java.util.List;
 
-import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.FLYOVER_ID_TAG;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 /**
  * Spawns one instance of {@code mobId} at this marker's position and mounts it onto a Create seat.
@@ -56,9 +56,9 @@ public record SeatMobBehavior(ResourceLocation mobId) implements MarkerBehavior<
         if (mob == null) return;
 
         mob.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
-        if (self.getPersistentData().hasUUID(FLYOVER_ID_TAG)) {
-            mob.getPersistentData().putUUID(FLYOVER_ID_TAG,
-                    self.getPersistentData().getUUID(FLYOVER_ID_TAG));
+        if (self.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)) {
+            mob.getPersistentData().putUUID(SUBLEVEL_ID_TAG,
+                    self.getPersistentData().getUUID(SUBLEVEL_ID_TAG));
         }
         if (!serverLevel.addFreshEntity(mob)) {
             CreateAeronauticsDiscovery.LOGGER.warn(
