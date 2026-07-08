@@ -30,7 +30,9 @@ public final class SubLevelImpactTrigger {
         for (MarkerEntity marker : level.getEntitiesOfClass(MarkerEntity.class,
                 event.getSubLevel().boundingBox().toMojang())) {
             if (!marker.isAlive() || !marker.isBound()) continue;
-            if (!subLevelId.equals(marker.getPersistentData().getUUID(SUBLEVEL_ID_TAG))) continue;
+            var data = marker.getPersistentData();
+            if (!data.hasUUID(SUBLEVEL_ID_TAG)) continue;
+            if (!subLevelId.equals(data.getUUID(SUBLEVEL_ID_TAG))) continue;
             if (!ChainExplosiveBehavior.TYPE.id().equals(marker.getBehaviorId())) continue;
 
             double distSq = marker.position().distanceToSqr(impactPos);
