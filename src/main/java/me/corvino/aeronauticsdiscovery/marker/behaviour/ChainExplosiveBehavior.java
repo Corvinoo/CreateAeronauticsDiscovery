@@ -7,10 +7,13 @@ import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
 import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
+import me.corvino.aeronauticsdiscovery.physics.explosion.ExplosionStrategy;
+import me.corvino.aeronauticsdiscovery.physics.explosion.SphereExplosion;
+import me.corvino.aeronauticsdiscovery.physics.explosion.VanillaExplosion;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +47,7 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
             ),
             0x80FF4040
     );
+
     @Override
     public MarkerBehaviorType<ChainExplosiveBehavior> type() {
         return TYPE;
@@ -55,36 +59,29 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
 
         CompoundTag data = self.getPersistentData();
         UUID subLevelId = data.contains(SUBLEVEL_ID_TAG) ? data.getUUID(SUBLEVEL_ID_TAG) : null;
-        // null fallback mechanism
         if (subLevelId == null) {
             var sl = Sable.HELPER.getContaining(serverLevel, self.position());
             if (sl != null) subLevelId = sl.getUniqueId();
         }
         final UUID resolvedSubLevelId = subLevelId;
 
-        double x = self.getX();
-        double y = self.getY();
-        double z = self.getZ();
         float pwr = this.power;
         double rad = this.radius;
         double propSpeed = this.propagationSpeed;
-        boolean fire = Config.explosionFire;
         boolean damageBlocks = Config.explosionBlocks;
-        net.minecraft.world.phys.Vec3 pos = self.position();
+        Vec3 pos = self.position();
 
-        // Schedule explosion 1 tick later so Sable's SubLevelHeatMapManager finishes its current tick before blocks are destroyed 
         TaskScheduler.getInstance().runSyncLater(() -> {
-            serverLevel.explode(
-                    null, null, null,
-                    x, y, z, pwr, fire,
-                    damageBlocks ? Level.ExplosionInteraction.MOB : Level.ExplosionInteraction.NONE,
-                    net.minecraft.core.particles.ParticleTypes.EXPLOSION,
-                    net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER,
-                    net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE
-            );
+            if (damageBlocks) {
+                boolean fire = Config.explosionFire;
+                ExplosionStrategy strategy = switch (Config.explosionStrategy) {
+                    case VANILLA -> VanillaExplosion.INSTANCE;
+                    case OPTIMIZED -> SphereExplosion.INSTANCE;
+                };
+                strategy.explode(serverLevel, pos, pwr, fire);
+            }
 
-            MarkerTrigger propagated = new MarkerTrigger(
-                    MarkerTrigger.Kind.EXPLOSION, pos);
+            MarkerTrigger propagated = new MarkerTrigger(MarkerTrigger.Kind.EXPLOSION, pos);
             MarkerNetwork.notifyTrigger(serverLevel, resolvedSubLevelId, propagated,
                     rad, propSpeed, serverLevel.getGameTime());
         }, 1);
