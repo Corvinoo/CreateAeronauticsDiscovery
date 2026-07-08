@@ -16,9 +16,11 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundMerchantOffersPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.UseItemGoal;
@@ -32,8 +34,10 @@ import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
@@ -49,6 +53,36 @@ import javax.annotation.Nullable;
 import static java.lang.Math.atan2;
 
 public class SoaringTrader extends WanderingTrader {
+    private int angryTicks;
+
+    public void makeAngry(int ticks) {
+        if (angryTicks <= 0 && ticks > 0) applyAnger();
+        else if (angryTicks > 0 && ticks <= 0) resetAnger();
+        angryTicks = ticks;
+    }
+
+    private void applyAnger() {
+        MerchantOffers offers = getOffers();
+        for (MerchantOffer offer : offers) {
+            offer.setSpecialPriceDiff(offer.getItemCostA().count());
+        }
+        syncOffers();
+    }
+
+    private void resetAnger() {
+        MerchantOffers offers = getOffers();
+        for (MerchantOffer offer : offers) {
+            offer.resetSpecialPriceDiff();
+        }
+        syncOffers();
+    }
+
+    private void syncOffers() {
+        if (this.getTradingPlayer() instanceof ServerPlayer player && player.connection != null)
+            player.connection.send(new ClientboundMerchantOffersPacket(
+                    player.containerMenu.containerId, this.getOffers(), 0, 0, false, false));
+    }
+
     private static final String[] CREATE_FOODS = {
             "create:bar_of_chocolate",
             "create:sweet_roll",
@@ -235,6 +269,8 @@ public class SoaringTrader extends WanderingTrader {
                 new ItemStack(randomClockOrToolbox(), 1),
                 2, 0, 0.0F
         ));
+
+        if (angryTicks > 0) applyAnger();
     }
 
     @Override
@@ -244,10 +280,32 @@ public class SoaringTrader extends WanderingTrader {
     }
 
     @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (!this.level().isClientSide && source.getEntity() instanceof ServerPlayer)
+            makeAngry(me.corvino.aeronauticsdiscovery.Config.traderAngerDuration);
+        return super.hurt(source, amount);
+    }
+
+    @Override
     public void tick() {
         super.tick();
-        if (this.level() instanceof ServerLevel serverLevel)
+        if (this.level() instanceof ServerLevel serverLevel) {
             tickStabilizer(serverLevel);
+            tickAnger(serverLevel);
+        }
+    }
+
+    private void tickAnger(ServerLevel serverLevel) {
+        if (angryTicks <= 0) return;
+        angryTicks--;
+        if (angryTicks <= 0) {
+            resetAnger();
+            return;
+        }
+        if (angryTicks % 20 == 0)
+            serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
+                    this.getRandomX(0.5), this.getY(1.0), this.getRandomZ(0.5),
+                    1, 0.0, 0.0, 0.0, 0.0);
     }
 
     @Nullable
