@@ -43,7 +43,7 @@ public record ChainExplosiveBehavior(float power, double propagationSpeed,
             List.of(
                     new ConfigField("power", "Power", ConfigField.FieldType.FLOAT, 4.0f),
                     new ConfigField("propagation_speed", "Propagation Speed", ConfigField.FieldType.DOUBLE, 5.0),
-                    new ConfigField("radius", "Radius", ConfigField.FieldType.DOUBLE, 100.0)
+                    new ConfigField("radius", "Radius", ConfigField.FieldType.DOUBLE, 10.0)
             ),
             0x80FF4040
     );

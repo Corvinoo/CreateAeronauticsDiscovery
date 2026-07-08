@@ -27,7 +27,6 @@ public final class SphereExplosion implements ExplosionStrategy {
         BlockPos centerPos = BlockPos.containing(center);
         int radius = Mth.ceil(power);
 
-        // Sound + particles ALWAYS play, regardless of toBlow
         float pitch = (1.0f + (level.random.nextFloat() - level.random.nextFloat()) * 0.2f) * 0.7f;
         level.playSound(null, center.x, center.y, center.z, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 4.0f, pitch);
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.x, center.y, center.z, 1, 0.0, 0.0, 0.0, 0.0);
@@ -54,8 +53,6 @@ public final class SphereExplosion implements ExplosionStrategy {
 
         if (toBlow.isEmpty()) return;
 
-        // Use vanilla Explosion with pre-computed blocks — calls finalizeExplosion only
-        // (skips the expensive explode() raycasting + entity processing)
         Explosion explosion = new Explosion(
                 level, null,
                 center.x, center.y, center.z,
