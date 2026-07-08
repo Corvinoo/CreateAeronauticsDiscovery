@@ -231,7 +231,7 @@ public class FlyoverManager extends SavedData {
     }
 
     private boolean isPlayerNearSubLevel(SubLevel subLevel) {
-        AABB proximityBox = subLevel.boundingBox().toMojang().inflate(5.0);
+        AABB proximityBox = subLevel.boundingBox().toMojang().inflate(1.0);
         for (ServerPlayer player : level.players()) {
             if (proximityBox.contains(player.position().x, player.position().y, player.position().z)) {
                 return true;
