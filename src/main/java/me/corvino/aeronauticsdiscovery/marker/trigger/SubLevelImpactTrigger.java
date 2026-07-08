@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.marker.trigger;
 
+import me.corvino.aeronauticsdiscovery.entities.SoaringTrader;
 import me.corvino.aeronauticsdiscovery.event.SubLevelImpactEvent;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
@@ -10,6 +11,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
 
+import static me.corvino.aeronauticsdiscovery.Config.traderAngerDuration;
 import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 public final class SubLevelImpactTrigger {
@@ -23,6 +25,13 @@ public final class SubLevelImpactTrigger {
                 event.getImpactPosition().y,
                 event.getImpactPosition().z
         );
+        // making soaring trader angry todo: probably move trigger elsewhere
+        for (SoaringTrader trader : level.getEntitiesOfClass(SoaringTrader.class,
+                event.getSubLevel().boundingBox().toMojang())) {
+            var data = trader.getPersistentData();
+            if (data.hasUUID(SUBLEVEL_ID_TAG) && subLevelId.equals(data.getUUID(SUBLEVEL_ID_TAG)))
+                trader.makeAngry(traderAngerDuration);
+        }
 
         MarkerEntity closest = null;
         double closestDistSq = Double.MAX_VALUE;

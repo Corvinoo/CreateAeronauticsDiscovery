@@ -48,6 +48,10 @@ public class Config {
             .comment("Explosion mode: OPTIMIZED (no raycasting) or VANILLA (more accurate, can be very slow on sublevels).")
             .defineEnum("impact.explosion.strategy", ExplosionMode.OPTIMIZED);
 
+    private static final ModConfigSpec.IntValue TRADER_ANGER_DURATION = BUILDER
+            .comment("How long the SoaringTrader stays angry (prices doubled) after a crash or being hit, in ticks (20 ticks = 1 second).")
+            .defineInRange("trader.angerDurationTicks", 12000, 1, Integer.MAX_VALUE);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
@@ -59,6 +63,7 @@ public class Config {
     public static boolean explosionBlocks;
     public static boolean explosionFire;
     public static ExplosionMode explosionStrategy;
+    public static int traderAngerDuration;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -71,6 +76,7 @@ public class Config {
         explosionBlocks = EXPLOSION_BLOCKS.get();
         explosionFire = EXPLOSION_FIRE.get();
         explosionStrategy = EXPLOSION_STRATEGY.get();
+        traderAngerDuration = TRADER_ANGER_DURATION.get();
     }
 
     public enum ExplosionMode {
