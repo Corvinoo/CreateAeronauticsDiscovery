@@ -18,16 +18,13 @@ public interface MarkerBehavior<T extends MarkerBehavior<T>> {
     MarkerBehaviorType<T> type();
 
     /**
-     * Called once, right after this marker has been bound to a freshly-assembled sub-level
-     * (see {@code AssembleStep})
-     */
-    default void onAssembled(MarkerEntity self) {
-    }
-
-    /**
-     * Called when a trigger reaches this marker - either because it was the origin of the trigger, or
+     * Called when a trigger reaches this marker — either because it was the origin of the trigger, or
      * because {@link MarkerNetwork} propagated one to it (e.g. a delayed chain-reaction). Call
      * {@code MarkerNetwork.notifyTrigger(...)} from here to keep the chain going.
+     * <p>
+     * The trigger {@link MarkerTrigger.Kind#ASSEMBLED} is dispatched once when the sub-level this
+     * marker belongs to finishes assembly. Implementations that set up persistent sub-level features
+     * (mob spawns, seat mounts, etc.) should respond to this kind.
      */
     default void onTrigger(MarkerEntity self, MarkerTrigger trigger) {
     }
