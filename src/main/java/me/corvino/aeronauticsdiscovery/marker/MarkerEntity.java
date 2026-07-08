@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
@@ -142,4 +143,10 @@ public class MarkerEntity extends Entity {
     public boolean isPushable() {
         return false;
     }
+
+    @Override
+    public boolean ignoreExplosion(Explosion explosion) {
+        return true;
+    }
+
 }
