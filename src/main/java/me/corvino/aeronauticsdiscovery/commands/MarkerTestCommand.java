@@ -1,10 +1,9 @@
 package me.corvino.aeronauticsdiscovery.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import me.corvino.aeronauticsdiscovery.items.MarkerWandItem;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
+import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
 import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -49,18 +48,9 @@ public final class MarkerTestCommand {
         }
 
         MarkerEntity marker = markers.get(0);
-        MarkerBehavior<?> behavior = marker.resolveBehavior();
-        if (behavior == null) {
-            source.sendFailure(Component.literal("Marker has no valid behavior configured"));
-            return 0;
-        }
 
-        behavior.onAssembled(marker);
-
-        marker.discard();
-
-        MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.PLAYER_PROXIMITY, marker.position());
-        behavior.onTrigger(marker, trigger);
+        MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.ASSEMBLED, marker.position());
+        MarkerNetwork.triggerDirect(marker, trigger);
 
         source.sendSuccess(() -> Component.literal("§8[§6✧§8] §aTriggered §f" + marker.getBehaviorId().getPath() + " §aat " + pos.getX() + " " + pos.getY() + " " + pos.getZ()), true);
         return 1;

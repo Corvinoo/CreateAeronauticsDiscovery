@@ -4,6 +4,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.content.contraptions.actors.seat.SeatBlock;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
+import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +18,7 @@ import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 /**
  * Spawns one instance of {@code mobId} at this marker's position and mounts it onto a Create seat.
- * Only activates if a {@link SeatBlock} exists at the marker's block position.
+ * Requires a {@link SeatBlock} at the marker's position.
  */
 public record SeatMobBehavior(ResourceLocation mobId) implements MarkerBehavior<SeatMobBehavior> {
 
@@ -38,7 +39,7 @@ public record SeatMobBehavior(ResourceLocation mobId) implements MarkerBehavior<
     }
 
     @Override
-    public void onAssembled(MarkerEntity self) {
+    public void onTrigger(MarkerEntity self, MarkerTrigger trigger) {
         if (!(self.level() instanceof ServerLevel serverLevel)) return;
 
         BlockPos pos = self.blockPosition();

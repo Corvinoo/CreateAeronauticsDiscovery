@@ -6,9 +6,7 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
@@ -69,16 +67,9 @@ public class MarkerSubLevelObserver implements SubLevelObserver {
                 MarkerEntity.class, bounds.inflate(1.0), m -> true);
 
         for (MarkerEntity marker : markers) {
-            MarkerBehavior<?> behavior = marker.resolveBehavior();
-            if (behavior != null) {
-                try {
-                    behavior.onAssembled(marker);
-                } catch (Exception e) {
-                    CreateAeronauticsDiscovery.LOGGER.error(
-                            "[MarkerSubLevelObserver] onAssembled failed for behavior '{}' at {}",
-                            marker.getBehaviorId(), marker.blockPosition(), e);
-                }
-            }
+            if (!marker.isAlive()) continue;
+            MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.ASSEMBLED, marker.position());
+            MarkerNetwork.triggerDirect(marker, trigger);
         }
     }
 }

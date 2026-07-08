@@ -4,6 +4,8 @@ import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
+import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
+import me.corvino.aeronauticsdiscovery.marker.TriggerMask;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.ConfigField;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
@@ -39,6 +41,7 @@ public class    MarkerWandItem extends Item {
 
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
+    private static final String TAG_TRIGGER_MASK = "TriggerMask";
 
     public MarkerWandItem(Properties properties) {
         super(properties);
@@ -83,6 +86,7 @@ public class    MarkerWandItem extends Item {
         MarkerEntity marker = new MarkerEntity(EntityRegistry.MARKER.get(), level);
         marker.setPos(epos.x, epos.y, epos.z);
         marker.setBehavior(behaviorId, config);
+        marker.setTriggerMask(getTriggerMask(tag));
 
         
         // Tag marker with sublevel UUID if placed inside a sublevel's bounding box.
@@ -136,6 +140,7 @@ public class    MarkerWandItem extends Item {
             }
         }
 
+        msg.append(Component.literal("  §7Triggers: " + triggerMaskSummary(marker.getTriggerMask()) + "\n"));
         msg.append(Component.literal("  §7Bound: §" + (marker.isBound() ? "aYes" : "cNo") + "\n"));
 
         MutableComponent removeBtn = Component.literal("§8[§c✕ Remove§8]")
@@ -196,13 +201,29 @@ public class    MarkerWandItem extends Item {
             }
         }
 
+        TriggerMask mask = getTriggerMask(tag);
+        msg.append(Component.literal("  §7Triggers: " + triggerMaskSummary(mask) + "  "));
+        MutableComponent editTriggersBtn = Component.literal("§8[§6✎ Triggers§8]")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand trigger"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("§7Configure which trigger kinds activate this marker"))));
+        msg.append(editTriggersBtn);
+        msg.append(Component.literal("\n"));
+
         msg.append(Component.literal("  §7Right-click a block to place the marker"));
         return msg;
     }
 
     public static void initConfig(ItemStack stack) {
         CompoundTag tag = getDataTag(stack);
-        if (tag.contains(TAG_BEHAVIOR_ID)) return;
+        if (!tag.contains(TAG_TRIGGER_MASK, CompoundTag.TAG_INT)) {
+            setTriggerMask(tag, TriggerMask.NONE);
+        }
+        if (tag.contains(TAG_BEHAVIOR_ID)) {
+            setDataTag(stack, tag);
+            return;
+        }
         var all = MarkerBehaviorTypes.getAll();
         if (all.isEmpty()) return;
         var first = all.values().iterator().next();
@@ -218,6 +239,74 @@ public class    MarkerWandItem extends Item {
 
     public static void setDataTag(ItemStack stack, CompoundTag tag) {
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+
+    public static TriggerMask getTriggerMask(CompoundTag tag) {
+        if (!tag.contains(TAG_TRIGGER_MASK, CompoundTag.TAG_INT)) return TriggerMask.NONE;
+        return new TriggerMask(tag.getInt(TAG_TRIGGER_MASK));
+    }
+
+    public static void setTriggerMask(CompoundTag tag, TriggerMask mask) {
+        tag.putInt(TAG_TRIGGER_MASK, mask.bits());
+    }
+
+    public static void toggleTriggerKind(ItemStack stack, MarkerTrigger.Kind kind) {
+        CompoundTag tag = getDataTag(stack);
+        TriggerMask mask = getTriggerMask(tag);
+        if (mask.accepts(kind)) {
+            mask = mask.without(kind);
+        } else {
+            mask = mask.with(kind);
+        }
+        setTriggerMask(tag, mask);
+        setDataTag(stack, tag);
+    }
+
+    public static Component buildTriggerMaskUI(ItemStack stack) {
+        CompoundTag tag = getDataTag(stack);
+        TriggerMask mask = getTriggerMask(tag);
+
+        MutableComponent msg = Component.literal("");
+        msg.append(Component.literal("§8[§6- Edit Triggers -§8]\n"));
+
+        for (MarkerTrigger.Kind kind : MarkerTrigger.Kind.values()) {
+            boolean enabled = mask.accepts(kind);
+            String icon = enabled ? "§a✓" : "§8✕";
+            String color = enabled ? "§a" : "§8";
+            MutableComponent toggleBtn = Component.literal("§8[§7" + icon + "§8]")
+                    .withStyle(style -> style
+                            .withClickEvent(new ClickEvent(RUN_COMMAND,
+                                    "/markerwand trigger " + kind.name()))
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                    Component.literal(enabled
+                                            ? "§cClick to disable " + kind.displayName()
+                                            : "§aClick to enable " + kind.displayName()))));
+            msg.append(Component.literal("  "));
+            msg.append(toggleBtn);
+            msg.append(Component.literal(" " + color + kind.displayName() + "\n"));
+        }
+
+        MutableComponent backBtn = Component.literal("§8[§6← Back§8]")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("§7Return to main wand config"))));
+        msg.append(Component.literal("  "));
+        msg.append(backBtn);
+
+        return msg;
+    }
+
+    private static String triggerMaskSummary(TriggerMask mask) {
+        if (mask.isEmpty()) return "§8(none)";
+        StringBuilder sb = new StringBuilder();
+        for (MarkerTrigger.Kind kind : MarkerTrigger.Kind.values()) {
+            if (mask.accepts(kind)) {
+                if (!sb.isEmpty()) sb.append("§7, ");
+                sb.append("§a").append(kind.displayName());
+            }
+        }
+        return sb.toString();
     }
 
     public static String readConfigValue(CompoundTag config, ConfigField field) {

@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.items.MarkerWandItem;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
+import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.ConfigField;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
@@ -31,6 +32,7 @@ public final class MarkerWandCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("markerwand")
                 .requires(source -> source.hasPermission(0))
+                .executes(ctx -> showMainUI(ctx.getSource()))
                 .then(Commands.literal("cycle")
                         .executes(ctx -> cycle(ctx.getSource())))
                 .then(Commands.literal("set")
@@ -42,6 +44,11 @@ public final class MarkerWandCommand {
                 .then(Commands.literal("remove")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                 .executes(ctx -> remove(ctx.getSource(), BlockPosArgument.getBlockPos(ctx, "pos")))))
+                .then(Commands.literal("trigger")
+                        .executes(ctx -> showTriggerUI(ctx.getSource()))
+                        .then(Commands.argument("kind", StringArgumentType.word())
+                                .executes(ctx -> toggleTrigger(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "kind")))))
         );
     }
 
@@ -146,6 +153,51 @@ public final class MarkerWandCommand {
 
         marker.discard();
         source.sendSuccess(() -> Component.literal("§8[§6✧§8] §aRemoved marker at " + pos.getX() + " " + pos.getY() + " " + pos.getZ()), true);
+        return 1;
+    }
+
+    private static int showMainUI(CommandSourceStack source) {
+        Player player = requirePlayer(source);
+        if (player == null) return 0;
+
+        ItemStack stack = player.getMainHandItem();
+        if (!validateWand(source, stack)) return 0;
+
+        MarkerWandItem.initConfig(stack);
+        player.sendSystemMessage(MarkerWandItem.buildConfigUI(stack));
+        return 1;
+    }
+
+    private static int showTriggerUI(CommandSourceStack source) {
+        Player player = requirePlayer(source);
+        if (player == null) return 0;
+
+        ItemStack stack = player.getMainHandItem();
+        if (!validateWand(source, stack)) return 0;
+
+        MarkerWandItem.initConfig(stack);
+        player.sendSystemMessage(MarkerWandItem.buildTriggerMaskUI(stack));
+        return 1;
+    }
+
+    private static int toggleTrigger(CommandSourceStack source, String kindName) {
+        Player player = requirePlayer(source);
+        if (player == null) return 0;
+
+        ItemStack stack = player.getMainHandItem();
+        if (!validateWand(source, stack)) return 0;
+
+        MarkerTrigger.Kind kind;
+        try {
+            kind = MarkerTrigger.Kind.valueOf(kindName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            source.sendFailure(Component.literal("Unknown trigger kind: " + kindName));
+            return 0;
+        }
+
+        MarkerWandItem.initConfig(stack);
+        MarkerWandItem.toggleTriggerKind(stack, kind);
+        player.sendSystemMessage(MarkerWandItem.buildTriggerMaskUI(stack));
         return 1;
     }
 
