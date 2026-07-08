@@ -5,6 +5,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
+import java.awt.geom.GeneralPath;
+
 @EventBusSubscriber(modid = CreateAeronauticsDiscovery.MODID)
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
@@ -52,6 +54,13 @@ public class Config {
             .comment("How long the SoaringTrader stays angry (prices doubled) after a crash or being hit, in ticks (20 ticks = 1 second).")
             .defineInRange("trader.angerDurationTicks", 12000, 1, Integer.MAX_VALUE);
 
+    private static final ModConfigSpec.BooleanValue PROCESS_ALL_SUBLEVEL = BUILDER.
+            comment("If enabled, all sublevels including the ones NOT created by this mod will be processed for internal physics detection."+ 
+                    "\n This makes event triggers such as 'External Force' markers work regardless of the sublevel internal data. " +
+                    " \n Useful while building using Pins.")
+            .define("general.processAll", false);
+    
+    
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
@@ -64,6 +73,7 @@ public class Config {
     public static boolean explosionFire;
     public static ExplosionMode explosionStrategy;
     public static int traderAngerDuration;
+    public static boolean processAllSublevels;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -77,6 +87,7 @@ public class Config {
         explosionFire = EXPLOSION_FIRE.get();
         explosionStrategy = EXPLOSION_STRATEGY.get();
         traderAngerDuration = TRADER_ANGER_DURATION.get();
+        processAllSublevels = PROCESS_ALL_SUBLEVEL.get();
     }
 
     public enum ExplosionMode {

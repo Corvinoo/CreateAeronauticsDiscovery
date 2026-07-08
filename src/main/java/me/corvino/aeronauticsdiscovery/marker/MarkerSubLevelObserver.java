@@ -8,6 +8,8 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
+
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
@@ -63,11 +65,16 @@ public class MarkerSubLevelObserver implements SubLevelObserver {
         AABB bounds = subLevel.boundingBox().toMojang();
         if (bounds.getXsize() <= 0 && bounds.getYsize() <= 0 && bounds.getZsize() <= 0) return;
 
-        List<MarkerEntity> markers = level.getEntitiesOfClass(
-                MarkerEntity.class, bounds.inflate(1.0), m -> true);
+        UUID subLevelId = subLevel.getUniqueId();
 
-        for (MarkerEntity marker : markers) {
+        for (MarkerEntity marker : level.getEntitiesOfClass(
+                MarkerEntity.class, bounds.inflate(1.0), m -> true)) {
             if (!marker.isAlive()) continue;
+
+            // Tag with sublevel UUID so spatial lookups (SubLevelImpactTrigger, MarkerNetwork)
+            // can find this marker even if it was placed before the sublevel existed.
+            marker.getPersistentData().putUUID(SUBLEVEL_ID_TAG, subLevelId);
+
             MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.ASSEMBLED, marker.position());
             MarkerNetwork.triggerDirect(marker, trigger);
         }

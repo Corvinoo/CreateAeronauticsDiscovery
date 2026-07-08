@@ -29,9 +29,10 @@ public class SubLevelImpactCallback implements BlockSubLevelCollisionCallback {
         if (!(subLevel instanceof ServerSubLevel ssl)) return CollisionResult.NONE;
 
         CompoundTag tag = ssl.getUserDataTag();
-        if (tag == null || !CreateAeronauticsDiscovery.MODID.equals(tag.getString("mod_id")))
-            return CollisionResult.NONE;
-
+        if (!Config.processAllSublevels){
+            if (tag == null || !CreateAeronauticsDiscovery.MODID.equals(tag.getString("mod_id")))
+                return CollisionResult.NONE;
+        }
         if (impactVelocity < Config.impactStrengthThreshold)
             return CollisionResult.NONE;
 
