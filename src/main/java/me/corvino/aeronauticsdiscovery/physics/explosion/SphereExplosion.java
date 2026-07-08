@@ -57,7 +57,7 @@ public final class SphereExplosion implements ExplosionStrategy {
                 level, null,
                 center.x, center.y, center.z,
                 power, fire,
-                Explosion.BlockInteraction.DESTROY, toBlow
+                Explosion.BlockInteraction.DESTROY_WITH_DECAY, toBlow
         );
         explosion.finalizeExplosion(true);
     }
