@@ -116,10 +116,25 @@ public final class MarkerNetwork {
     private static void fire(MarkerEntity marker, MarkerTrigger trigger) {
         if (!marker.isAlive() || !marker.isBound()) return;
         if (!marker.getTriggerMask().accepts(trigger.kind())) return;
+
+        // Capture emitter info before discard
+        EmitterConfig emitter = marker.getEmitterConfig();
+        Vec3 pos = marker.position();
+        CompoundTag data = marker.getPersistentData();
+        UUID subLevelId = data.hasUUID(SUBLEVEL_ID_TAG) ? data.getUUID(SUBLEVEL_ID_TAG) : null;
+        ServerLevel level = marker.level() instanceof ServerLevel sl ? sl : null;
+
         marker.discard();
         MarkerBehavior<?> behavior = marker.resolveBehavior();
         if (behavior != null) {
             behavior.onTrigger(marker, trigger);
+        }
+
+        // Propagate to nearby markers if this marker is an emitter
+        if (emitter.isEnabled() && level != null) {
+            MarkerTrigger propagated = new MarkerTrigger(trigger.kind(), pos);
+            notifyTrigger(level, subLevelId, propagated,
+                    emitter.radius(), emitter.propagationSpeed(), level.getGameTime());
         }
     }
 
