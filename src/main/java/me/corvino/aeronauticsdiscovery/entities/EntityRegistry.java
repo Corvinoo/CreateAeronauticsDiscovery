@@ -32,7 +32,7 @@ public class EntityRegistry {
     public static final DeferredHolder<EntityType<?>, EntityType<PinEntity>> PIN = ENTITIES.register("pin",
             () -> EntityType.Builder.of(PinEntity::new, MobCategory.MISC)
                     .noSummon()
-                    .sized(1.0F, 1.0F)
+                    .sized(1.1F, 1.1F)
                     .eyeHeight(0.0F)
                     .build("pin"));
 }
