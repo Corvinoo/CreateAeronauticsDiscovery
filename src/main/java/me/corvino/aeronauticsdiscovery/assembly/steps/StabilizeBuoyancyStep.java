@@ -22,6 +22,7 @@ public class StabilizeBuoyancyStep extends AssemblyStep {
         seq
                 .run(ctx -> {
                     subLevel = resolveSubLevel(ctx);
+                    if (subLevel == null) return; //to avoid NPE on assembly fail
                     BuoyancyStabilizationManager manager = BuoyancyStabilizationManager.get(ctx.level);
                     if (!manager.isTracking(subLevel.getUniqueId())) {
                         manager.beginStabilizing(subLevel, BuoyancyStabilizationConfig.DEFAULT);
