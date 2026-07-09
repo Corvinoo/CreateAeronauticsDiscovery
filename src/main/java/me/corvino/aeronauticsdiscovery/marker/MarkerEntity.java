@@ -5,6 +5,7 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
 import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
+import me.corvino.aeronauticsdiscovery.marker.EmitterConfig;
 import me.corvino.aeronauticsdiscovery.marker.TriggerMask;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -33,6 +34,7 @@ public class MarkerEntity extends Entity {
     private CompoundTag config = new CompoundTag();
     @Nullable private MarkerBehavior<?> behavior;
     private TriggerMask triggerMask = TriggerMask.NONE;
+    private EmitterConfig emitterConfig = EmitterConfig.DISABLED;
 
     public MarkerEntity(EntityType<? extends MarkerEntity> type, Level level) {
         super(type, level);
@@ -69,6 +71,14 @@ public class MarkerEntity extends Entity {
 
     public void setTriggerMask(TriggerMask triggerMask) {
         this.triggerMask = triggerMask;
+    }
+
+    public EmitterConfig getEmitterConfig() {
+        return emitterConfig;
+    }
+
+    public void setEmitterConfig(EmitterConfig emitterConfig) {
+        this.emitterConfig = emitterConfig;
     }
 
 
@@ -124,6 +134,7 @@ public class MarkerEntity extends Entity {
         }
         this.config = tag.getCompound(TAG_CONFIG);
         this.triggerMask = TriggerMask.fromNbt(tag);
+        this.emitterConfig = EmitterConfig.fromNbt(tag);
         this.behavior = null;
     }
 
@@ -134,6 +145,7 @@ public class MarkerEntity extends Entity {
         }
         tag.put(TAG_CONFIG, this.config);
         this.triggerMask.save(tag);
+        this.emitterConfig.save(tag);
     }
 
     @Override

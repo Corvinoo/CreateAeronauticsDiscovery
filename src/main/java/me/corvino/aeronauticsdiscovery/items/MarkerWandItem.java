@@ -3,6 +3,7 @@ package me.corvino.aeronauticsdiscovery.items;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
+import me.corvino.aeronauticsdiscovery.marker.EmitterConfig;
 import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
 import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
 import me.corvino.aeronauticsdiscovery.marker.TriggerMask;
@@ -42,6 +43,8 @@ public class    MarkerWandItem extends Item {
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
     private static final String TAG_TRIGGER_MASK = "TriggerMask";
+    private static final String TAG_EMITTER_RADIUS = "EmitterRadius";
+    private static final String TAG_EMITTER_SPEED = "EmitterSpeed";
 
     public MarkerWandItem(Properties properties) {
         super(properties);
@@ -87,6 +90,7 @@ public class    MarkerWandItem extends Item {
         marker.setPos(epos.x, epos.y, epos.z);
         marker.setBehavior(behaviorId, config);
         marker.setTriggerMask(getTriggerMask(tag));
+        marker.setEmitterConfig(getEmitterConfig(tag));
 
         
         // Tag marker with sublevel UUID if placed inside a sublevel's bounding box.
@@ -141,6 +145,7 @@ public class    MarkerWandItem extends Item {
         }
 
         msg.append(Component.literal("  §7Triggers: " + triggerMaskSummary(marker.getTriggerMask()) + "\n"));
+        msg.append(Component.literal("  §7Emitter: " + emitterSummary(marker.getEmitterConfig()) + "\n"));
         msg.append(Component.literal("  §7Bound: §" + (marker.isBound() ? "aYes" : "cNo") + "\n"));
 
         MutableComponent removeBtn = Component.literal("§8[§c✕ Remove§8]")
@@ -209,6 +214,16 @@ public class    MarkerWandItem extends Item {
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Configure which trigger kinds activate this marker"))));
         msg.append(editTriggersBtn);
+        msg.append(Component.literal("\n"));
+
+        EmitterConfig emitter = getEmitterConfig(tag);
+        msg.append(Component.literal("  §7Emitter: " + emitterSummary(emitter) + "  "));
+        MutableComponent editEmitterBtn = Component.literal("§8[§6✎ Emitter§8]")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand emitter"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("§7Configure trigger propagation"))));
+        msg.append(editEmitterBtn);
         msg.append(Component.literal("\n"));
 
         msg.append(Component.literal("  §7Right-click a block to place the marker"));
@@ -295,6 +310,92 @@ public class    MarkerWandItem extends Item {
         msg.append(backBtn);
 
         return msg;
+    }
+
+    public static EmitterConfig getEmitterConfig(CompoundTag tag) {
+        if (!tag.contains(TAG_EMITTER_RADIUS, CompoundTag.TAG_DOUBLE)) return EmitterConfig.DISABLED;
+        double radius = tag.getDouble(TAG_EMITTER_RADIUS);
+        double speed = tag.contains(TAG_EMITTER_SPEED, CompoundTag.TAG_DOUBLE)
+                ? tag.getDouble(TAG_EMITTER_SPEED) : 5.0;
+        return new EmitterConfig(radius, speed);
+    }
+
+    public static void setEmitterConfig(CompoundTag tag, EmitterConfig config) {
+        if (!config.isEnabled()) {
+            tag.remove(TAG_EMITTER_RADIUS);
+            tag.remove(TAG_EMITTER_SPEED);
+            return;
+        }
+        tag.putDouble(TAG_EMITTER_RADIUS, config.radius());
+        tag.putDouble(TAG_EMITTER_SPEED, config.propagationSpeed());
+    }
+
+    public static Component buildEmitterUI(ItemStack stack) {
+        CompoundTag tag = getDataTag(stack);
+        EmitterConfig emitter = getEmitterConfig(tag);
+
+        MutableComponent msg = Component.literal("");
+        msg.append(Component.literal("§8[§6- Edit Emitter -§8]\n"));
+
+        String radiusStr = emitter.isEnabled() ? "§a" + emitter.radius() : "§8(off)";
+        msg.append(Component.literal("  §7Radius: " + radiusStr + "  "));
+        MutableComponent editRadiusBtn = Component.literal("§8[§6\u270e§8]")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(SUGGEST_COMMAND,
+                                "/markerwand emitter radius " + (emitter.isEnabled() ? emitter.radius() : "10.0")))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("§7Set propagation radius (0 = disabled)"))));
+        msg.append(editRadiusBtn);
+        msg.append(Component.literal("\n"));
+
+        String speedStr = emitter.isEnabled() ? "§a" + emitter.propagationSpeed() + " §7b/t" : "§8-";
+        msg.append(Component.literal("  §7Speed: " + speedStr + "  "));
+        MutableComponent editSpeedBtn = Component.literal("§8[§6\u270e§8]")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(SUGGEST_COMMAND,
+                                "/markerwand emitter speed " + (emitter.isEnabled() ? emitter.propagationSpeed() : "5.0")))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("§7Set propagation speed in blocks/tick"))));
+        msg.append(editSpeedBtn);
+        msg.append(Component.literal("\n"));
+
+        MutableComponent backBtn = Component.literal("§8[§6← Back§8]")
+                .withStyle(style -> style
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("§7Return to main wand config"))));
+        msg.append(Component.literal("  "));
+        msg.append(backBtn);
+
+        return msg;
+    }
+
+    public static void setEmitterRadius(ItemStack stack, double radius) {
+        CompoundTag tag = getDataTag(stack);
+        double speed = tag.contains(TAG_EMITTER_SPEED, CompoundTag.TAG_DOUBLE)
+                ? tag.getDouble(TAG_EMITTER_SPEED) : 5.0;
+        if (radius <= 0) {
+            tag.remove(TAG_EMITTER_RADIUS);
+            tag.remove(TAG_EMITTER_SPEED);
+        } else {
+            tag.putDouble(TAG_EMITTER_RADIUS, radius);
+            tag.putDouble(TAG_EMITTER_SPEED, speed);
+        }
+        setDataTag(stack, tag);
+    }
+
+    public static void setEmitterSpeed(ItemStack stack, double speed) {
+        CompoundTag tag = getDataTag(stack);
+        double radius = tag.contains(TAG_EMITTER_RADIUS, CompoundTag.TAG_DOUBLE)
+                ? tag.getDouble(TAG_EMITTER_RADIUS) : 0;
+        if (radius <= 0) return;
+        tag.putDouble(TAG_EMITTER_SPEED, speed);
+        setDataTag(stack, tag);
+    }
+
+    private static String emitterSummary(EmitterConfig emitter) {
+        if (!emitter.isEnabled()) return "§8(off)";
+        return "§a" + emitter.radius() + " §7@ §a" + emitter.propagationSpeed() + " §7b/t";
     }
 
     private static String triggerMaskSummary(TriggerMask mask) {

@@ -1,6 +1,7 @@
 package me.corvino.aeronauticsdiscovery.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.items.MarkerWandItem;
@@ -49,6 +50,16 @@ public final class MarkerWandCommand {
                         .then(Commands.argument("kind", StringArgumentType.word())
                                 .executes(ctx -> toggleTrigger(ctx.getSource(),
                                         StringArgumentType.getString(ctx, "kind")))))
+                .then(Commands.literal("emitter")
+                        .executes(ctx -> showEmitterUI(ctx.getSource()))
+                        .then(Commands.literal("radius")
+                                .then(Commands.argument("value", DoubleArgumentType.doubleArg(0))
+                                        .executes(ctx -> setEmitterRadius(ctx.getSource(),
+                                                DoubleArgumentType.getDouble(ctx, "value")))))
+                        .then(Commands.literal("speed")
+                                .then(Commands.argument("value", DoubleArgumentType.doubleArg(0))
+                                        .executes(ctx -> setEmitterSpeed(ctx.getSource(),
+                                                DoubleArgumentType.getDouble(ctx, "value"))))))
         );
     }
 
@@ -198,6 +209,44 @@ public final class MarkerWandCommand {
         MarkerWandItem.initConfig(stack);
         MarkerWandItem.toggleTriggerKind(stack, kind);
         player.sendSystemMessage(MarkerWandItem.buildTriggerMaskUI(stack));
+        return 1;
+    }
+
+    private static int showEmitterUI(CommandSourceStack source) {
+        Player player = requirePlayer(source);
+        if (player == null) return 0;
+
+        ItemStack stack = player.getMainHandItem();
+        if (!validateWand(source, stack)) return 0;
+
+        MarkerWandItem.initConfig(stack);
+        player.sendSystemMessage(MarkerWandItem.buildEmitterUI(stack));
+        return 1;
+    }
+
+    private static int setEmitterRadius(CommandSourceStack source, double radius) {
+        Player player = requirePlayer(source);
+        if (player == null) return 0;
+
+        ItemStack stack = player.getMainHandItem();
+        if (!validateWand(source, stack)) return 0;
+
+        MarkerWandItem.initConfig(stack);
+        MarkerWandItem.setEmitterRadius(stack, radius);
+        player.sendSystemMessage(MarkerWandItem.buildEmitterUI(stack));
+        return 1;
+    }
+
+    private static int setEmitterSpeed(CommandSourceStack source, double speed) {
+        Player player = requirePlayer(source);
+        if (player == null) return 0;
+
+        ItemStack stack = player.getMainHandItem();
+        if (!validateWand(source, stack)) return 0;
+
+        MarkerWandItem.initConfig(stack);
+        MarkerWandItem.setEmitterSpeed(stack, speed);
+        player.sendSystemMessage(MarkerWandItem.buildEmitterUI(stack));
         return 1;
     }
 
