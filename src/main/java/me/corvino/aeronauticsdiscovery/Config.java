@@ -39,7 +39,7 @@ public class Config {
             .defineInRange("impact.strengthThreshold", 5.0, 0.0, 1000.0);
 
     private static final ModConfigSpec.BooleanValue EXPLOSION_BLOCKS = BUILDER
-            .comment("Whether chain explosive markers destroy blocks on detonation.")
+            .comment("Whether chain explosive pins destroy blocks on detonation.")
             .define("impact.explosion.blocks", true);
 
     private static final ModConfigSpec.BooleanValue EXPLOSION_FIRE = BUILDER
@@ -56,7 +56,7 @@ public class Config {
 
     private static final ModConfigSpec.BooleanValue PROCESS_ALL_SUBLEVEL = BUILDER.
             comment("If enabled, all sublevels including the ones NOT created by this mod will be processed for internal physics detection."+ 
-                    "\n This makes event triggers such as 'External Force' markers work regardless of the sublevel internal data. " +
+                    "\n This makes event triggers such as 'External Force' pins work regardless of the sublevel internal data. " +
                     " \n Useful while building using Pins.")
             .define("general.processAll", false);
     

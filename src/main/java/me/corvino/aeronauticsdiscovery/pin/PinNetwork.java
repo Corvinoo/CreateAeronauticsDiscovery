@@ -1,8 +1,8 @@
-package me.corvino.aeronauticsdiscovery.marker;
+package me.corvino.aeronauticsdiscovery.pin;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehavior;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
@@ -14,28 +14,28 @@ import java.util.*;
 import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 /**
- * Handles "markers aware of other markers" without ever giving one marker a direct reference to another.
+ * Handles "pins aware of other pins" without ever giving one pin a direct reference to another.
  * <p>
  * Direct entity-to-entity references (cached UUIDs, held Entity pointers) go stale across chunk
- * unload/reload and get expensive fast if every marker independently scans the world every tick for
+ * unload/reload and get expensive fast if every pin independently scans the world every tick for
  * neighbours. Instead:
  * <ul>
- *   <li>Membership in a flyover's marker set is never stored explicitly - it's resolved on demand by
- *   querying a world-space region around the trigger for {@link MarkerEntity} instances tagged with that
+ *   <li>Membership in a flyover's pin set is never stored explicitly - it's resolved on demand by
+ *   querying a world-space region around the trigger for {@link PinEntity} instances tagged with that
  *   sub-level's {@link me.corvino.aeronauticsdiscovery.util.SubLevelTags#SUBLEVEL_ID_TAG},
  *   exactly the same convention {@code SeatPopulator} already uses for traders.</li>
  *   <li>A trigger (explosion, external force, proximity) is posted once via {@link #notifyTrigger}, which
- *   does a single distance pass over the relevant markers and schedules delayed callbacks for the ones
- *   that should react - rather than each marker polling its surroundings every tick.</li>
+ *   does a single distance pass over the relevant pins and schedules delayed callbacks for the ones
+ *   that should react - rather than each pin polling its surroundings every tick.</li>
  * </ul>
- * Markers without a sub-level tag (world-bound markers, e.g. placed manually with the wand on a normal
+ * Pins without a sub-level tag (world-bound pins, e.g. placed manually with the wand on a normal
  * block) are grouped under {@link #WORLD_BOUND_KEY} internally. Their triggers propagate spatially within
  * the search radius, with no sub-level grouping.
  */
-public final class MarkerNetwork {
-    private MarkerNetwork() {}
+public final class PinNetwork {
+    private PinNetwork() {}
 
-    /** Sentinel UUID for world-bound markers (those without {@code SUBLEVEL_ID_TAG}). */
+    /** Sentinel UUID for world-bound pins (those without {@code SUBLEVEL_ID_TAG}). */
     private static final UUID WORLD_BOUND_KEY = new UUID(0, 0);
 
     private record ScheduledTask(long targetTick, Runnable task) {}
@@ -43,23 +43,23 @@ public final class MarkerNetwork {
     private static final Map<UUID, List<ScheduledTask>> PENDING = new HashMap<>();
 
     /**
-     * Posts a trigger to markers bound to a sub-level, or to world-bound markers when {@code subLevelId}
-     * is {@code null}. World-bound markers are resolved purely by spatial proximity, with no sub-level
+     * Posts a trigger to pins bound to a sub-level, or to world-bound pins when {@code subLevelId}
+     * is {@code null}. World-bound pins are resolved purely by spatial proximity, with no sub-level
      * grouping.
      */
-    public static void notifyTrigger(ServerLevel level, UUID subLevelId, MarkerTrigger trigger,
+    public static void notifyTrigger(ServerLevel level, UUID subLevelId, PinTrigger trigger,
                                      double searchRadius, double propagationBlocksPerTick,
                                      long currentTick) {
         UUID key = subLevelId != null ? subLevelId : WORLD_BOUND_KEY;
 
-        for (MarkerEntity marker : resolveBoundMarkers(level, key, trigger.originWorldPos(), searchRadius)) {
-            double distance = marker.position().distanceTo(trigger.originWorldPos());
+        for (PinEntity pin : resolveBoundPins(level, key, trigger.originWorldPos(), searchRadius)) {
+            double distance = pin.position().distanceTo(trigger.originWorldPos());
 
             if (propagationBlocksPerTick <= 0) {
-                fire(marker, trigger);
+                fire(pin, trigger);
             } else {
                 long delayTicks = (long) Math.ceil(distance / propagationBlocksPerTick);
-                schedule(key, currentTick + delayTicks, () -> fire(marker, trigger));
+                schedule(key, currentTick + delayTicks, () -> fire(pin, trigger));
             }
         }
     }
@@ -87,14 +87,14 @@ public final class MarkerNetwork {
             try {
                 task.run();
             } catch (Exception e) {
-                CreateAeronauticsDiscovery.LOGGER.error("[MarkerNetwork] Delayed trigger task failed", e);
+                CreateAeronauticsDiscovery.LOGGER.error("[PinNetwork] Delayed trigger task failed", e);
             }
         }
     }
 
-    /** Public entry point for triggering a single specific marker from external systems (projectile, collision, etc.). */
-    public static void triggerDirect(MarkerEntity marker, MarkerTrigger trigger) {
-        fire(marker, trigger);
+    /** Public entry point for triggering a single specific pin from external systems (projectile, collision, etc.). */
+    public static void triggerDirect(PinEntity pin, PinTrigger trigger) {
+        fire(pin, trigger);
     }
 
     /** Clears any pending delayed triggers for a sub-level. Does not affect world-bound pending tasks. */
@@ -113,50 +113,50 @@ public final class MarkerNetwork {
         PENDING.computeIfAbsent(key, id -> new ArrayList<>()).add(new ScheduledTask(targetTick, task));
     }
 
-    private static void fire(MarkerEntity marker, MarkerTrigger trigger) {
-        if (!marker.isAlive() || !marker.isBound()) return;
-        if (!marker.getTriggerMask().accepts(trigger.kind())) return;
+    private static void fire(PinEntity pin, PinTrigger trigger) {
+        if (!pin.isAlive() || !pin.isBound()) return;
+        if (!pin.getTriggerMask().accepts(trigger.kind())) return;
 
         // Capture emitter info before discard
-        EmitterConfig emitter = marker.getEmitterConfig();
-        Vec3 pos = marker.position();
-        CompoundTag data = marker.getPersistentData();
+        EmitterConfig emitter = pin.getEmitterConfig();
+        Vec3 pos = pin.position();
+        CompoundTag data = pin.getPersistentData();
         UUID subLevelId = data.hasUUID(SUBLEVEL_ID_TAG) ? data.getUUID(SUBLEVEL_ID_TAG) : null;
-        ServerLevel level = marker.level() instanceof ServerLevel sl ? sl : null;
+        ServerLevel level = pin.level() instanceof ServerLevel sl ? sl : null;
 
-        marker.discard();
-        MarkerBehavior<?> behavior = marker.resolveBehavior();
+        pin.discard();
+        PinBehavior<?> behavior = pin.resolveBehavior();
         if (behavior != null) {
-            behavior.onTrigger(marker, trigger);
+            behavior.onTrigger(pin, trigger);
         }
 
-        // Propagate to nearby markers if this marker is an emitter
+        // Propagate to nearby pins if this pin is an emitter
         if (emitter.isEnabled() && level != null) {
-            MarkerTrigger propagated = new MarkerTrigger(trigger.kind(), pos);
+            PinTrigger propagated = new PinTrigger(trigger.kind(), pos);
             notifyTrigger(level, subLevelId, propagated,
                     emitter.radius(), emitter.propagationSpeed(), level.getGameTime());
         }
     }
 
     /**
-     * Resolves markers matching the given key:
+     * Resolves pins matching the given key:
      * <ul>
-     *   <li>{@link #WORLD_BOUND_KEY} - markers without {@code SUBLEVEL_ID_TAG} that are {@link MarkerEntity#isBound()}</li>
-     *   <li>Any other UUID - markers whose persistent data contains a matching {@code SUBLEVEL_ID_TAG}</li>
+     *   <li>{@link #WORLD_BOUND_KEY} - pins without {@code SUBLEVEL_ID_TAG} that are {@link PinEntity#isBound()}</li>
+     *   <li>Any other UUID - pins whose persistent data contains a matching {@code SUBLEVEL_ID_TAG}</li>
      * </ul>
      */
-    private static List<MarkerEntity> resolveBoundMarkers(ServerLevel level, UUID key, Vec3 originWorldPos, double searchRadius) {
+    private static List<PinEntity> resolveBoundPins(ServerLevel level, UUID key, Vec3 originWorldPos, double searchRadius) {
         AABB bounds = new AABB(
                 originWorldPos.x - searchRadius, originWorldPos.y - searchRadius, originWorldPos.z - searchRadius,
                 originWorldPos.x + searchRadius, originWorldPos.y + searchRadius, originWorldPos.z + searchRadius);
 
-        return level.getEntitiesOfClass(MarkerEntity.class, bounds, marker -> {
-            CompoundTag data = marker.getPersistentData();
+        return level.getEntitiesOfClass(PinEntity.class, bounds, pin -> {
+            CompoundTag data = pin.getPersistentData();
             UUID existingId = data.contains(SUBLEVEL_ID_TAG) ? data.getUUID(SUBLEVEL_ID_TAG) : null;
             if (WORLD_BOUND_KEY.equals(key)) {
-                return existingId == null && marker.isBound();
+                return existingId == null && pin.isBound();
             }
-            return key.equals(existingId) && marker.isBound();
+            return key.equals(existingId) && pin.isBound();
         });
     }
 }

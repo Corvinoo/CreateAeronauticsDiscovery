@@ -1,4 +1,4 @@
-package me.corvino.aeronauticsdiscovery.marker.behaviour;
+package me.corvino.aeronauticsdiscovery.pin.behaviour;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.nbt.CompoundTag;
@@ -7,15 +7,15 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
 /**
- * Identifies a {@link MarkerBehavior} implementation and how to (de)serialize it from a marker's config
- * tag. Adding a new behaviour means implementing {@link MarkerBehavior} + a {@link Codec} for
- * its config and registering one of these in {@link MarkerBehaviorTypes}
+ * Identifies a {@link PinBehavior} implementation and how to (de)serialize it from a pin's config
+ * tag. Adding a new behaviour means implementing {@link PinBehavior} + a {@link Codec} for
+ * its config and registering one of these in {@link PinBehaviorTypes}
  *
- * @param configFields metadata used by the Marker Wand's chat UI to generate parameter editing buttons
+ * @param configFields metadata used by the Pin Wand's chat UI to generate parameter editing buttons
  */
-public record MarkerBehaviorType<T extends MarkerBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color) {
+public record PinBehaviorType<T extends PinBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color) {
 
-    public MarkerBehaviorType(ResourceLocation id, Codec<T> codec, int color) {
+    public PinBehaviorType(ResourceLocation id, Codec<T> codec, int color) {
         this(id, codec, List.of(), color);
     }
 

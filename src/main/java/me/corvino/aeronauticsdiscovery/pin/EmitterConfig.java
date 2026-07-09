@@ -1,4 +1,4 @@
-package me.corvino.aeronauticsdiscovery.marker;
+package me.corvino.aeronauticsdiscovery.pin;
 
 import net.minecraft.nbt.CompoundTag;
 

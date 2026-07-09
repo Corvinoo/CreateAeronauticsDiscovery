@@ -16,8 +16,8 @@ public class ItemRegistry {
             ITEMS.register("soaring_trader_spawn_egg",
                     () -> new SpawnEggItem(EntityRegistry.SOARING_TRADER.get(), 0x300200, 0xffd800, new Item.Properties()));
 
-    public static final DeferredHolder<Item, MarkerWandItem> MARKER_WAND =
-            ITEMS.register("marker_wand", () -> new MarkerWandItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredHolder<Item, PinWandItem> PIN_WAND =
+            ITEMS.register("pin_wand", () -> new PinWandItem(new Item.Properties().stacksTo(1)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

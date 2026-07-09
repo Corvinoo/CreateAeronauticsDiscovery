@@ -1,4 +1,4 @@
-package me.corvino.aeronauticsdiscovery.marker;
+package me.corvino.aeronauticsdiscovery.pin;
 
 import net.minecraft.nbt.CompoundTag;
 
@@ -11,15 +11,15 @@ public record TriggerMask(int bits) {
 
     private static final String TAG_KEY = "TriggerMask";
 
-    public boolean accepts(MarkerTrigger.Kind kind) {
+    public boolean accepts(PinTrigger.Kind kind) {
         return (bits & kind.bit()) != 0;
     }
 
-    public TriggerMask with(MarkerTrigger.Kind kind) {
+    public TriggerMask with(PinTrigger.Kind kind) {
         return new TriggerMask(bits | kind.bit());
     }
 
-    public TriggerMask without(MarkerTrigger.Kind kind) {
+    public TriggerMask without(PinTrigger.Kind kind) {
         return new TriggerMask(bits & ~kind.bit());
     }
 
@@ -27,9 +27,9 @@ public record TriggerMask(int bits) {
         return bits == 0;
     }
 
-    public EnumSet<MarkerTrigger.Kind> enabledKinds() {
-        EnumSet<MarkerTrigger.Kind> set = EnumSet.noneOf(MarkerTrigger.Kind.class);
-        for (MarkerTrigger.Kind kind : MarkerTrigger.Kind.values()) {
+    public EnumSet<PinTrigger.Kind> enabledKinds() {
+        EnumSet<PinTrigger.Kind> set = EnumSet.noneOf(PinTrigger.Kind.class);
+        for (PinTrigger.Kind kind : PinTrigger.Kind.values()) {
             if (accepts(kind)) set.add(kind);
         }
         return set;
@@ -50,9 +50,9 @@ public record TriggerMask(int bits) {
         tag.putInt(TAG_KEY, bits);
     }
 
-    public static TriggerMask of(MarkerTrigger.Kind first, MarkerTrigger.Kind... rest) {
+    public static TriggerMask of(PinTrigger.Kind first, PinTrigger.Kind... rest) {
         int bits = first.bit();
-        for (MarkerTrigger.Kind kind : rest) {
+        for (PinTrigger.Kind kind : rest) {
             bits |= kind.bit();
         }
         return new TriggerMask(bits);
