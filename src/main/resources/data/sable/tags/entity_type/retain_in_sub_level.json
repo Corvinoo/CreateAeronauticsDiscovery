@@ -1,6 +1,6 @@
 {
   "replace": false,
   "values": [
-    { "id": "aeronauticsdiscovery:marker", "required": false }
+    { "id": "aeronauticsdiscovery:pin", "required": false }
   ]
 }

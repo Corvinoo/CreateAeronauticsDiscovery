@@ -1,9 +1,9 @@
 package me.corvino.aeronauticsdiscovery.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
-import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
-import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
+import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -16,12 +16,12 @@ import net.minecraft.world.phys.HitResult;
 
 import java.util.List;
 
-public final class MarkerTestCommand {
+public final class PinTestCommand {
 
-    private MarkerTestCommand() {}
+    private PinTestCommand() {}
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("markertest")
+        dispatcher.register(Commands.literal("pintest")
                 .requires(source -> source.hasPermission(2))
                 .executes(ctx -> run(ctx.getSource()))
         );
@@ -36,23 +36,23 @@ public final class MarkerTestCommand {
         Level level = player.level();
         var hit = player.pick(10.0, 1.0f, false);
         if (hit.getType() != HitResult.Type.BLOCK) {
-            source.sendFailure(Component.literal("Look at a block containing a marker"));
+            source.sendFailure(Component.literal("Look at a block containing a pin"));
             return 0;
         }
 
         BlockPos pos = ((BlockHitResult) hit).getBlockPos();
-        List<MarkerEntity> markers = level.getEntitiesOfClass(MarkerEntity.class, new AABB(pos).inflate(0.01), m -> m.blockPosition().equals(pos));
-        if (markers.isEmpty()) {
-            source.sendFailure(Component.literal("No marker found at the block you're looking at"));
+        List<PinEntity> pins = level.getEntitiesOfClass(PinEntity.class, new AABB(pos).inflate(0.01), m -> m.blockPosition().equals(pos));
+        if (pins.isEmpty()) {
+            source.sendFailure(Component.literal("No pin found at the block you're looking at"));
             return 0;
         }
 
-        MarkerEntity marker = markers.get(0);
+        PinEntity pin = pins.get(0);
 
-        MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.ASSEMBLED, marker.position());
-        MarkerNetwork.triggerDirect(marker, trigger);
+        PinTrigger trigger = new PinTrigger(PinTrigger.Kind.ASSEMBLED, pin.position());
+        PinNetwork.triggerDirect(pin, trigger);
 
-        source.sendSuccess(() -> Component.literal("§8[§6✧§8] §aTriggered §f" + marker.getBehaviorId().getPath() + " §aat " + pos.getX() + " " + pos.getY() + " " + pos.getZ()), true);
+        source.sendSuccess(() -> Component.literal("§8[§6✧§8] §aTriggered §f" + pin.getBehaviorId().getPath() + " §aat " + pos.getX() + " " + pos.getY() + " " + pos.getZ()), true);
         return 1;
     }
 }

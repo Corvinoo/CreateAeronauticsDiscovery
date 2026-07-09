@@ -3,13 +3,13 @@ package me.corvino.aeronauticsdiscovery.items;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
-import me.corvino.aeronauticsdiscovery.marker.EmitterConfig;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
-import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
-import me.corvino.aeronauticsdiscovery.marker.TriggerMask;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.ConfigField;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
+import me.corvino.aeronauticsdiscovery.pin.EmitterConfig;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
+import me.corvino.aeronauticsdiscovery.pin.TriggerMask;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.ConfigField;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorType;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -38,7 +38,7 @@ import java.util.List;
 import static net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND;
 import static net.minecraft.network.chat.ClickEvent.Action.SUGGEST_COMMAND;
 
-public class    MarkerWandItem extends Item {
+public class    PinWandItem extends Item {
 
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
@@ -46,7 +46,7 @@ public class    MarkerWandItem extends Item {
     private static final String TAG_EMITTER_RADIUS = "EmitterRadius";
     private static final String TAG_EMITTER_SPEED = "EmitterSpeed";
 
-    public MarkerWandItem(Properties properties) {
+    public PinWandItem(Properties properties) {
         super(properties);
     }
 
@@ -69,9 +69,9 @@ public class    MarkerWandItem extends Item {
 
         BlockPos pos = context.getClickedPos();
 
-        MarkerEntity existing = findMarkerAt(level, pos);
+        PinEntity existing = findPinAt(level, pos);
         if (existing != null) {
-            player.sendSystemMessage(buildMarkerInfoUI(existing));
+            player.sendSystemMessage(buildPinInfoUI(existing));
             return InteractionResult.CONSUME;
         }
 
@@ -86,23 +86,23 @@ public class    MarkerWandItem extends Item {
         CompoundTag config = tag.getCompound(TAG_CONFIG);
         Vec3 epos = Vec3.atBottomCenterOf(pos);
 
-        MarkerEntity marker = new MarkerEntity(EntityRegistry.MARKER.get(), level);
-        marker.setPos(epos.x, epos.y, epos.z);
-        marker.setBehavior(behaviorId, config);
-        marker.setTriggerMask(getTriggerMask(tag));
-        marker.setEmitterConfig(getEmitterConfig(tag));
+        PinEntity pin = new PinEntity(EntityRegistry.PIN.get(), level);
+        pin.setPos(epos.x, epos.y, epos.z);
+        pin.setBehavior(behaviorId, config);
+        pin.setTriggerMask(getTriggerMask(tag));
+        pin.setEmitterConfig(getEmitterConfig(tag));
 
         
-        // Tag marker with sublevel UUID if placed inside a sublevel's bounding box.
+        // Tag pin with sublevel UUID if placed inside a sublevel's bounding box.
         // Uses Sable.HELPER.getContaining() (sl.boundingBox() returns plot-local, not world coordinates).
         if (level instanceof ServerLevel serverLevel) {
             SubLevel sl = Sable.HELPER.getContaining(serverLevel, epos);
             if (sl != null) {
-                marker.getPersistentData().putUUID(SUBLEVEL_ID_TAG, sl.getUniqueId());
+                pin.getPersistentData().putUUID(SUBLEVEL_ID_TAG, sl.getUniqueId());
             }
         }
 
-        level.addFreshEntity(marker);
+        level.addFreshEntity(pin);
 
         player.sendSystemMessage(Component.literal(
                 "§8[§6✧§8] §aPlaced §f" + behaviorId.getPath() + " §aat " +
@@ -110,27 +110,27 @@ public class    MarkerWandItem extends Item {
         return InteractionResult.CONSUME;
     }
 
-    public static MarkerEntity findMarkerAt(Level level, BlockPos pos) {
-        for (MarkerEntity marker : level.getEntitiesOfClass(MarkerEntity.class, new AABB(pos).inflate(0.01))) {
-            if (marker.blockPosition().equals(pos)) {
-                return marker;
+    public static PinEntity findPinAt(Level level, BlockPos pos) {
+        for (PinEntity pin : level.getEntitiesOfClass(PinEntity.class, new AABB(pos).inflate(0.01))) {
+            if (pin.blockPosition().equals(pos)) {
+                return pin;
             }
         }
         return null;
     }
 
-    public static Component buildMarkerInfoUI(MarkerEntity marker) {
-        ResourceLocation id = marker.getBehaviorId();
+    public static Component buildPinInfoUI(PinEntity pin) {
+        ResourceLocation id = pin.getBehaviorId();
         if (id == null) {
-            return Component.literal("§c[Marker] No behavior configured on this entity");
+            return Component.literal("§c[Pin] No behavior configured on this entity");
         }
 
-        MarkerBehaviorType<?> type = MarkerBehaviorTypes.byId(id);
-        CompoundTag config = marker.getConfig();
-        BlockPos pos = marker.blockPosition();
+        PinBehaviorType<?> type = PinBehaviorTypes.byId(id);
+        CompoundTag config = pin.getConfig();
+        BlockPos pos = pin.blockPosition();
 
         MutableComponent msg = Component.literal("");
-        msg.append(Component.literal("§8[§6- Marker Info - §f" + id.getPath() + "§8]\n"));
+        msg.append(Component.literal("§8[§6- Pin Info - §f" + id.getPath() + "§8]\n"));
         msg.append(Component.literal("  §7Position: §f" + pos.getX() + " " + pos.getY() + " " + pos.getZ() + "\n"));
 
         if (type != null) {
@@ -144,16 +144,16 @@ public class    MarkerWandItem extends Item {
             }
         }
 
-        msg.append(Component.literal("  §7Triggers: " + triggerMaskSummary(marker.getTriggerMask()) + "\n"));
-        msg.append(Component.literal("  §7Emitter: " + emitterSummary(marker.getEmitterConfig()) + "\n"));
-        msg.append(Component.literal("  §7Bound: §" + (marker.isBound() ? "aYes" : "cNo") + "\n"));
+        msg.append(Component.literal("  §7Triggers: " + triggerMaskSummary(pin.getTriggerMask()) + "\n"));
+        msg.append(Component.literal("  §7Emitter: " + emitterSummary(pin.getEmitterConfig()) + "\n"));
+        msg.append(Component.literal("  §7Bound: §" + (pin.isBound() ? "aYes" : "cNo") + "\n"));
 
         MutableComponent removeBtn = Component.literal("§8[§c✕ Remove§8]")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(RUN_COMMAND,
-                                "/markerwand remove " + pos.getX() + " " + pos.getY() + " " + pos.getZ()))
+                                "/pinwand remove " + pos.getX() + " " + pos.getY() + " " + pos.getZ()))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                Component.literal("§cRemove this marker"))));
+                                Component.literal("§cRemove this pin"))));
         msg.append(Component.literal("  "));
         msg.append(removeBtn);
 
@@ -167,22 +167,22 @@ public class    MarkerWandItem extends Item {
 
         ResourceLocation behaviorId = ResourceLocation.tryParse(behaviorIdStr);
         if (behaviorId == null) {
-            return Component.literal("§c[Marker Wand] No behavior configured - use /markerwand cycle");
+            return Component.literal("§c[Pin Wand] No behavior configured - use /pinwand cycle");
         }
 
-        MarkerBehaviorType<?> type = MarkerBehaviorTypes.byId(behaviorId);
+        PinBehaviorType<?> type = PinBehaviorTypes.byId(behaviorId);
         if (type == null) {
-            return Component.literal("§c[Marker Wand] Unknown behavior: " + behaviorIdStr);
+            return Component.literal("§c[Pin Wand] Unknown behavior: " + behaviorIdStr);
         }
 
         CompoundTag config = tag.getCompound(TAG_CONFIG);
         MutableComponent msg = Component.literal("");
 
-        msg.append(Component.literal("§8[§6- Marker Wand - §f" + behaviorId.getPath() + "§8]\n"));
+        msg.append(Component.literal("§8[§6- Pin Wand - §f" + behaviorId.getPath() + "§8]\n"));
 
         MutableComponent cycleBtn = Component.literal("§8[§6\u2936 Cycle§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand cycle"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand cycle"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Switch behavior type"))));
         msg.append(Component.literal("  §7Behavior: §f" + behaviorId.getPath() + "  "));
@@ -197,7 +197,7 @@ public class    MarkerWandItem extends Item {
                 MutableComponent editBtn = Component.literal("§8[§6\u270e§8]")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(SUGGEST_COMMAND,
-                                        "/markerwand set " + field.key() + " " + valueStr))
+                                        "/pinwand set " + field.key() + " " + valueStr))
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                         Component.literal("§7Edit " + field.label()))));
                 msg.append(Component.literal("    §7" + field.label() + ": §f" + valueStr + "  "));
@@ -210,9 +210,9 @@ public class    MarkerWandItem extends Item {
         msg.append(Component.literal("  §7Triggers: " + triggerMaskSummary(mask) + "  "));
         MutableComponent editTriggersBtn = Component.literal("§8[§6✎ Triggers§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand trigger"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand trigger"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                Component.literal("§7Configure which trigger kinds activate this marker"))));
+                                Component.literal("§7Configure which trigger kinds activate this pin"))));
         msg.append(editTriggersBtn);
         msg.append(Component.literal("\n"));
 
@@ -220,13 +220,13 @@ public class    MarkerWandItem extends Item {
         msg.append(Component.literal("  §7Emitter: " + emitterSummary(emitter) + "  "));
         MutableComponent editEmitterBtn = Component.literal("§8[§6✎ Emitter§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand emitter"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand emitter"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Configure trigger propagation"))));
         msg.append(editEmitterBtn);
         msg.append(Component.literal("\n"));
 
-        msg.append(Component.literal("  §7Right-click a block to place the marker"));
+        msg.append(Component.literal("  §7Right-click a block to place the pin"));
         return msg;
     }
 
@@ -239,7 +239,7 @@ public class    MarkerWandItem extends Item {
             setDataTag(stack, tag);
             return;
         }
-        var all = MarkerBehaviorTypes.getAll();
+        var all = PinBehaviorTypes.getAll();
         if (all.isEmpty()) return;
         var first = all.values().iterator().next();
         tag.putString(TAG_BEHAVIOR_ID, first.id().toString());
@@ -265,7 +265,7 @@ public class    MarkerWandItem extends Item {
         tag.putInt(TAG_TRIGGER_MASK, mask.bits());
     }
 
-    public static void toggleTriggerKind(ItemStack stack, MarkerTrigger.Kind kind) {
+    public static void toggleTriggerKind(ItemStack stack, PinTrigger.Kind kind) {
         CompoundTag tag = getDataTag(stack);
         TriggerMask mask = getTriggerMask(tag);
         if (mask.accepts(kind)) {
@@ -284,14 +284,14 @@ public class    MarkerWandItem extends Item {
         MutableComponent msg = Component.literal("");
         msg.append(Component.literal("§8[§6- Edit Triggers -§8]\n"));
 
-        for (MarkerTrigger.Kind kind : MarkerTrigger.Kind.values()) {
+        for (PinTrigger.Kind kind : PinTrigger.Kind.values()) {
             boolean enabled = mask.accepts(kind);
             String icon = enabled ? "§a✓" : "§8✕";
             String color = enabled ? "§a" : "§8";
             MutableComponent toggleBtn = Component.literal("§8[§7" + icon + "§8]")
                     .withStyle(style -> style
                             .withClickEvent(new ClickEvent(RUN_COMMAND,
-                                    "/markerwand trigger " + kind.name()))
+                                    "/pinwand trigger " + kind.name()))
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                     Component.literal(enabled
                                             ? "§cClick to disable " + kind.displayName()
@@ -303,7 +303,7 @@ public class    MarkerWandItem extends Item {
 
         MutableComponent backBtn = Component.literal("§8[§6← Back§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Return to main wand config"))));
         msg.append(Component.literal("  "));
@@ -342,7 +342,7 @@ public class    MarkerWandItem extends Item {
         MutableComponent editRadiusBtn = Component.literal("§8[§6\u270e§8]")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(SUGGEST_COMMAND,
-                                "/markerwand emitter radius " + (emitter.isEnabled() ? emitter.radius() : "10.0")))
+                                "/pinwand emitter radius " + (emitter.isEnabled() ? emitter.radius() : "10.0")))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Set propagation radius (0 = disabled)"))));
         msg.append(editRadiusBtn);
@@ -353,7 +353,7 @@ public class    MarkerWandItem extends Item {
         MutableComponent editSpeedBtn = Component.literal("§8[§6\u270e§8]")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(SUGGEST_COMMAND,
-                                "/markerwand emitter speed " + (emitter.isEnabled() ? emitter.propagationSpeed() : "5.0")))
+                                "/pinwand emitter speed " + (emitter.isEnabled() ? emitter.propagationSpeed() : "5.0")))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Set propagation speed in blocks/tick"))));
         msg.append(editSpeedBtn);
@@ -361,7 +361,7 @@ public class    MarkerWandItem extends Item {
 
         MutableComponent backBtn = Component.literal("§8[§6← Back§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/markerwand"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Return to main wand config"))));
         msg.append(Component.literal("  "));
@@ -401,7 +401,7 @@ public class    MarkerWandItem extends Item {
     private static String triggerMaskSummary(TriggerMask mask) {
         if (mask.isEmpty()) return "§8(none)";
         StringBuilder sb = new StringBuilder();
-        for (MarkerTrigger.Kind kind : MarkerTrigger.Kind.values()) {
+        for (PinTrigger.Kind kind : PinTrigger.Kind.values()) {
             if (mask.accepts(kind)) {
                 if (!sb.isEmpty()) sb.append("§7, ");
                 sb.append("§a").append(kind.displayName());

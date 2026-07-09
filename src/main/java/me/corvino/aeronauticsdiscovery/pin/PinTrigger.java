@@ -1,9 +1,9 @@
-package me.corvino.aeronauticsdiscovery.marker;
+package me.corvino.aeronauticsdiscovery.pin;
 
 import net.minecraft.world.phys.Vec3;
 
 
-public record MarkerTrigger(Kind kind, Vec3 originWorldPos) {
+public record PinTrigger(Kind kind, Vec3 originWorldPos) {
 
     /**
      * Trigger kind identifiers for bitmask

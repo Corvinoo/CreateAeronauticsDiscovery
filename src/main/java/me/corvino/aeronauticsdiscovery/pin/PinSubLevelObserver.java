@@ -1,4 +1,4 @@
-package me.corvino.aeronauticsdiscovery.marker;
+package me.corvino.aeronauticsdiscovery.pin;
 
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -19,12 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class MarkerSubLevelObserver implements SubLevelObserver {
-    private static final Map<ServerLevel, MarkerSubLevelObserver> INSTANCES = new HashMap<>();
+public class PinSubLevelObserver implements SubLevelObserver {
+    private static final Map<ServerLevel, PinSubLevelObserver> INSTANCES = new HashMap<>();
 
     private final ServerLevel level;
 
-    private MarkerSubLevelObserver(ServerLevel level) {
+    private PinSubLevelObserver(ServerLevel level) {
         this.level = level;
     }
 
@@ -35,7 +35,7 @@ public class MarkerSubLevelObserver implements SubLevelObserver {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(serverLevel);
         if (container == null) return;
 
-        MarkerSubLevelObserver observer = new MarkerSubLevelObserver(serverLevel);
+        PinSubLevelObserver observer = new PinSubLevelObserver(serverLevel);
         container.addObserver(observer);
         INSTANCES.put(serverLevel, observer);
     }
@@ -49,7 +49,7 @@ public class MarkerSubLevelObserver implements SubLevelObserver {
             if (container == null) return;
             SubLevel sl = container.getSubLevel(id);
             if (!(sl instanceof ServerSubLevel serverSL)) return;
-            initializeMarkers(serverSL);
+            initializePins(serverSL);
         }, 1);
     }
 
@@ -58,25 +58,25 @@ public class MarkerSubLevelObserver implements SubLevelObserver {
         if (!reason.equals(SubLevelRemovalReason.REMOVED)) return;
         if (!(subLevel instanceof ServerSubLevel serverSubLevel)) return;
         FlyoverUtils.removeAllEntitiesInSublevel(serverSubLevel, false);
-        MarkerNetwork.clear(subLevel.getUniqueId());
+        PinNetwork.clear(subLevel.getUniqueId());
     }
 
-    private void initializeMarkers(ServerSubLevel subLevel) {
+    private void initializePins(ServerSubLevel subLevel) {
         AABB bounds = subLevel.boundingBox().toMojang();
         if (bounds.getXsize() <= 0 && bounds.getYsize() <= 0 && bounds.getZsize() <= 0) return;
 
         UUID subLevelId = subLevel.getUniqueId();
 
-        for (MarkerEntity marker : level.getEntitiesOfClass(
-                MarkerEntity.class, bounds.inflate(1.0), m -> true)) {
-            if (!marker.isAlive()) continue;
+        for (PinEntity pin : level.getEntitiesOfClass(
+                PinEntity.class, bounds.inflate(1.0), m -> true)) {
+            if (!pin.isAlive()) continue;
 
-            // Tag with sublevel UUID so spatial lookups (SubLevelImpactTrigger, MarkerNetwork)
-            // can find this marker even if it was placed before the sublevel existed.
-            marker.getPersistentData().putUUID(SUBLEVEL_ID_TAG, subLevelId);
+            // Tag with sublevel UUID so spatial lookups (SubLevelImpactTrigger, PinNetwork)
+            // can find this pin even if it was placed before the sublevel existed.
+            pin.getPersistentData().putUUID(SUBLEVEL_ID_TAG, subLevelId);
 
-            MarkerTrigger trigger = new MarkerTrigger(MarkerTrigger.Kind.ASSEMBLED, marker.position());
-            MarkerNetwork.triggerDirect(marker, trigger);
+            PinTrigger trigger = new PinTrigger(PinTrigger.Kind.ASSEMBLED, pin.position());
+            PinNetwork.triggerDirect(pin, trigger);
         }
     }
 }

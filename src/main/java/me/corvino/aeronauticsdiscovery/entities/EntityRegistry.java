@@ -1,6 +1,6 @@
 package me.corvino.aeronauticsdiscovery.entities;
 
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -29,10 +29,10 @@ public class EntityRegistry {
                 .build());
     }
 
-    public static final DeferredHolder<EntityType<?>, EntityType<MarkerEntity>> MARKER = ENTITIES.register("marker",
-            () -> EntityType.Builder.of(MarkerEntity::new, MobCategory.MISC)
+    public static final DeferredHolder<EntityType<?>, EntityType<PinEntity>> PIN = ENTITIES.register("pin",
+            () -> EntityType.Builder.of(PinEntity::new, MobCategory.MISC)
                     .noSummon()
                     .sized(1.0F, 1.0F)
                     .eyeHeight(0.0F)
-                    .build("marker"));
+                    .build("pin"));
 }

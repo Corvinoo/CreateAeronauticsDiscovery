@@ -4,12 +4,12 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
-import me.corvino.aeronauticsdiscovery.items.MarkerWandItem;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
-import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.ConfigField;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
+import me.corvino.aeronauticsdiscovery.items.PinWandItem;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.ConfigField;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorType;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -24,14 +24,14 @@ import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class MarkerWandCommand {
+public final class PinWandCommand {
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
 
-    private MarkerWandCommand() {}
+    private PinWandCommand() {}
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("markerwand")
+        dispatcher.register(Commands.literal("pinwand")
                 .requires(source -> source.hasPermission(0))
                 .executes(ctx -> showMainUI(ctx.getSource()))
                 .then(Commands.literal("cycle")
@@ -70,13 +70,13 @@ public final class MarkerWandCommand {
         ItemStack stack = player.getMainHandItem();
         if (!validateWand(source, stack)) return 0;
 
-        MarkerWandItem.initConfig(stack);
-        CompoundTag tag = MarkerWandItem.getDataTag(stack);
+        PinWandItem.initConfig(stack);
+        CompoundTag tag = PinWandItem.getDataTag(stack);
         String currentStr = tag.getString(TAG_BEHAVIOR_ID);
 
-        List<MarkerBehaviorType<?>> types = new ArrayList<>(MarkerBehaviorTypes.getAll().values());
+        List<PinBehaviorType<?>> types = new ArrayList<>(PinBehaviorTypes.getAll().values());
         if (types.isEmpty()) {
-            source.sendFailure(Component.literal("No marker behavior types registered"));
+            source.sendFailure(Component.literal("No pin behavior types registered"));
             return 0;
         }
 
@@ -94,12 +94,12 @@ public final class MarkerWandCommand {
         }
 
         int nextIdx = (idx + 1) % types.size();
-        MarkerBehaviorType<?> nextType = types.get(nextIdx);
+        PinBehaviorType<?> nextType = types.get(nextIdx);
         tag.putString(TAG_BEHAVIOR_ID, nextType.id().toString());
         tag.put(TAG_CONFIG, nextType.defaultConfig());
-        MarkerWandItem.setDataTag(stack, tag);
+        PinWandItem.setDataTag(stack, tag);
 
-        player.sendSystemMessage(MarkerWandItem.buildConfigUI(stack));
+        player.sendSystemMessage(PinWandItem.buildConfigUI(stack));
         return 1;
     }
 
@@ -110,16 +110,16 @@ public final class MarkerWandCommand {
         ItemStack stack = player.getMainHandItem();
         if (!validateWand(source, stack)) return 0;
 
-        MarkerWandItem.initConfig(stack);
-        CompoundTag tag = MarkerWandItem.getDataTag(stack);
+        PinWandItem.initConfig(stack);
+        CompoundTag tag = PinWandItem.getDataTag(stack);
         String behaviorIdStr = tag.getString(TAG_BEHAVIOR_ID);
         ResourceLocation behaviorId = ResourceLocation.tryParse(behaviorIdStr);
         if (behaviorId == null) {
-            source.sendFailure(Component.literal("No behavior configured - use /markerwand cycle first"));
+            source.sendFailure(Component.literal("No behavior configured - use /pinwand cycle first"));
             return 0;
         }
 
-        MarkerBehaviorType<?> type = MarkerBehaviorTypes.byId(behaviorId);
+        PinBehaviorType<?> type = PinBehaviorTypes.byId(behaviorId);
         if (type == null) {
             source.sendFailure(Component.literal("Unknown behavior: " + behaviorIdStr));
             return 0;
@@ -139,15 +139,15 @@ public final class MarkerWandCommand {
 
         CompoundTag config = tag.getCompound(TAG_CONFIG);
         try {
-            MarkerWandItem.writeConfigValue(config, field, value);
+            PinWandItem.writeConfigValue(config, field, value);
         } catch (Exception e) {
             source.sendFailure(Component.literal("Invalid value for " + field.label() + ": " + e.getMessage()));
             return 0;
         }
         tag.put(TAG_CONFIG, config);
-        MarkerWandItem.setDataTag(stack, tag);
+        PinWandItem.setDataTag(stack, tag);
 
-        player.sendSystemMessage(MarkerWandItem.buildConfigUI(stack));
+        player.sendSystemMessage(PinWandItem.buildConfigUI(stack));
         return 1;
     }
 
@@ -156,14 +156,14 @@ public final class MarkerWandCommand {
         if (player == null) return 0;
 
         Level level = player.level();
-        MarkerEntity marker = MarkerWandItem.findMarkerAt(level, pos);
-        if (marker == null) {
-            source.sendFailure(Component.literal("No marker found at " + pos.getX() + " " + pos.getY() + " " + pos.getZ()));
+        PinEntity pin = PinWandItem.findPinAt(level, pos);
+        if (pin == null) {
+            source.sendFailure(Component.literal("No pin found at " + pos.getX() + " " + pos.getY() + " " + pos.getZ()));
             return 0;
         }
 
-        marker.discard();
-        source.sendSuccess(() -> Component.literal("§8[§6✧§8] §aRemoved marker at " + pos.getX() + " " + pos.getY() + " " + pos.getZ()), true);
+        pin.discard();
+        source.sendSuccess(() -> Component.literal("§8[§6✧§8] §aRemoved pin at " + pos.getX() + " " + pos.getY() + " " + pos.getZ()), true);
         return 1;
     }
 
@@ -174,8 +174,8 @@ public final class MarkerWandCommand {
         ItemStack stack = player.getMainHandItem();
         if (!validateWand(source, stack)) return 0;
 
-        MarkerWandItem.initConfig(stack);
-        player.sendSystemMessage(MarkerWandItem.buildConfigUI(stack));
+        PinWandItem.initConfig(stack);
+        player.sendSystemMessage(PinWandItem.buildConfigUI(stack));
         return 1;
     }
 
@@ -186,8 +186,8 @@ public final class MarkerWandCommand {
         ItemStack stack = player.getMainHandItem();
         if (!validateWand(source, stack)) return 0;
 
-        MarkerWandItem.initConfig(stack);
-        player.sendSystemMessage(MarkerWandItem.buildTriggerMaskUI(stack));
+        PinWandItem.initConfig(stack);
+        player.sendSystemMessage(PinWandItem.buildTriggerMaskUI(stack));
         return 1;
     }
 
@@ -198,17 +198,17 @@ public final class MarkerWandCommand {
         ItemStack stack = player.getMainHandItem();
         if (!validateWand(source, stack)) return 0;
 
-        MarkerTrigger.Kind kind;
+        PinTrigger.Kind kind;
         try {
-            kind = MarkerTrigger.Kind.valueOf(kindName.toUpperCase());
+            kind = PinTrigger.Kind.valueOf(kindName.toUpperCase());
         } catch (IllegalArgumentException e) {
             source.sendFailure(Component.literal("Unknown trigger kind: " + kindName));
             return 0;
         }
 
-        MarkerWandItem.initConfig(stack);
-        MarkerWandItem.toggleTriggerKind(stack, kind);
-        player.sendSystemMessage(MarkerWandItem.buildTriggerMaskUI(stack));
+        PinWandItem.initConfig(stack);
+        PinWandItem.toggleTriggerKind(stack, kind);
+        player.sendSystemMessage(PinWandItem.buildTriggerMaskUI(stack));
         return 1;
     }
 
@@ -219,8 +219,8 @@ public final class MarkerWandCommand {
         ItemStack stack = player.getMainHandItem();
         if (!validateWand(source, stack)) return 0;
 
-        MarkerWandItem.initConfig(stack);
-        player.sendSystemMessage(MarkerWandItem.buildEmitterUI(stack));
+        PinWandItem.initConfig(stack);
+        player.sendSystemMessage(PinWandItem.buildEmitterUI(stack));
         return 1;
     }
 
@@ -231,9 +231,9 @@ public final class MarkerWandCommand {
         ItemStack stack = player.getMainHandItem();
         if (!validateWand(source, stack)) return 0;
 
-        MarkerWandItem.initConfig(stack);
-        MarkerWandItem.setEmitterRadius(stack, radius);
-        player.sendSystemMessage(MarkerWandItem.buildEmitterUI(stack));
+        PinWandItem.initConfig(stack);
+        PinWandItem.setEmitterRadius(stack, radius);
+        player.sendSystemMessage(PinWandItem.buildEmitterUI(stack));
         return 1;
     }
 
@@ -244,9 +244,9 @@ public final class MarkerWandCommand {
         ItemStack stack = player.getMainHandItem();
         if (!validateWand(source, stack)) return 0;
 
-        MarkerWandItem.initConfig(stack);
-        MarkerWandItem.setEmitterSpeed(stack, speed);
-        player.sendSystemMessage(MarkerWandItem.buildEmitterUI(stack));
+        PinWandItem.initConfig(stack);
+        PinWandItem.setEmitterSpeed(stack, speed);
+        player.sendSystemMessage(PinWandItem.buildEmitterUI(stack));
         return 1;
     }
 
@@ -259,8 +259,8 @@ public final class MarkerWandCommand {
     }
 
     private static boolean validateWand(CommandSourceStack source, ItemStack stack) {
-        if (stack.getItem() != ItemRegistry.MARKER_WAND.get()) {
-            source.sendFailure(Component.literal("You must hold the Marker Wand in your main hand"));
+        if (stack.getItem() != ItemRegistry.PIN_WAND.get()) {
+            source.sendFailure(Component.literal("You must hold the Pin Wand in your main hand"));
             return false;
         }
         return true;

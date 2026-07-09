@@ -8,7 +8,7 @@
     "accessor.LevelAccessor",
     "accessor.PersistentEntitySectionManagerAccessor",
     "hook.SubLevelAssemblyHelperMixin",
-    "hook.ProjectileCanHitMarkerMixin",
+    "hook.ProjectileCanHitPinMixin",
     "hook.BlockWithSubLevelCallbackMixin",
     "patch.AquiferMixin"
   ],

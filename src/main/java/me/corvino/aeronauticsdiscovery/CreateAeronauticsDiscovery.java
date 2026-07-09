@@ -3,22 +3,22 @@ package me.corvino.aeronauticsdiscovery;
 import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import me.corvino.aeronauticsdiscovery.benchmark.BenchmarkCommand;
-import me.corvino.aeronauticsdiscovery.client.renderer.MarkerEntityRenderer;
+import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
-import me.corvino.aeronauticsdiscovery.marker.MarkerNetwork;
-import me.corvino.aeronauticsdiscovery.marker.MarkerSubLevelObserver;
-import me.corvino.aeronauticsdiscovery.marker.trigger.ProjectileImpactTrigger;
-import me.corvino.aeronauticsdiscovery.marker.trigger.SubLevelImpactTrigger;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
+import me.corvino.aeronauticsdiscovery.pin.PinSubLevelObserver;
+import me.corvino.aeronauticsdiscovery.pin.trigger.ProjectileImpactTrigger;
+import me.corvino.aeronauticsdiscovery.pin.trigger.SubLevelImpactTrigger;
 import me.corvino.aeronauticsdiscovery.commands.CleanChildSubLevelsCommand;
 import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
-import me.corvino.aeronauticsdiscovery.commands.MarkerTestCommand;
-import me.corvino.aeronauticsdiscovery.commands.MarkerWandCommand;
+import me.corvino.aeronauticsdiscovery.commands.PinTestCommand;
+import me.corvino.aeronauticsdiscovery.commands.PinWandCommand;
 import me.corvino.aeronauticsdiscovery.commands.PipelineDebugCommand;
 import me.corvino.aeronauticsdiscovery.commands.PrefabCommands;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
 import me.corvino.aeronauticsdiscovery.event.FlyoverCommands;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventScheduler;
@@ -71,9 +71,9 @@ public class CreateAeronauticsDiscovery {
 //    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN_TAB =
 //            CREATIVE_MODE_TABS.register("main", () -> CreativeModeTab.builder()
 //                    .title(Component.translatable("itemGroup." + MODID + ".main"))
-//                    .icon(() -> new ItemStack(ItemRegistry.MARKER_WAND.get()))
+//                    .icon(() -> new ItemStack(ItemRegistry.PIN_WAND.get()))
 //                    .displayItems((params, output) -> {
-//                        output.accept(ItemRegistry.MARKER_WAND.get());
+//                        output.accept(ItemRegistry.PIN_WAND.get());
 //                        output.accept(ItemRegistry.SOARING_TRADER_SPAWN_EGG.get());
 //                    })
 //                    .build());
@@ -101,8 +101,8 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(AssemblyQueue::onLevelTick);
         NeoForge.EVENT_BUS.addListener(FlyoverEventScheduler::onLevelTick);
         NeoForge.EVENT_BUS.addListener(FlyoverManager::onLevelTick);
-        NeoForge.EVENT_BUS.addListener(MarkerNetwork::onLevelTick);
-        NeoForge.EVENT_BUS.addListener(MarkerSubLevelObserver::onLevelTick);
+        NeoForge.EVENT_BUS.addListener(PinNetwork::onLevelTick);
+        NeoForge.EVENT_BUS.addListener(PinSubLevelObserver::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ProjectileImpactTrigger::onProjectileImpact);
         NeoForge.EVENT_BUS.addListener(SubLevelImpactTrigger::onSubLevelImpact);
 //        NeoForge.EVENT_BUS.addListener(StructureProximityTracker::onLevelTick); //disabled for now
@@ -128,7 +128,7 @@ public class CreateAeronauticsDiscovery {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        MarkerBehaviorTypes.bootstrap();
+        PinBehaviorTypes.bootstrap();
     }
 
 
@@ -149,8 +149,8 @@ public class CreateAeronauticsDiscovery {
         DebugCommands.register(event.getDispatcher());
         PipelineDebugCommand.register(event.getDispatcher());
         CleanChildSubLevelsCommand.register(event.getDispatcher());
-        MarkerWandCommand.register(event.getDispatcher());
-        MarkerTestCommand.register(event.getDispatcher());
+        PinWandCommand.register(event.getDispatcher());
+        PinTestCommand.register(event.getDispatcher());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
@@ -163,7 +163,7 @@ public class CreateAeronauticsDiscovery {
         @SubscribeEvent
         public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(EntityRegistry.SOARING_TRADER.get(), SoaringTraderRenderer::new);
-            event.registerEntityRenderer(EntityRegistry.MARKER.get(), MarkerEntityRenderer::new);
+            event.registerEntityRenderer(EntityRegistry.PIN.get(), PinEntityRenderer::new);
         }
     }
 }

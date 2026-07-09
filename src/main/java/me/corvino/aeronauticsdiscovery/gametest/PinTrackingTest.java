@@ -10,7 +10,7 @@ import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.*;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -29,10 +29,10 @@ import java.util.*;
 
 @GameTestHolder(CreateAeronauticsDiscovery.MODID)
 @PrefixGameTestTemplate(false)
-public class MarkerTrackingTest {
+public class PinTrackingTest {
 
-    @GameTest(template = "airplane", timeoutTicks = 200, batch = "marker_tracking")
-    public void markersAreBoundAfterAssembly(GameTestHelper helper) {
+    @GameTest(template = "airplane", timeoutTicks = 200, batch = "pin_tracking")
+    public void pinsAreBoundAfterAssembly(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         int origLifetime = Config.flyoverMaxLifetimeTicks;
         Config.flyoverMaxLifetimeTicks = 200;
@@ -40,7 +40,7 @@ public class MarkerTrackingTest {
         ServerPlayer player = FlyoverTestHelper.spawnAndRegisterPlayer(helper, level);
         BlockPos origin = player.blockPosition();
 
-        System.out.println("[MARKER_DIAG] origin=" + origin);
+        System.out.println("[PIN_DIAG] origin=" + origin);
 
         AssemblyContext ctx = AssemblyContext.builder()
                 .level(level)
@@ -51,7 +51,7 @@ public class MarkerTrackingTest {
                 .setYaw(0.0)
                 .overrideVelocity(new InitialVelocity(new Vec3(0, 0, 3), Vec3.ZERO, false))
                 .maxRetries(MAX_RETRIES)
-                .setName("marker_tracking_test")
+                .setName("pin_tracking_test")
                 .registerFlyover()
                 .build();
 
@@ -87,28 +87,28 @@ public class MarkerTrackingTest {
             }
 
             AABB bb = subLevel.boundingBox().toMojang();
-            List<MarkerEntity> markers = level.getEntitiesOfClass(MarkerEntity.class, bb,
+            List<PinEntity> pins = level.getEntitiesOfClass(PinEntity.class, bb,
                     m -> flyoverId.equals(m.getPersistentData().getUUID(SUBLEVEL_ID_TAG)));
 
             int bound = 0;
-            for (MarkerEntity m : markers) {
-                System.out.println("[MARKER_DIAG]   Marker " + m.getBehaviorId()
+            for (PinEntity m : pins) {
+                System.out.println("[PIN_DIAG]   Pin " + m.getBehaviorId()
                         + " pos=" + m.position() + " isBound=" + m.isBound());
                 if (m.isBound()) bound++;
             }
-            System.out.println("[MARKER_DIAG] Found " + markers.size() + " markers (" + bound + " bound)");
+            System.out.println("[PIN_DIAG] Found " + pins.size() + " pins (" + bound + " bound)");
 
             Config.flyoverMaxLifetimeTicks = origLifetime;
             unregisterPlayer(level, player);
 
-            if (markers.isEmpty()) {
-                helper.fail("No markers found for flyover " + flyoverId);
+            if (pins.isEmpty()) {
+                helper.fail("No pins found for flyover " + flyoverId);
             }
             if (bound == 0) {
-                helper.fail("Found " + markers.size() + " markers but none are bound");
+                helper.fail("Found " + pins.size() + " pins but none are bound");
             }
 
-            System.out.println("[MARKER_DIAG] PASS: " + bound + "/" + markers.size() + " markers bound");
+            System.out.println("[PIN_DIAG] PASS: " + bound + "/" + pins.size() + " pins bound");
             helper.succeed();
         });
     }

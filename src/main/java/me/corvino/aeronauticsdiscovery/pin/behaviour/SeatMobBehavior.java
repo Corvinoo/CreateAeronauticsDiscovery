@@ -1,10 +1,10 @@
-package me.corvino.aeronauticsdiscovery.marker.behaviour;
+package me.corvino.aeronauticsdiscovery.pin.behaviour;
 
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.content.contraptions.actors.seat.SeatBlock;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
-import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -17,12 +17,12 @@ import java.util.List;
 import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
 /**
- * Spawns one instance of {@code mobId} at this marker's position and mounts it onto a Create seat.
- * Requires a {@link SeatBlock} at the marker's position.
+ * Spawns one instance of {@code mobId} at this pin's position and mounts it onto a Create seat.
+ * Requires a {@link SeatBlock} at the pin's position.
  */
-public record SeatMobBehavior(ResourceLocation mobId) implements MarkerBehavior<SeatMobBehavior> {
+public record SeatMobBehavior(ResourceLocation mobId) implements PinBehavior<SeatMobBehavior> {
 
-    public static final MarkerBehaviorType<SeatMobBehavior> TYPE = MarkerBehaviorTypes.<SeatMobBehavior>register(
+    public static final PinBehaviorType<SeatMobBehavior> TYPE = PinBehaviorTypes.<SeatMobBehavior>register(
             "seat_mob",
             RecordCodecBuilder.create(instance -> instance.group(
                     ResourceLocation.CODEC.fieldOf("mob_id").forGetter(SeatMobBehavior::mobId)
@@ -34,12 +34,12 @@ public record SeatMobBehavior(ResourceLocation mobId) implements MarkerBehavior<
     );
 
     @Override
-    public MarkerBehaviorType<SeatMobBehavior> type() {
+    public PinBehaviorType<SeatMobBehavior> type() {
         return TYPE;
     }
 
     @Override
-    public void onTrigger(MarkerEntity self, MarkerTrigger trigger) {
+    public void onTrigger(PinEntity self, PinTrigger trigger) {
         if (!(self.level() instanceof ServerLevel serverLevel)) return;
 
         BlockPos pos = self.blockPosition();

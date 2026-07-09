@@ -3,9 +3,9 @@ package me.corvino.aeronauticsdiscovery.client.renderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorType;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -14,26 +14,26 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
-public class MarkerEntityRenderer extends EntityRenderer<MarkerEntity> {
+public class PinEntityRenderer extends EntityRenderer<PinEntity> {
 
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("aeronauticsdiscovery", "textures/entity/marker.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("aeronauticsdiscovery", "textures/entity/pin.png");
 
-    public MarkerEntityRenderer(EntityRendererProvider.Context context) {
+    public PinEntityRenderer(EntityRendererProvider.Context context) {
         super(context);
     }
 
     @Override
-    public ResourceLocation getTextureLocation(MarkerEntity entity) {
+    public ResourceLocation getTextureLocation(PinEntity entity) {
         return TEXTURE;
     }
 
     @Override
-    public void render(MarkerEntity entity, float entityYaw, float partialTick,
+    public void render(PinEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
-        MarkerBehaviorType<?> type = entity.getBehaviorId() != null
-                ? MarkerBehaviorTypes.byId(entity.getBehaviorId())
+        PinBehaviorType<?> type = entity.getBehaviorId() != null
+                ? PinBehaviorTypes.byId(entity.getBehaviorId())
                 : null;
         int argb = type != null ? type.color() : 0x80FFFFFF;
 
@@ -84,10 +84,10 @@ public class MarkerEntityRenderer extends EntityRenderer<MarkerEntity> {
     }
 
     @Override
-    public boolean shouldRender(MarkerEntity entity, Frustum camera, double camX, double camY, double camZ) {
+    public boolean shouldRender(PinEntity entity, Frustum camera, double camX, double camY, double camZ) {
         var player = Minecraft.getInstance().player;
         if (player == null) return false;
-        var wand = ItemRegistry.MARKER_WAND.get();
+        var wand = ItemRegistry.PIN_WAND.get();
         return player.getMainHandItem().is(wand) || player.getOffhandItem().is(wand);
     }
 }

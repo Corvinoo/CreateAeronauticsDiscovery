@@ -1,10 +1,10 @@
-package me.corvino.aeronauticsdiscovery.marker.behaviour;
+package me.corvino.aeronauticsdiscovery.pin.behaviour;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.Config;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
-import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import me.corvino.aeronauticsdiscovery.physics.explosion.ExplosionStrategy;
 import me.corvino.aeronauticsdiscovery.physics.explosion.SphereExplosion;
 import me.corvino.aeronauticsdiscovery.physics.explosion.VanillaExplosion;
@@ -14,16 +14,16 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 /**
- * Explodes at this marker's position when triggered.
- * Propagation to nearby markers is handled by {@link me.corvino.aeronauticsdiscovery.marker.MarkerNetwork}
- * based on the marker's {@link me.corvino.aeronauticsdiscovery.marker.EmitterConfig}.
+ * Explodes at this pin's position when triggered.
+ * Propagation to nearby pins is handled by {@link me.corvino.aeronauticsdiscovery.pin.PinNetwork}
+ * based on the pin's {@link me.corvino.aeronauticsdiscovery.pin.EmitterConfig}.
  *
  * @param power  explosion power, same scale as vanilla {@code Level#explode}
  */
 public record ChainExplosiveBehavior(float power)
-        implements MarkerBehavior<ChainExplosiveBehavior> {
+        implements PinBehavior<ChainExplosiveBehavior> {
 
-    public static final MarkerBehaviorType<ChainExplosiveBehavior> TYPE = MarkerBehaviorTypes.<ChainExplosiveBehavior>register(
+    public static final PinBehaviorType<ChainExplosiveBehavior> TYPE = PinBehaviorTypes.<ChainExplosiveBehavior>register(
             "chain_explosive",
             RecordCodecBuilder.create(instance -> instance.group(
                     Codec.FLOAT.fieldOf("power").forGetter(ChainExplosiveBehavior::power)
@@ -35,12 +35,12 @@ public record ChainExplosiveBehavior(float power)
     );
 
     @Override
-    public MarkerBehaviorType<ChainExplosiveBehavior> type() {
+    public PinBehaviorType<ChainExplosiveBehavior> type() {
         return TYPE;
     }
 
     @Override
-    public void onTrigger(MarkerEntity self, MarkerTrigger trigger) {
+    public void onTrigger(PinEntity self, PinTrigger trigger) {
         if (!(self.level() instanceof ServerLevel serverLevel)) return;
 
         if (!Config.explosionBlocks) return;

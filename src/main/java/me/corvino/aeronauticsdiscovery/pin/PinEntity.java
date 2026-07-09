@@ -1,12 +1,12 @@
-package me.corvino.aeronauticsdiscovery.marker;
+package me.corvino.aeronauticsdiscovery.pin;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehavior;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorType;
-import me.corvino.aeronauticsdiscovery.marker.behaviour.MarkerBehaviorTypes;
-import me.corvino.aeronauticsdiscovery.marker.EmitterConfig;
-import me.corvino.aeronauticsdiscovery.marker.TriggerMask;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehavior;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorType;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
+import me.corvino.aeronauticsdiscovery.pin.EmitterConfig;
+import me.corvino.aeronauticsdiscovery.pin.TriggerMask;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -22,21 +22,21 @@ import javax.annotation.Nullable;
 
 import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
-public class MarkerEntity extends Entity {
+public class PinEntity extends Entity {
 
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
 
     private static final EntityDataAccessor<String> DATA_BEHAVIOR_ID =
-            SynchedEntityData.defineId(MarkerEntity.class, EntityDataSerializers.STRING);
+            SynchedEntityData.defineId(PinEntity.class, EntityDataSerializers.STRING);
 
     @Nullable private ResourceLocation behaviorId;
     private CompoundTag config = new CompoundTag();
-    @Nullable private MarkerBehavior<?> behavior;
+    @Nullable private PinBehavior<?> behavior;
     private TriggerMask triggerMask = TriggerMask.NONE;
     private EmitterConfig emitterConfig = EmitterConfig.DISABLED;
 
-    public MarkerEntity(EntityType<? extends MarkerEntity> type, Level level) {
+    public PinEntity(EntityType<? extends PinEntity> type, Level level) {
         super(type, level);
         this.noPhysics = true;
         this.setInvulnerable(true);
@@ -98,7 +98,7 @@ public class MarkerEntity extends Entity {
     }
 
     @Nullable
-    public MarkerBehavior<?> resolveBehavior() {
+    public PinBehavior<?> resolveBehavior() {
         if (this.behavior != null) {
             return this.behavior;
         }
@@ -106,10 +106,10 @@ public class MarkerEntity extends Entity {
             return null;
         }
 
-        MarkerBehaviorType<?> type = MarkerBehaviorTypes.byId(this.behaviorId);
+        PinBehaviorType<?> type = PinBehaviorTypes.byId(this.behaviorId);
         if (type == null) {
             CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[MarkerEntity] Unknown behavior id '{}' at {} - was a mod removed/renamed?",
+                    "[PinEntity] Unknown behavior id '{}' at {} - was a mod removed/renamed?",
                     this.behaviorId, this.blockPosition());
             return null;
         }
@@ -117,7 +117,7 @@ public class MarkerEntity extends Entity {
         var decoded = type.codec().parse(net.minecraft.nbt.NbtOps.INSTANCE, this.config);
         if (decoded.error().isPresent()) {
             CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[MarkerEntity] Failed to decode config for behavior '{}' at {}: {}",
+                    "[PinEntity] Failed to decode config for behavior '{}' at {}: {}",
                     this.behaviorId, this.blockPosition(), decoded.error().get().message());
             return null;
         }

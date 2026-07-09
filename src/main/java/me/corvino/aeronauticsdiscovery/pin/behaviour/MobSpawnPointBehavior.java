@@ -1,9 +1,9 @@
-package me.corvino.aeronauticsdiscovery.marker.behaviour;
+package me.corvino.aeronauticsdiscovery.pin.behaviour;
 
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
-import me.corvino.aeronauticsdiscovery.marker.MarkerEntity;
-import me.corvino.aeronauticsdiscovery.marker.MarkerTrigger;
+import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -12,13 +12,13 @@ import net.minecraft.world.entity.EntityType;
 import java.util.List;
 
 /**
- * Spawns one instance of {@code mobId} at this marker's position when triggered.
+ * Spawns one instance of {@code mobId} at this pin's position when triggered.
  *
  * @param mobId registry id of the entity type to spawn, e.g. "minecraft:pillager"
  */
-public record MobSpawnPointBehavior(ResourceLocation mobId) implements MarkerBehavior<MobSpawnPointBehavior> {
+public record MobSpawnPointBehavior(ResourceLocation mobId) implements PinBehavior<MobSpawnPointBehavior> {
 
-    public static final MarkerBehaviorType<MobSpawnPointBehavior> TYPE = MarkerBehaviorTypes.<MobSpawnPointBehavior>register(
+    public static final PinBehaviorType<MobSpawnPointBehavior> TYPE = PinBehaviorTypes.<MobSpawnPointBehavior>register(
             "mob_spawn_point",
             RecordCodecBuilder.create(instance -> instance.group(
                     ResourceLocation.CODEC.fieldOf("mob_id").forGetter(MobSpawnPointBehavior::mobId)
@@ -30,12 +30,12 @@ public record MobSpawnPointBehavior(ResourceLocation mobId) implements MarkerBeh
     );
 
     @Override
-    public MarkerBehaviorType<MobSpawnPointBehavior> type() {
+    public PinBehaviorType<MobSpawnPointBehavior> type() {
         return TYPE;
     }
 
     @Override
-    public void onTrigger(MarkerEntity self, MarkerTrigger trigger) {
+    public void onTrigger(PinEntity self, PinTrigger trigger) {
         if (!(self.level() instanceof ServerLevel serverLevel)) return;
 
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(this.mobId);
