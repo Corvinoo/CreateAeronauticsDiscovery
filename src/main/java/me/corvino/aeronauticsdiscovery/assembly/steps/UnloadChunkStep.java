@@ -23,7 +23,7 @@ public class UnloadChunkStep extends AssemblyStep {
                 FlyoverManager.ticketController.forceChunk(ctx.level, ctx.anchor, cx, cz, false, true);
             }
 
-        CreateAeronauticsDiscovery.LOGGER.info("[UnloadChunkStep] Unloaded {} chunks for '{}'",
+        CreateAeronauticsDiscovery.LOGGER.debug("[UnloadChunkStep] Unloaded {} chunks for '{}'",
                 (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1),
                 ctx.templateId);
     }

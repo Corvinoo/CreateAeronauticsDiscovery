@@ -138,7 +138,7 @@ public class AssemblyQueue extends SavedData {
     private void applyResult(ServerLevel level, ListIterator<Entry> it, Entry entry, AssemblyContext ctx, AssemblyResult result) {
         switch (result) {
             case SUCCESS -> {
-                CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] SUCCESS: '{}' (src={})", ctx.templateId, ctx.source);
+                CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] SUCCESS: '{}' (src={})", ctx.templateId, ctx.source);
                 PostAssemblyFinalizer.run(level, ctx);
                 it.remove();
                 setDirty();
