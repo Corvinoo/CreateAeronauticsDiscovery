@@ -84,7 +84,7 @@ public class FlyoverManager extends SavedData {
         FlyoverData entry = FlyoverData.fresh(subLevel.getUniqueId(), templateId);
         flyovers.put(entry.subLevelId(), entry);
         setDirty();
-        LOGGER.info("[FLYOVER] Registered '{}' (id={}) - despawns after {} ticks or on player approach",
+        LOGGER.info("[FLYOVER] Registered '{}' (id={}) - despawns after {} ticks if player does not approach it",
                 templateId, subLevel.getUniqueId(), Config.flyoverMaxLifetimeTicks);
     }
 
