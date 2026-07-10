@@ -9,6 +9,7 @@ import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -175,16 +176,16 @@ public class FlyoverTestDriver {
             boolean timedOut = elapsed >= TIMEOUT_TICKS - 50;
 
             if (done) {
-                ServerSubLevelContainer container =
-                    (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
-                Collection<ServerSubLevel> forceLoaded = container.collectForceLoadedSubLevels();
-                if (forceLoaded.isEmpty()) {
-                    LOG.warn("[FLYOVER_TEST] {} no force-loaded sub-levels found!", tc.name());
+                FlyoverManager fm = FlyoverManager.get(level);
+                activeFlyoverId = fm.getAllFlyovers().keySet().stream()
+                    .findFirst()
+                    .orElse(null);
+                if (activeFlyoverId == null) {
+                    LOG.warn("[FLYOVER_TEST] {} no flyover registered in FlyoverManager!", tc.name());
                     tierIdx++;
                     state = STATE_SETUP;
-                    throw new GameTestAssertException(tc.name() + " no force-loaded sub-level — skipping");
+                    throw new GameTestAssertException(tc.name() + " no flyover registered — skipping");
                 }
-                activeFlyoverId = forceLoaded.iterator().next().getUniqueId();
                 state = STATE_ACTIVE;
             } else if (timedOut) {
                 LOG.warn("[FLYOVER_TEST] {} TIMEOUT (queue={})", tc.name(), qs);
