@@ -190,7 +190,17 @@ public class FlyoverManager extends SavedData {
         LOGGER.info("[FLYOVER] Releasing {} ('{}') - player approached - handing off to Sable",
                 entry.subLevelId(), entry.templateId());
         PinNetwork.clear(entry.subLevelId());
-        FlyoverUtils.removeAllEntitiesInSublevel(subLevel, false, e -> e instanceof PinEntity, true); //deleting pins on release
+
+        // Clean entities from child sub-levels too (e.g. barrel physics sub-levels)
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container != null) {
+            for (ServerSubLevel child : FlyoverUtils.getChildSubLevels(container, entry.subLevelId())) {
+                FlyoverUtils.removeAllEntitiesInSublevel(child, false,
+                        e -> e instanceof PinEntity, true);
+            }
+        }
+
+        FlyoverUtils.removeAllEntitiesInSublevel(subLevel, false, e -> e instanceof PinEntity, true);
         removeForceTicket(subLevel);
     }
 

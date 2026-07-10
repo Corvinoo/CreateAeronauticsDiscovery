@@ -71,6 +71,14 @@ public class PinSubLevelObserver implements SubLevelObserver {
                 PinEntity.class, bounds.inflate(1.0), m -> true)) {
             if (!pin.isAlive()) continue;
 
+            // Don't overwrite a SUBLEVEL_ID_TAG that belongs to a different sub-level.
+            // This prevents child sub-levels (e.g. from ConvertPhysicsBarrelStep) from
+            // stealing pins that belong to the main flyover sub-level.
+            if (pin.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)
+                    && !pin.getPersistentData().getUUID(SUBLEVEL_ID_TAG).equals(subLevelId)) {
+                continue;
+            }
+
             // Tag with sublevel UUID so spatial lookups (SubLevelImpactTrigger, PinNetwork)
             // can find this pin even if it was placed before the sublevel existed.
             pin.getPersistentData().putUUID(SUBLEVEL_ID_TAG, subLevelId);

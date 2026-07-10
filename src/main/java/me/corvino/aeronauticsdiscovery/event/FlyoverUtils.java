@@ -19,6 +19,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.entity.EntitySection;
 import net.minecraft.world.level.entity.EntitySectionStorage;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -50,7 +51,7 @@ public class FlyoverUtils {
     }
 
     public static void removeAllEntitiesInSublevel(
-            ServerSubLevel subLevel,
+            @NotNull ServerSubLevel subLevel,
             boolean forceLoadChunks,
             @Nullable Predicate<Entity> filter,
             boolean onlyOwnedBySubLevel) {
