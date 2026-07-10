@@ -20,14 +20,14 @@ import java.util.List;
  *
  * @param power  explosion power, same scale as vanilla {@code Level#explode}
  */
-public record ChainExplosiveBehavior(float power)
-        implements PinBehavior<ChainExplosiveBehavior> {
+public record ExplosiveBehavior(float power)
+        implements PinBehavior<ExplosiveBehavior> {
 
-    public static final PinBehaviorType<ChainExplosiveBehavior> TYPE = PinBehaviorTypes.<ChainExplosiveBehavior>register(
-            "chain_explosive",
+    public static final PinBehaviorType<ExplosiveBehavior> TYPE = PinBehaviorTypes.<ExplosiveBehavior>register(
+            "explosive",
             RecordCodecBuilder.create(instance -> instance.group(
-                    Codec.FLOAT.fieldOf("power").forGetter(ChainExplosiveBehavior::power)
-            ).apply(instance, ChainExplosiveBehavior::new)),
+                    Codec.FLOAT.fieldOf("power").forGetter(ExplosiveBehavior::power)
+            ).apply(instance, ExplosiveBehavior::new)),
             List.of(
                     new ConfigField("power", "Power", ConfigField.FieldType.FLOAT, 4.0f)
             ),
@@ -35,7 +35,7 @@ public record ChainExplosiveBehavior(float power)
     );
 
     @Override
-    public PinBehaviorType<ChainExplosiveBehavior> type() {
+    public PinBehaviorType<ExplosiveBehavior> type() {
         return TYPE;
     }
 

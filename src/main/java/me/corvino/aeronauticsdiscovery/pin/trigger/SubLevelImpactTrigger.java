@@ -5,7 +5,7 @@ import me.corvino.aeronauticsdiscovery.event.SubLevelImpactEvent;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
-import me.corvino.aeronauticsdiscovery.pin.behaviour.ChainExplosiveBehavior;
+import me.corvino.aeronauticsdiscovery.pin.behaviour.ExplosiveBehavior;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
@@ -42,7 +42,7 @@ public final class SubLevelImpactTrigger {
             var data = pin.getPersistentData();
             if (!data.hasUUID(SUBLEVEL_ID_TAG)) continue;
             if (!subLevelId.equals(data.getUUID(SUBLEVEL_ID_TAG))) continue;
-            if (!ChainExplosiveBehavior.TYPE.id().equals(pin.getBehaviorId())) continue;
+            if (!ExplosiveBehavior.TYPE.id().equals(pin.getBehaviorId())) continue;
 
             double distSq = pin.position().distanceToSqr(impactPos);
             if (distSq < closestDistSq) {
