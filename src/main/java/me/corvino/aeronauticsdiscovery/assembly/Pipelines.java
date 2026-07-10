@@ -28,8 +28,7 @@ public final class Pipelines {
             new ReadinessCheckStep(),
             new FindAssemblyStartStep(),
             new AssembleStep(),
-            new StabilizeBuoyancyStep(),
-            new UnloadChunkStep() 
+            new UnloadChunkStep()
     )));
 
     public static final AssemblyPipeline COMMAND = register(new AssemblyPipeline("command", () -> List.of(
