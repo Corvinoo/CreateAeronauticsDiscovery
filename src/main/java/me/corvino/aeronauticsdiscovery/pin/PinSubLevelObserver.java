@@ -10,6 +10,7 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 
 import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
+import dev.ryanhcode.sable.Sable;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
@@ -71,11 +72,12 @@ public class PinSubLevelObserver implements SubLevelObserver {
                 PinEntity.class, bounds.inflate(1.0), m -> true)) {
             if (!pin.isAlive()) continue;
 
-            // Don't overwrite a SUBLEVEL_ID_TAG that belongs to a different sub-level.
+            // Only tag pins that are actually contained in this sub-level's chunk area.
             // This prevents child sub-levels (e.g. from ConvertPhysicsBarrelStep) from
-            // stealing pins that belong to the main flyover sub-level.
-            if (pin.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)
-                    && !pin.getPersistentData().getUUID(SUBLEVEL_ID_TAG).equals(subLevelId)) {
+            // stealing pins that belong to the main flyover sub-level, while still
+            // correctly tagging pins legitimately inside child sub-levels.
+            SubLevel containing = Sable.HELPER.getContaining(level, pin.position());
+            if (containing == null || !containing.getUniqueId().equals(subLevelId)) {
                 continue;
             }
 
