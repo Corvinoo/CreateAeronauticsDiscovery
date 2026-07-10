@@ -37,7 +37,7 @@ public final class PinBehaviorTypes {
     }
 
     public static void bootstrap() {
-        touch(ChainExplosiveBehavior.TYPE);
+        touch(ExplosiveBehavior.TYPE);
         touch(MobSpawnPointBehavior.TYPE);
         touch(SeatMobBehavior.TYPE);
     }

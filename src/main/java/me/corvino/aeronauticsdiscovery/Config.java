@@ -39,7 +39,7 @@ public class Config {
             .defineInRange("impact.strengthThreshold", 5.0, 0.0, 1000.0);
 
     private static final ModConfigSpec.BooleanValue EXPLOSION_BLOCKS = BUILDER
-            .comment("Whether chain explosive pins destroy blocks on detonation.")
+            .comment("Whether explosive pins destroy blocks on detonation.")
             .define("impact.explosion.blocks", true);
 
     private static final ModConfigSpec.BooleanValue EXPLOSION_FIRE = BUILDER
