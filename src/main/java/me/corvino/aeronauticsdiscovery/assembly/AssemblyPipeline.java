@@ -26,7 +26,7 @@ public record AssemblyPipeline(String name, Supplier<List<AssemblyStep>> stepsFa
                 switch (result) {
                     case WAITING -> { return AssemblyResult.WAITING; }
                     case FAIL -> {
-                        CreateAeronauticsDiscovery.LOGGER.warn(
+                        CreateAeronauticsDiscovery.LOGGER.debug(
                                 "[PIPELINE:{}] Step '{}' FAILED for template '{}'",
                                 name, step.getClass().getSimpleName(), ctx.templateId);
                         cleanup(ctx, ctx.currentStepIndex);
