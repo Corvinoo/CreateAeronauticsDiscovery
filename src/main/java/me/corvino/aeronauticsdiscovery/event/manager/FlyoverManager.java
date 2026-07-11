@@ -181,6 +181,10 @@ public class FlyoverManager extends SavedData {
             if (!pendingRemoval.contains(id) && flyovers.containsKey(id)) {
                 LOGGER.info("[FLYOVER] Removing {} via external request", id);
                 pendingRemoval.add(id);
+                ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+                if (container != null) {
+                    removeChildSubLevels(container, id);
+                }
             }
         }
     }
@@ -228,16 +232,18 @@ public class FlyoverManager extends SavedData {
             return;
         }
 
-        AABB parentBounds = subLevel.boundingBox().toMojang();
-        for (ServerSubLevel child : FlyoverUtils.getChildSubLevels(container, subLevel.getUniqueId())) {
-            if (parentBounds.intersects(child.boundingBox().toMojang())) {
-                FlyoverUtils.removeAllEntitiesInSublevel(child, false);
-                container.removeSubLevel(child, SubLevelRemovalReason.REMOVED);
-            }
-        }
+        removeChildSubLevels(container, subLevel.getUniqueId());
 
         container.removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
         removeForceTicket(subLevel);
+    }
+
+    private void removeChildSubLevels(ServerSubLevelContainer container, UUID parentId) {
+        for (ServerSubLevel child : FlyoverUtils.getChildSubLevels(container, parentId)) {
+            FlyoverUtils.removeAllEntitiesInSublevel(child, false);
+            removeChildSubLevels(container, child.getUniqueId());
+            container.removeSubLevel(child, SubLevelRemovalReason.REMOVED);
+        }
     }
 
     private boolean isPlayerNearSubLevel(SubLevel subLevel) {
