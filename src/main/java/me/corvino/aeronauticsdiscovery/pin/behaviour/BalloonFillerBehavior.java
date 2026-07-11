@@ -7,6 +7,7 @@ import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.ServerBalloon;
 import dev.eriksonn.aeronautics.content.blocks.hot_air.balloon.map.BalloonMap;
 import dev.eriksonn.aeronautics.content.blocks.hot_air.lifting_gas.LiftingGasHolder;
 import dev.eriksonn.aeronautics.index.AeroTags;
+import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
@@ -35,8 +36,8 @@ public record BalloonFillerBehavior(double fillAmount) implements PinBehavior<Ba
     );
 
     private static final int MAX_RAYCAST_RANGE = 80;
-    private static final int MAX_RETRIES = 100;
     private static final int RETRY_INTERVAL_TICKS = 2;
+    private static final int TIMEOUT_TICKS = 1200;
 
     @Override
     public PinBehaviorType<BalloonFillerBehavior> type() {
@@ -50,32 +51,41 @@ public record BalloonFillerBehavior(double fillAmount) implements PinBehavior<Ba
         BlockPos interiorPos = findBalloonInterior(serverLevel, self.blockPosition());
         if (interiorPos == null) return;
 
-        attemptFill(serverLevel, interiorPos, 0);
+        tryFill(serverLevel, interiorPos, TIMEOUT_TICKS);
     }
 
-    private void attemptFill(ServerLevel serverLevel, BlockPos interiorPos, int attempt) {
+    private void tryFill(ServerLevel serverLevel, BlockPos interiorPos, int remainingTicks) {
         Balloon balloon = BalloonMap.MAP.get(serverLevel).getBalloon(interiorPos);
-
-        if (balloon instanceof ServerBalloon serverBalloon) {
-            if (!serverBalloon.isAssembling()) {
-                List<LiftingGasHolder> holders = serverBalloon.getLiftingGasHolders();
-                if (!holders.isEmpty()) {
-                    double capacity = serverBalloon.getCapacity();
-                    double fillTarget = capacity * this.fillAmount;
-                    double perType = fillTarget / holders.size();
-                    for (LiftingGasHolder holder : holders) {
-                        holder.data().amount = perType;
-                        holder.data().target = perType;
-                    }
-                    return;
-                }
-            }
+        if (!(balloon instanceof ServerBalloon serverBalloon)) {
+            retry(serverLevel, interiorPos, remainingTicks);
+            return;
+        }
+        if (serverBalloon.isAssembling()) {
+            retry(serverLevel, interiorPos, remainingTicks);
+            return;
+        }
+        if (serverBalloon.getHeaters().isEmpty()) {
+            retry(serverLevel, interiorPos, remainingTicks);
+            return;
         }
 
-        if (attempt >= MAX_RETRIES) return;
+        List<LiftingGasHolder> holders = serverBalloon.getLiftingGasHolders();
+        double capacity = serverBalloon.getCapacity();
+        double fillTarget = capacity * this.fillAmount;
+        double perType = fillTarget / holders.size();
+        for (LiftingGasHolder holder : holders) {
+            holder.data().amount = perType;
+            holder.data().target = perType;
+        }
+    }
 
+    private void retry(ServerLevel serverLevel, BlockPos interiorPos, int remainingTicks) {
+        if (remainingTicks <= 0) {
+            CreateAeronauticsDiscovery.LOGGER.warn("[BalloonFiller] Timed out after {} ticks at {}", TIMEOUT_TICKS, interiorPos);
+            return;
+        }
         TaskScheduler.getInstance().runSyncLater(
-                () -> attemptFill(serverLevel, interiorPos, attempt + 1),
+                () -> tryFill(serverLevel, interiorPos, remainingTicks - RETRY_INTERVAL_TICKS),
                 RETRY_INTERVAL_TICKS);
     }
 
