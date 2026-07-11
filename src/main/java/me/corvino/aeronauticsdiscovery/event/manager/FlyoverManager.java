@@ -8,6 +8,7 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.child.ChildSubLevelManager;
 import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
@@ -147,7 +148,7 @@ public class FlyoverManager extends SavedData {
             return;
         }
 
-        if (isPlayerNearSubLevel(subLevel, 1)) {
+        if (FlyoverUtils.isPlayerNearSubLevel(subLevel, 1)) {
             release(entry, subLevel);
             pendingRemoval.add(entry.subLevelId());
             return;
@@ -183,7 +184,7 @@ public class FlyoverManager extends SavedData {
                 pendingRemoval.add(id);
                 ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
                 if (container != null) {
-                    removeChildSubLevels(container, id);
+                    ChildSubLevelManager.cleanupChildren(container, id, level);
                 }
             }
         }
@@ -198,7 +199,7 @@ public class FlyoverManager extends SavedData {
         // Clean entities from child sub-levels too (e.g. barrel physics sub-levels)
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container != null) {
-            for (ServerSubLevel child : FlyoverUtils.getChildSubLevels(container, entry.subLevelId())) {
+            for (ServerSubLevel child : ChildSubLevelManager.getChildSubLevels(container, entry.subLevelId())) {
                 FlyoverUtils.removeAllEntitiesInSublevel(child, false,
                         e -> e instanceof PinEntity, true);
             }
@@ -232,39 +233,14 @@ public class FlyoverManager extends SavedData {
             return;
         }
 
-        removeChildSubLevels(container, subLevel.getUniqueId());
+        ChildSubLevelManager.cleanupChildren(container, subLevel.getUniqueId(), level);
 
         container.removeSubLevel(subLevel, SubLevelRemovalReason.REMOVED);
         removeForceTicket(subLevel);
     }
+    
 
-    private void removeChildSubLevels(ServerSubLevelContainer container, UUID parentId) {
-        for (ServerSubLevel child : FlyoverUtils.getChildSubLevels(container, parentId)) {
-            CompoundTag childTag = child.getUserDataTag();
-            String role = childTag != null ? childTag.getString(FlyoverUtils.CHILD_ROLE_TAG) : "";
-
-            if (FlyoverUtils.CHILD_ROLE_PERSISTENT.equals(role) && isPlayerNearSubLevel(child, 10)) {
-                FlyoverUtils.removeAllEntitiesInSublevel(child, false, entity -> entity instanceof PinEntity, false);
-                // Still descend into any fragments that split off this child
-                removeChildSubLevels(container, child.getUniqueId());
-            } else {
-                // Fragment (or persistent child out of range): destroy fully
-                FlyoverUtils.removeAllEntitiesInSublevel(child, false);
-                removeChildSubLevels(container, child.getUniqueId());
-                container.removeSubLevel(child, SubLevelRemovalReason.REMOVED);
-            }
-        }
-    }
-
-    private boolean isPlayerNearSubLevel(SubLevel subLevel, int inflation) {
-        AABB proximityBox = subLevel.boundingBox().toMojang().inflate(inflation);
-        for (ServerPlayer player : level.players()) {
-            if (proximityBox.contains(player.position().x, player.position().y, player.position().z)) {
-                return true;
-            }
-        }
-        return false;
-    }
+   
 
     private boolean isTooFarFromAllPlayers(SubLevel subLevel) {
         AABB bb = subLevel.boundingBox().toMojang();
