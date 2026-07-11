@@ -59,9 +59,8 @@ public class Config {
             .define("general.processAll", false);
 
     private static final ModConfigSpec.BooleanValue FRAGMENT_PROMOTION = BUILDER
-            .comment("When enabled, if the player approaches a flyover fragment it will not despawn (WARNING: this can cause a performance overhead " +
-                    "with large number of fragments).")
-            .define("flyover.promotion.enabled", true);
+            .comment("When enabled, if the player approaches a flyover fragment it will not despawn (NOTE: with large amounts of fragments this may cause a performance overhead).")
+            .define("flyover.promotion.enabled", false);
 
     private static final ModConfigSpec.DoubleValue PROMOTION_RANGE = BUILDER
             .comment("Range in blocks from the fragment at which promotion triggers.")
