@@ -62,7 +62,7 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
         UUID flyoverRoot = pendingSplitFlyoverRoot.remove(level);
         if (flyoverRoot == null) return;
 
-        ChildSubLevelManager.tagAs(ssl, ChildRole.FRAGMENT, flyoverRoot);
+        ChildSubLevelManager.tagAs(ssl, ChildRole.TRANSIENT, flyoverRoot);
     }
 
     @Override

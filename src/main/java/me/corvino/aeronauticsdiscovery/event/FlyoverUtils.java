@@ -127,7 +127,7 @@ public class FlyoverUtils {
                 ticketController.forceChunk(level, id, cx, cz, add, true);
     }
 
-    public static boolean isPlayerNearSubLevel(SubLevel subLevel, float inflation) {
+    public static boolean isPlayerNearSubLevel(SubLevel subLevel, double inflation) {
         AABB proximityBox = subLevel.boundingBox().toMojang().inflate(inflation);
         for (ServerPlayer player : subLevel.getLevel().getServer().getPlayerList().getPlayers()) {
             if (proximityBox.contains(player.position().x, player.position().y, player.position().z)) {
