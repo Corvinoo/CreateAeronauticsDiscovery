@@ -27,7 +27,7 @@ public enum ChildRole {
     TRANSIENT {
         @Override
         void handleCleanup(ChildContext ctx, ServerSubLevel child) {
-            if (Config.fragmentPromotion && FlyoverUtils.isPlayerNearSubLevel(child, Config.promotionRange)) {
+            if (Config.fragmentPromotion && FlyoverUtils.isPlayerNearSubLevel(child, (float) Config.promotionRange)) {
                 ChildSubLevelManager.tagAs(child, PERSISTENT);
                 ctx.release(child, entity -> entity instanceof PinEntity);
             } else {

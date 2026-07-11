@@ -30,6 +30,7 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
             BlockPos anchor = blocks.iterator().next();
             SubLevel parent = Sable.HELPER.getContaining(serverLevel, anchor);
             if (!(parent instanceof ServerSubLevel ssl)) return;
+            if (ssl.isRemoved()) return;
 
             UUID flyoverRoot = null;
             FlyoverManager manager = FlyoverManager.get(serverLevel);
