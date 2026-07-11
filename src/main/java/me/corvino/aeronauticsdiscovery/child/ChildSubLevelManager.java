@@ -51,6 +51,13 @@ public final class ChildSubLevelManager {
                 .toList();
     }
 
+    public static void clearChildTags(ServerSubLevel child) {
+        CompoundTag tag = child.getUserDataTag();
+        if (tag == null) return;
+        tag.remove(PARENT_SUBLEVEL_ID_TAG);
+        tag.remove(CHILD_ROLE_TAG);
+    }
+
     public static void cleanupChildren(ServerSubLevelContainer container, UUID parentId, ServerLevel level) {
         new ChildContext(container, level).cleanupChildrenOf(parentId);
     }
