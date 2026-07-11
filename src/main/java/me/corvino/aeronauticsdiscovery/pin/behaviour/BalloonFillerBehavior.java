@@ -9,6 +9,7 @@ import dev.eriksonn.aeronautics.content.blocks.hot_air.lifting_gas.LiftingGasHol
 import dev.eriksonn.aeronautics.index.AeroTags;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
+import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ClipContext;
@@ -34,6 +35,8 @@ public record BalloonFillerBehavior(double fillAmount) implements PinBehavior<Ba
     );
 
     private static final int MAX_RAYCAST_RANGE = 80;
+    private static final int MAX_RETRIES = 100;
+    private static final int RETRY_INTERVAL_TICKS = 2;
 
     @Override
     public PinBehaviorType<BalloonFillerBehavior> type() {
@@ -47,20 +50,33 @@ public record BalloonFillerBehavior(double fillAmount) implements PinBehavior<Ba
         BlockPos interiorPos = findBalloonInterior(serverLevel, self.blockPosition());
         if (interiorPos == null) return;
 
+        attemptFill(serverLevel, interiorPos, 0);
+    }
+
+    private void attemptFill(ServerLevel serverLevel, BlockPos interiorPos, int attempt) {
         Balloon balloon = BalloonMap.MAP.get(serverLevel).getBalloon(interiorPos);
-        if (!(balloon instanceof ServerBalloon serverBalloon)) return;
 
-        double capacity = serverBalloon.getCapacity();
-        double fillTarget = capacity * this.fillAmount;
-
-        List<LiftingGasHolder> holders = serverBalloon.getLiftingGasHolders();
-        if (holders.isEmpty()) return;
-
-        double perType = fillTarget / holders.size();
-        for (LiftingGasHolder holder : holders) {
-            holder.data().amount = perType;
-            holder.data().target = perType;
+        if (balloon instanceof ServerBalloon serverBalloon) {
+            if (!serverBalloon.isAssembling()) {
+                List<LiftingGasHolder> holders = serverBalloon.getLiftingGasHolders();
+                if (!holders.isEmpty()) {
+                    double capacity = serverBalloon.getCapacity();
+                    double fillTarget = capacity * this.fillAmount;
+                    double perType = fillTarget / holders.size();
+                    for (LiftingGasHolder holder : holders) {
+                        holder.data().amount = perType;
+                        holder.data().target = perType;
+                    }
+                    return;
+                }
+            }
         }
+
+        if (attempt >= MAX_RETRIES) return;
+
+        TaskScheduler.getInstance().runSyncLater(
+                () -> attemptFill(serverLevel, interiorPos, attempt + 1),
+                RETRY_INTERVAL_TICKS);
     }
 
     private static BlockPos findBalloonInterior(Level level, BlockPos pinPos) {
