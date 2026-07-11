@@ -33,7 +33,9 @@ public interface BlockWithSubLevelCallbackMixin {
                     ? first.sable$onCollision(pos, otherHitBlockPos, impactPosition, impactVelocity)
                     : CollisionResult.NONE;
             CollisionResult r2 = second.sable$onCollision(pos, otherHitBlockPos, impactPosition, impactVelocity);
-            return r1.removeCollision() ? r1 : r2;
+            if (r1.removeCollision()) return r1;
+            if (r2.removeCollision()) return r2;
+            return r1;
         }
     }
 }
