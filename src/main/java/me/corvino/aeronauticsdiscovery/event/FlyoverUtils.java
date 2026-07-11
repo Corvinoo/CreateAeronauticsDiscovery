@@ -34,6 +34,13 @@ import static me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager.ticke
 public class FlyoverUtils {
     public static final String PARENT_SUBLEVEL_ID_TAG = "parent_sublevel_id";
 
+    /** Tag key for child sublevel role*/
+    public static final String CHILD_ROLE_TAG = "child_role";
+    /** Value for {@link #CHILD_ROLE_TAG}: intentionally-created child - Preserved if a player is nearby; otherwise cleaned up. */
+    public static final String CHILD_ROLE_PERSISTENT = "persistent";
+    /** Value for {@link #CHILD_ROLE_TAG}: junk fragment from physics splitting - Always destroyed. */
+    public static final String CHILD_ROLE_FRAGMENT = "fragment";
+
     public static List<ServerSubLevel> getChildSubLevels(SubLevelContainer container, UUID parentId) {
         return container.getAllSubLevels().stream()
                 .filter(sl -> sl instanceof ServerSubLevel)

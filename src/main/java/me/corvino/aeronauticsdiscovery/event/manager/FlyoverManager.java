@@ -147,7 +147,7 @@ public class FlyoverManager extends SavedData {
             return;
         }
 
-        if (isPlayerNearSubLevel(subLevel)) {
+        if (isPlayerNearSubLevel(subLevel, 1)) {
             release(entry, subLevel);
             pendingRemoval.add(entry.subLevelId());
             return;
@@ -240,14 +240,24 @@ public class FlyoverManager extends SavedData {
 
     private void removeChildSubLevels(ServerSubLevelContainer container, UUID parentId) {
         for (ServerSubLevel child : FlyoverUtils.getChildSubLevels(container, parentId)) {
-            FlyoverUtils.removeAllEntitiesInSublevel(child, false);
-            removeChildSubLevels(container, child.getUniqueId());
-            container.removeSubLevel(child, SubLevelRemovalReason.REMOVED);
+            CompoundTag childTag = child.getUserDataTag();
+            String role = childTag != null ? childTag.getString(FlyoverUtils.CHILD_ROLE_TAG) : "";
+
+            if (FlyoverUtils.CHILD_ROLE_PERSISTENT.equals(role) && isPlayerNearSubLevel(child, 10)) {
+                FlyoverUtils.removeAllEntitiesInSublevel(child, false, entity -> entity instanceof PinEntity, false);
+                // Still descend into any fragments that split off this child
+                removeChildSubLevels(container, child.getUniqueId());
+            } else {
+                // Fragment (or persistent child out of range): destroy fully
+                FlyoverUtils.removeAllEntitiesInSublevel(child, false);
+                removeChildSubLevels(container, child.getUniqueId());
+                container.removeSubLevel(child, SubLevelRemovalReason.REMOVED);
+            }
         }
     }
 
-    private boolean isPlayerNearSubLevel(SubLevel subLevel) {
-        AABB proximityBox = subLevel.boundingBox().toMojang().inflate(1.0);
+    private boolean isPlayerNearSubLevel(SubLevel subLevel, int inflation) {
+        AABB proximityBox = subLevel.boundingBox().toMojang().inflate(inflation);
         for (ServerPlayer player : level.players()) {
             if (proximityBox.contains(player.position().x, player.position().y, player.position().z)) {
                 return true;

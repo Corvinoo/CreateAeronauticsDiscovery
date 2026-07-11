@@ -53,6 +53,7 @@ public class ConvertPhysicsBarrelStep extends AssemblyStep {
                     childSubLevel.setUserDataTag(tag);
                 }
                 tag.putUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG, parentId);
+                tag.putString(FlyoverUtils.CHILD_ROLE_TAG, FlyoverUtils.CHILD_ROLE_PERSISTENT);
             }
         }
     }

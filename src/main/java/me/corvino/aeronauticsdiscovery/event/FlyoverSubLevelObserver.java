@@ -68,6 +68,9 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
         if (!tag.hasUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG)) {
             tag.putUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG, flyoverRoot);
         }
+        if (!tag.contains(FlyoverUtils.CHILD_ROLE_TAG)) {
+            tag.putString(FlyoverUtils.CHILD_ROLE_TAG, FlyoverUtils.CHILD_ROLE_FRAGMENT);
+        }
     }
 
     @Override
