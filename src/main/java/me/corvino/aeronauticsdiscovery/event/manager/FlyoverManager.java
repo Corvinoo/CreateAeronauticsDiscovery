@@ -196,10 +196,11 @@ public class FlyoverManager extends SavedData {
                 entry.subLevelId(), entry.templateId());
         PinNetwork.clear(entry.subLevelId());
 
-        // Clean entities from child sub-levels too (e.g. barrel physics sub-levels)
+        // Clean entities and tags from child sub-levels | TODO: make path to handle child-sublevel more clear and streamlined
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container != null) {
             for (ServerSubLevel child : ChildSubLevelManager.getChildSubLevels(container, entry.subLevelId())) {
+                ChildSubLevelManager.clearChildTags(child);
                 FlyoverUtils.removeAllEntitiesInSublevel(child, false,
                         e -> e instanceof PinEntity, true);
             }
