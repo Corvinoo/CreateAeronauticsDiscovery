@@ -6,6 +6,8 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.plot.heat.SubLevelHeatMapManager;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
+import me.corvino.aeronauticsdiscovery.child.ChildRole;
+import me.corvino.aeronauticsdiscovery.child.ChildSubLevelManager;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
 import net.minecraft.core.BlockPos;
@@ -35,8 +37,8 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
                 flyoverRoot = parent.getUniqueId();
             } else {
                 CompoundTag parentTag = ssl.getUserDataTag();
-                if (parentTag != null && parentTag.hasUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG)) {
-                    flyoverRoot = parentTag.getUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG);
+                if (parentTag != null && parentTag.hasUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG)) {
+                    flyoverRoot = parentTag.getUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG);
                 }
             }
 
@@ -60,17 +62,7 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
         UUID flyoverRoot = pendingSplitFlyoverRoot.remove(level);
         if (flyoverRoot == null) return;
 
-        CompoundTag tag = ssl.getUserDataTag();
-        if (tag == null) {
-            tag = new CompoundTag();
-            ssl.setUserDataTag(tag);
-        }
-        if (!tag.hasUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG)) {
-            tag.putUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG, flyoverRoot);
-        }
-        if (!tag.contains(FlyoverUtils.CHILD_ROLE_TAG)) {
-            tag.putString(FlyoverUtils.CHILD_ROLE_TAG, FlyoverUtils.CHILD_ROLE_FRAGMENT);
-        }
+        ChildSubLevelManager.tagAs(ssl, ChildRole.FRAGMENT, flyoverRoot);
     }
 
     @Override

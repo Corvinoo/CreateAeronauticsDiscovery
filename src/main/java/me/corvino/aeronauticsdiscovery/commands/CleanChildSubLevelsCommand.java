@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
+import me.corvino.aeronauticsdiscovery.child.ChildSubLevelManager;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -69,8 +70,8 @@ public final class CleanChildSubLevelsCommand {
         source.sendSuccess(() -> Component.literal("Found " + children.size() + " child sublevel(s):"), true);
         for (ServerSubLevel child : children) {
             CompoundTag tag = child.getUserDataTag();
-            String parentId = tag != null && tag.hasUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG)
-                    ? tag.getUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG).toString().substring(0, 8) + "..."
+            String parentId = tag != null && tag.hasUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG)
+                    ? tag.getUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG).toString().substring(0, 8) + "..."
                     : "unknown";
             source.sendSuccess(() -> Component.literal("  - " + child.getUniqueId().toString().substring(0, 8) + "..."
                     + " (parent: " + parentId + ", name: " + child.getName() + ")"), true);
@@ -85,7 +86,7 @@ public final class CleanChildSubLevelsCommand {
                 .map(sl -> (ServerSubLevel) sl)
                 .filter(sl -> {
                     CompoundTag tag = sl.getUserDataTag();
-                    return tag != null && tag.hasUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG);
+                    return tag != null && tag.hasUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG);
                 })
                 .toList();
     }

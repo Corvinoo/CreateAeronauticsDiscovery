@@ -4,9 +4,9 @@ import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
-import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
+import me.corvino.aeronauticsdiscovery.child.ChildRole;
+import me.corvino.aeronauticsdiscovery.child.ChildSubLevelManager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
@@ -47,13 +47,7 @@ public class ConvertPhysicsBarrelStep extends AssemblyStep {
                 ServerSubLevel childSubLevel = SubLevelAssemblyHelper.assembleBlocks(ctx.level, tempPos, blockList,
                         Objects.requireNonNull(BoundingBox3i.from(blockList)));
 
-                CompoundTag tag = childSubLevel.getUserDataTag();
-                if (tag == null) {
-                    tag = new CompoundTag();
-                    childSubLevel.setUserDataTag(tag);
-                }
-                tag.putUUID(FlyoverUtils.PARENT_SUBLEVEL_ID_TAG, parentId);
-                tag.putString(FlyoverUtils.CHILD_ROLE_TAG, FlyoverUtils.CHILD_ROLE_PERSISTENT);
+                ChildSubLevelManager.tagAs(childSubLevel, ChildRole.PERSISTENT, parentId);
             }
         }
     }
