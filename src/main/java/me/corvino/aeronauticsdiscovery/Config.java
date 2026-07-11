@@ -5,8 +5,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-import java.awt.geom.GeneralPath;
-
 @EventBusSubscriber(modid = CreateAeronauticsDiscovery.MODID)
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
@@ -59,7 +57,15 @@ public class Config {
                     "\n This makes event triggers such as 'External Force' pins work regardless of the sublevel internal data. " +
                     " \n Useful while building using Pins.")
             .define("general.processAll", false);
-    
+
+    private static final ModConfigSpec.BooleanValue FRAGMENT_PROMOTION = BUILDER
+            .comment("When enabled, if the player approaches a flyover fragment it will not despawn (WARNING: this can cause a performance overhead " +
+                    "with large number of fragments).")
+            .define("flyover.promotion.enabled", true);
+
+    private static final ModConfigSpec.DoubleValue PROMOTION_RANGE = BUILDER
+            .comment("Range in blocks from the fragment at which promotion triggers.")
+            .defineInRange("flyover.promotion.range", 10.0, 1.0, 128.0);
     
     static final ModConfigSpec SPEC = BUILDER.build();
 
@@ -74,6 +80,8 @@ public class Config {
     public static ExplosionMode explosionStrategy;
     public static int traderAngerDuration;
     public static boolean processAllSublevels;
+    public static boolean fragmentPromotion;
+    public static double promotionRange;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -88,6 +96,8 @@ public class Config {
         explosionStrategy = EXPLOSION_STRATEGY.get();
         traderAngerDuration = TRADER_ANGER_DURATION.get();
         processAllSublevels = PROCESS_ALL_SUBLEVEL.get();
+        fragmentPromotion = FRAGMENT_PROMOTION.get();
+        promotionRange = PROMOTION_RANGE.get();
     }
 
     public enum ExplosionMode {

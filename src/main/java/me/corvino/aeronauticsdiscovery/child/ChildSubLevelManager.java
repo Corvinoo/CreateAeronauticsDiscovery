@@ -27,9 +27,15 @@ public final class ChildSubLevelManager {
         tag.putString(CHILD_ROLE_TAG, role.key());
     }
 
+    public static void tagAs(ServerSubLevel child, ChildRole role) {
+        CompoundTag tag = child.getUserDataTag();
+        if (tag == null || !tag.hasUUID(PARENT_SUBLEVEL_ID_TAG)) return;
+        tag.putString(CHILD_ROLE_TAG, role.key());
+    }
+
     public static ChildRole getRole(ServerSubLevel child) {
         CompoundTag tag = child.getUserDataTag();
-        if (tag == null || !tag.contains(CHILD_ROLE_TAG)) return ChildRole.FRAGMENT;
+        if (tag == null || !tag.contains(CHILD_ROLE_TAG)) return ChildRole.TRANSIENT;
         return ChildRole.fromKey(tag.getString(CHILD_ROLE_TAG));
     }
 
