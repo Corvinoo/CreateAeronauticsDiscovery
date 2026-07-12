@@ -18,12 +18,15 @@ public final class CleanChildSubLevelsCommand {
     private CleanChildSubLevelsCommand() {}
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        var cleanChild = Commands.literal("cleanchildsl")
+                .executes(ctx -> executeRemove(ctx.getSource()))
+                .then(Commands.literal("list")
+                        .executes(ctx -> executeList(ctx.getSource())));
+
         dispatcher.register(
-                Commands.literal("cleanchildsl")
+                Commands.literal("discovery")
                         .requires(source -> source.hasPermission(2))
-                        .executes(ctx -> executeRemove(ctx.getSource()))
-                        .then(Commands.literal("list")
-                                .executes(ctx -> executeList(ctx.getSource())))
+                        .then(cleanChild)
         );
     }
 

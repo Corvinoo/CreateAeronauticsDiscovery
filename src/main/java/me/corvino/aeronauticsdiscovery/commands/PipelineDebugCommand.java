@@ -17,21 +17,24 @@ import java.util.List;
 
 public class PipelineDebugCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        var pipelineDebug = Commands.literal("pipelinedebug")
+                .then(Commands.literal("list")
+                        .executes(ctx -> executeList(ctx.getSource())))
+                .then(Commands.literal("steps")
+                        .executes(ctx -> executeSteps(ctx.getSource(), "flyover"))
+                        .then(Commands.argument("name", StringArgumentType.word())
+                                .suggests((ctx, builder) ->
+                                        SharedSuggestionProvider.suggest(Pipelines.getAll().keySet(), builder))
+                                .executes(ctx -> executeSteps(
+                                        ctx.getSource(), StringArgumentType.getString(ctx, "name")))))
+                .then(Commands.literal("queue")
+                        .executes(ctx -> executeQueue(ctx.getSource())))
+                .executes(ctx -> executeList(ctx.getSource()));
+
         dispatcher.register(
-                Commands.literal("pipelinedebug")
+                Commands.literal("discovery")
                         .requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("list")
-                                .executes(ctx -> executeList(ctx.getSource())))
-                        .then(Commands.literal("steps")
-                                .executes(ctx -> executeSteps(ctx.getSource(), "flyover"))
-                                .then(Commands.argument("name", StringArgumentType.word())
-                                        .suggests((ctx, builder) ->
-                                                SharedSuggestionProvider.suggest(Pipelines.getAll().keySet(), builder))
-                                        .executes(ctx -> executeSteps(
-                                                ctx.getSource(), StringArgumentType.getString(ctx, "name")))))
-                        .then(Commands.literal("queue")
-                                .executes(ctx -> executeQueue(ctx.getSource())))
-                        .executes(ctx -> executeList(ctx.getSource()))
+                        .then(pipelineDebug)
         );
     }
 

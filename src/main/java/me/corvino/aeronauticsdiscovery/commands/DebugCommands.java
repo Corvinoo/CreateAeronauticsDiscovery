@@ -51,21 +51,24 @@ public final class DebugCommands {
     private static final ResourceKey<Structure> KEY_BY_NAME = null; // sentinel, resolved via lookup below
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        var debugFindStructure = Commands.literal("debugfindstructure")
+                .executes(ctx -> executeFind(ctx, null))
+                .then(Commands.argument("structure", StringArgumentType.word())
+                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(DEBUG_NAMES, builder))
+                        .executes(ctx -> {
+                            String name = StringArgumentType.getString(ctx, "structure");
+                            ResourceKey<Structure> key = resolveKey(name);
+                            if (key == null) {
+                                ctx.getSource().sendFailure(Component.literal("Unknown structure: " + name));
+                                return 0;
+                            }
+                            return executeFind(ctx, key);
+                        }));
+
         dispatcher.register(
-                Commands.literal("debugfindstructure")
+                Commands.literal("discovery")
                         .requires(source -> source.hasPermission(2))
-                        .executes(ctx -> executeFind(ctx, null))
-                        .then(Commands.argument("structure", StringArgumentType.word())
-                                .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(DEBUG_NAMES, builder))
-                                .executes(ctx -> {
-                                    String name = StringArgumentType.getString(ctx, "structure");
-                                    ResourceKey<Structure> key = resolveKey(name);
-                                    if (key == null) {
-                                        ctx.getSource().sendFailure(Component.literal("Unknown structure: " + name));
-                                        return 0;
-                                    }
-                                    return executeFind(ctx, key);
-                                }))
+                        .then(debugFindStructure)
         );
     }
 
