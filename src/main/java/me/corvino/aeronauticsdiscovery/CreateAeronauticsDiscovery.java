@@ -2,7 +2,6 @@ package me.corvino.aeronauticsdiscovery;
 
 import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
-import me.corvino.aeronauticsdiscovery.benchmark.BenchmarkCommand;
 import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
@@ -144,7 +143,6 @@ public class CreateAeronauticsDiscovery {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         PrefabCommands.register(event.getDispatcher());
-        BenchmarkCommand.register(event.getDispatcher());
         FlyoverCommands.register(event.getDispatcher());
         DebugCommands.register(event.getDispatcher());
         PipelineDebugCommand.register(event.getDispatcher());

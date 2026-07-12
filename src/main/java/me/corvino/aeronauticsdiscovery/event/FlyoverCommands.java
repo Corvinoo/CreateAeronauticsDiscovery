@@ -64,39 +64,35 @@ public final class FlyoverCommands {
                         )
                 );
 
-        dispatcher.register(
-                Commands.literal("flyover")
-                        .requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("toggle")
-                                .executes(ctx -> executeToggle(ctx.getSource()))
-                        )
-                        .then(Commands.literal("status")
-                                .executes(ctx -> executeStatus(ctx.getSource()))
-                        )
-                        .then(Commands.literal("chunks")
-                                .executes(ctx -> executeChunks(ctx.getSource()))
-                        )
-                        .then(Commands.literal("list")
-                                .executes(ctx -> executeList(ctx.getSource()))
-                        )
-                        .then(debugBranch)
-                        .executes(ctx -> spawn(ctx.getSource(), null, null, false))
+        var flyover = Commands.literal("flyover")
+                .then(Commands.literal("toggle")
+                        .executes(ctx -> executeToggle(ctx.getSource())))
+                .then(Commands.literal("status")
+                        .executes(ctx -> executeStatus(ctx.getSource())))
+                .then(Commands.literal("chunks")
+                        .executes(ctx -> executeChunks(ctx.getSource())))
+                .then(Commands.literal("list")
+                        .executes(ctx -> executeList(ctx.getSource())))
+                .then(debugBranch)
+                .executes(ctx -> spawn(ctx.getSource(), null, null, false))
+                .then(Commands.argument("structure", StringArgumentType.word())
+                        .suggests(FLYOVER_SUGGESTIONS)
+                        .executes(ctx -> spawn(ctx.getSource(), null, StringArgumentType.getString(ctx, "structure"), false)))
+                .then(Commands.argument("player", EntityArgument.player())
+                        .executes(ctx -> spawn(ctx.getSource(), EntityArgument.getPlayer(ctx, "player"), null, false))
                         .then(Commands.argument("structure", StringArgumentType.word())
                                 .suggests(FLYOVER_SUGGESTIONS)
-                                .executes(ctx -> spawn(ctx.getSource(), null, StringArgumentType.getString(ctx, "structure"), false))
-                        )
-                        .then(Commands.argument("player", EntityArgument.player())
-                                .executes(ctx -> spawn(ctx.getSource(), EntityArgument.getPlayer(ctx, "player"), null, false))
-                                .then(Commands.argument("structure", StringArgumentType.word())
-                                        .suggests(FLYOVER_SUGGESTIONS)
-                                        .executes(ctx -> spawn(
-                                                ctx.getSource(),
-                                                EntityArgument.getPlayer(ctx, "player"),
-                                                StringArgumentType.getString(ctx, "structure"),
-                                                false
-                                        ))
-                                )
-                        )
+                                .executes(ctx -> spawn(
+                                        ctx.getSource(),
+                                        EntityArgument.getPlayer(ctx, "player"),
+                                        StringArgumentType.getString(ctx, "structure"),
+                                        false
+                                ))));
+
+        dispatcher.register(
+                Commands.literal("discovery")
+                        .requires(source -> source.hasPermission(2))
+                        .then(flyover)
         );
     }
 

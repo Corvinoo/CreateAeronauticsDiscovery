@@ -4,7 +4,6 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyPipeline;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
-import me.corvino.aeronauticsdiscovery.benchmark.PrefabBenchmark;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -82,8 +81,6 @@ public class AssemblyQueue extends SavedData {
     private void process(ServerLevel level) {
         if (entries.isEmpty() && pendingAdd.isEmpty()) return;
 
-        long startNanos = System.nanoTime();
-        int beforeCount = entries.size();
         long currentTick = level.getGameTime();
 
         processing = true;
@@ -92,10 +89,6 @@ public class AssemblyQueue extends SavedData {
         } finally {
             processing = false;
             flushPendingAdds();
-        }
-
-        if (PrefabBenchmark.isActive()) {
-            PrefabBenchmark.recordTick(System.nanoTime() - startNanos, beforeCount, entries.size());
         }
     }
 
