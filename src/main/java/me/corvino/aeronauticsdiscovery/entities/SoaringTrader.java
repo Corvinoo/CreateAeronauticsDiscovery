@@ -49,6 +49,8 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.Math.atan2;
 
@@ -312,13 +314,36 @@ public class SoaringTrader extends WanderingTrader {
     private ItemStack buildMapTrade() {
         if (!(this.level() instanceof ServerLevel serverLevel)) return null;
 
-        StructureEntry entry = STRUCTURES[this.random.nextInt(STRUCTURES.length)];
         Registry<Structure> registry = serverLevel.registryAccess().registryOrThrow(Registries.STRUCTURE);
-        Holder<Structure> holder = registry.getHolderOrThrow(entry.key());
-
         ChunkGeneratorStructureState state = serverLevel.getChunkSource().getGeneratorState();
         long seed = state.getLevelSeed();
 
+        if (me.corvino.aeronauticsdiscovery.Config.traderGuaranteedMap) {
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < STRUCTURES.length; i++) indices.add(i);
+            for (int i = indices.size() - 1; i > 0; i--) {
+                int j = this.random.nextInt(i + 1);
+                int tmp = indices.get(i);
+                indices.set(i, indices.get(j));
+                indices.set(j, tmp);
+            }
+
+            for (int idx : indices) {
+                ItemStack map = tryStructure(serverLevel, registry, state, seed, STRUCTURES[idx]);
+                if (map != null) return map;
+            }
+            return null;
+        }
+
+        ItemStack map = tryStructure(serverLevel, registry, state, seed,
+                STRUCTURES[this.random.nextInt(STRUCTURES.length)]);
+        return map;
+    }
+
+    @Nullable
+    private ItemStack tryStructure(ServerLevel serverLevel, Registry<Structure> registry,
+                                   ChunkGeneratorStructureState state, long seed, StructureEntry entry) {
+        Holder<Structure> holder = registry.getHolderOrThrow(entry.key());
         for (StructurePlacement sp : state.getPlacementsForStructure(holder)) {
             if (sp instanceof RandomSpreadStructurePlacement rssp) {
                 BlockPos found = StructureSearchWorker.searchNearest(

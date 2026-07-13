@@ -52,6 +52,11 @@ public class Config {
             .comment("How long the SoaringTrader stays angry (prices doubled) after a crash or being hit, in ticks (20 ticks = 1 second).")
             .defineInRange("trader.angerDurationTicks", 12000, 1, Integer.MAX_VALUE);
 
+    private static final ModConfigSpec.BooleanValue TRADER_GUARANTEED_MAP = BUILDER
+            .comment("When enabled, the SoaringTrader will always offer a structure map as long as any structure type exists within search range. " +
+                    "When disabled, it picks one random structure type and only offers a map if that specific type is found.")
+            .define("trader.guaranteedMap", true);
+
     private static final ModConfigSpec.BooleanValue PROCESS_ALL_SUBLEVEL = BUILDER.
             comment("If enabled, all sublevels including the ones NOT created by this mod will be processed for internal physics detection."+ 
                     "\n This makes event triggers such as 'External Force' pins work regardless of the sublevel internal data. " +
@@ -78,6 +83,7 @@ public class Config {
     public static boolean explosionFire;
     public static ExplosionMode explosionStrategy;
     public static int traderAngerDuration;
+    public static boolean traderGuaranteedMap;
     public static boolean processAllSublevels;
     public static boolean fragmentPromotion;
     public static double promotionRange;
@@ -94,6 +100,7 @@ public class Config {
         explosionFire = EXPLOSION_FIRE.get();
         explosionStrategy = EXPLOSION_STRATEGY.get();
         traderAngerDuration = TRADER_ANGER_DURATION.get();
+        traderGuaranteedMap = TRADER_GUARANTEED_MAP.get();
         processAllSublevels = PROCESS_ALL_SUBLEVEL.get();
         fragmentPromotion = FRAGMENT_PROMOTION.get();
         promotionRange = PROMOTION_RANGE.get();
