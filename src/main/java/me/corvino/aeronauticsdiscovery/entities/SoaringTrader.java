@@ -341,11 +341,15 @@ public class SoaringTrader extends WanderingTrader {
         ResourceLocation loc = ResourceLocation.parse(structId);
         ResourceKey<Structure> key = ResourceKey.create(Registries.STRUCTURE, loc);
         me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] tryStructure: {}", structId);
-        Holder<Structure> holder = registry.getHolderOrThrow(key);
-        for (StructurePlacement sp : state.getPlacementsForStructure(holder)) {
+        var holderOpt = registry.getHolder(key);
+        if (holderOpt.isEmpty()) {
+            me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.warn("[TRADE] unknown structure: {}", structId);
+            return null;
+        }
+        for (StructurePlacement sp : state.getPlacementsForStructure(holderOpt.get())) {
             if (sp instanceof RandomSpreadStructurePlacement rssp) {
                 BlockPos found = StructureSearchWorker.searchNearest(
-                        serverLevel, holder.value(), rssp, seed, this.blockPosition(), 50, 800);
+                        serverLevel, holderOpt.get().value(), rssp, seed, this.blockPosition(), 50, 800);
                 me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] searchNearest({}) = {}", structId, found);
                 if (found != null) {
                     StructureMeta meta = KNOWN_STRUCTURES.get(structId);
