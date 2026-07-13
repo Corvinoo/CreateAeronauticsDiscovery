@@ -38,7 +38,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
@@ -51,6 +50,7 @@ import org.joml.Vector3d;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.Math.atan2;
 
@@ -99,18 +99,12 @@ public class SoaringTrader extends WanderingTrader {
             "create:cardboard_leggings",
             "create:cardboard_boots"
     };
-    private record StructureEntry(ResourceKey<Structure> key, Holder<MapDecorationType> decoration, String nameKey) {
-    }
+    private record StructureMeta(Holder<MapDecorationType> decoration, String nameKey) {}
 
-    private static final List<StructureEntry> STRUCTURES = List.of(
-            new StructureEntry(BuiltinStructures.WOODLAND_MANSION, MapDecorationTypes.WOODLAND_MANSION, "filled_map.mansion"),
-            new StructureEntry(BuiltinStructures.JUNGLE_TEMPLE, MapDecorationTypes.JUNGLE_TEMPLE, "filled_map.aeronauticsdiscovery.jungle_temple"),
-            new StructureEntry(BuiltinStructures.DESERT_PYRAMID, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.desert_pyramid"),
-            new StructureEntry(BuiltinStructures.TRAIL_RUINS, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.trail_ruins"),
-            new StructureEntry(BuiltinStructures.IGLOO, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.igloo"),
-            new StructureEntry(BuiltinStructures.ANCIENT_CITY, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.ancient_city"),
-            new StructureEntry(BuiltinStructures.MINESHAFT, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.mineshaft"),
-            new StructureEntry(BuiltinStructures.TRIAL_CHAMBERS, MapDecorationTypes.TRIAL_CHAMBERS, "filled_map.trial_chambers")
+    private static final Map<String, StructureMeta> KNOWN_STRUCTURES = Map.ofEntries(
+            Map.entry("minecraft:woodland_mansion", new StructureMeta(MapDecorationTypes.WOODLAND_MANSION, "filled_map.mansion")),
+            Map.entry("minecraft:jungle_pyramid", new StructureMeta(MapDecorationTypes.JUNGLE_TEMPLE, "filled_map.aeronauticsdiscovery.jungle_temple")),
+            Map.entry("minecraft:trial_chambers", new StructureMeta(MapDecorationTypes.TRIAL_CHAMBERS, "filled_map.trial_chambers"))
     );
 
     private static final String[] DYE_COLORS = {
@@ -314,51 +308,57 @@ public class SoaringTrader extends WanderingTrader {
     private ItemStack buildMapTrade() {
         if (!(this.level() instanceof ServerLevel serverLevel)) return null;
 
-        List<? extends String> enabledIds = me.corvino.aeronauticsdiscovery.Config.traderStructureMaps;
-        List<StructureEntry> enabled = STRUCTURES.stream()
-                .filter(e -> enabledIds.contains(e.key().location().toString()))
-                .toList();
-        if (enabled.isEmpty()) return null;
+        List<? extends String> ids = me.corvino.aeronauticsdiscovery.Config.traderStructureMaps;
+        me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] ids={}", ids);
+        if (ids.isEmpty()) return null;
 
         Registry<Structure> registry = serverLevel.registryAccess().registryOrThrow(Registries.STRUCTURE);
         ChunkGeneratorStructureState state = serverLevel.getChunkSource().getGeneratorState();
         long seed = state.getLevelSeed();
 
         if (me.corvino.aeronauticsdiscovery.Config.traderGuaranteedMap) {
-            List<StructureEntry> shuffled = new ArrayList<>(enabled);
+            List<String> shuffled = new ArrayList<>(ids);
             for (int i = shuffled.size() - 1; i > 0; i--) {
                 int j = this.random.nextInt(i + 1);
-                StructureEntry tmp = shuffled.get(i);
+                String tmp = shuffled.get(i);
                 shuffled.set(i, shuffled.get(j));
                 shuffled.set(j, tmp);
             }
-            for (StructureEntry entry : shuffled) {
-                ItemStack map = tryStructure(serverLevel, registry, state, seed, entry);
+            for (String id : shuffled) {
+                ItemStack map = tryStructure(serverLevel, registry, state, seed, id);
                 if (map != null) return map;
             }
             return null;
         }
 
         return tryStructure(serverLevel, registry, state, seed,
-                enabled.get(this.random.nextInt(enabled.size())));
+                ids.get(this.random.nextInt(ids.size())));
     }
 
     @Nullable
     private ItemStack tryStructure(ServerLevel serverLevel, Registry<Structure> registry,
-                                   ChunkGeneratorStructureState state, long seed, StructureEntry entry) {
-        Holder<Structure> holder = registry.getHolderOrThrow(entry.key());
+                                   ChunkGeneratorStructureState state, long seed, String structId) {
+        ResourceLocation loc = ResourceLocation.parse(structId);
+        ResourceKey<Structure> key = ResourceKey.create(Registries.STRUCTURE, loc);
+        me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] tryStructure: {}", structId);
+        Holder<Structure> holder = registry.getHolderOrThrow(key);
         for (StructurePlacement sp : state.getPlacementsForStructure(holder)) {
             if (sp instanceof RandomSpreadStructurePlacement rssp) {
                 BlockPos found = StructureSearchWorker.searchNearest(
                         serverLevel, holder.value(), rssp, seed, this.blockPosition(), 50, 800);
+                me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] searchNearest({}) = {}", structId, found);
                 if (found != null) {
+                    StructureMeta meta = KNOWN_STRUCTURES.get(structId);
+                    Holder<MapDecorationType> deco = meta != null ? meta.decoration() : MapDecorationTypes.TARGET_X;
+                    String nameKey = meta != null ? meta.nameKey() : "filled_map.aeronauticsdiscovery." + loc.getPath();
                     ItemStack map = MapItem.create(serverLevel, found.getX(), found.getZ(), (byte) 2, true, true);
-                    MapItemSavedData.addTargetDecoration(map, found, "+", entry.decoration());
-                    map.set(DataComponents.ITEM_NAME, Component.translatable(entry.nameKey()));
+                    MapItemSavedData.addTargetDecoration(map, found, "+", deco);
+                    map.set(DataComponents.ITEM_NAME, Component.translatable(nameKey));
                     return map;
                 }
             }
         }
+        me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] no placement found for {}", structId);
         return null;
     }
 
