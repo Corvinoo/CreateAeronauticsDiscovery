@@ -99,7 +99,10 @@ public class SoaringTrader extends WanderingTrader {
             "create:cardboard_leggings",
             "create:cardboard_boots"
     };
-    private static final StructureEntry[] STRUCTURES = {
+    private record StructureEntry(ResourceKey<Structure> key, Holder<MapDecorationType> decoration, String nameKey) {
+    }
+
+    private static final List<StructureEntry> STRUCTURES = List.of(
             new StructureEntry(BuiltinStructures.WOODLAND_MANSION, MapDecorationTypes.WOODLAND_MANSION, "filled_map.mansion"),
             new StructureEntry(BuiltinStructures.JUNGLE_TEMPLE, MapDecorationTypes.JUNGLE_TEMPLE, "filled_map.aeronauticsdiscovery.jungle_temple"),
             new StructureEntry(BuiltinStructures.DESERT_PYRAMID, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.desert_pyramid"),
@@ -107,11 +110,8 @@ public class SoaringTrader extends WanderingTrader {
             new StructureEntry(BuiltinStructures.IGLOO, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.igloo"),
             new StructureEntry(BuiltinStructures.ANCIENT_CITY, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.ancient_city"),
             new StructureEntry(BuiltinStructures.MINESHAFT, MapDecorationTypes.TARGET_X, "filled_map.aeronauticsdiscovery.mineshaft"),
-            new StructureEntry(BuiltinStructures.TRIAL_CHAMBERS, MapDecorationTypes.TRIAL_CHAMBERS, "filled_map.trial_chambers"),
-    };
-
-    private record StructureEntry(ResourceKey<Structure> key, Holder<MapDecorationType> decoration, String nameKey) {
-    }
+            new StructureEntry(BuiltinStructures.TRIAL_CHAMBERS, MapDecorationTypes.TRIAL_CHAMBERS, "filled_map.trial_chambers")
+    );
 
     private static final String[] DYE_COLORS = {
             "white", "orange", "magenta", "light_blue",
@@ -314,30 +314,33 @@ public class SoaringTrader extends WanderingTrader {
     private ItemStack buildMapTrade() {
         if (!(this.level() instanceof ServerLevel serverLevel)) return null;
 
+        List<? extends String> enabledIds = me.corvino.aeronauticsdiscovery.Config.traderStructureMaps;
+        List<StructureEntry> enabled = STRUCTURES.stream()
+                .filter(e -> enabledIds.contains(e.key().location().toString()))
+                .toList();
+        if (enabled.isEmpty()) return null;
+
         Registry<Structure> registry = serverLevel.registryAccess().registryOrThrow(Registries.STRUCTURE);
         ChunkGeneratorStructureState state = serverLevel.getChunkSource().getGeneratorState();
         long seed = state.getLevelSeed();
 
         if (me.corvino.aeronauticsdiscovery.Config.traderGuaranteedMap) {
-            List<Integer> indices = new ArrayList<>();
-            for (int i = 0; i < STRUCTURES.length; i++) indices.add(i);
-            for (int i = indices.size() - 1; i > 0; i--) {
+            List<StructureEntry> shuffled = new ArrayList<>(enabled);
+            for (int i = shuffled.size() - 1; i > 0; i--) {
                 int j = this.random.nextInt(i + 1);
-                int tmp = indices.get(i);
-                indices.set(i, indices.get(j));
-                indices.set(j, tmp);
+                StructureEntry tmp = shuffled.get(i);
+                shuffled.set(i, shuffled.get(j));
+                shuffled.set(j, tmp);
             }
-
-            for (int idx : indices) {
-                ItemStack map = tryStructure(serverLevel, registry, state, seed, STRUCTURES[idx]);
+            for (StructureEntry entry : shuffled) {
+                ItemStack map = tryStructure(serverLevel, registry, state, seed, entry);
                 if (map != null) return map;
             }
             return null;
         }
 
-        ItemStack map = tryStructure(serverLevel, registry, state, seed,
-                STRUCTURES[this.random.nextInt(STRUCTURES.length)]);
-        return map;
+        return tryStructure(serverLevel, registry, state, seed,
+                enabled.get(this.random.nextInt(enabled.size())));
     }
 
     @Nullable
