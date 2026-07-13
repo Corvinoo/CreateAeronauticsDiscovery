@@ -5,6 +5,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
+import java.util.List;
+
 @EventBusSubscriber(modid = CreateAeronauticsDiscovery.MODID)
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
@@ -57,6 +59,26 @@ public class Config {
                     "When disabled, it picks one random structure type and only offers a map if that specific type is found.")
             .define("trader.guaranteedMap", true);
 
+    public static final List<String> DEFAULT_STRUCTURE_MAPS = List.of(
+            "minecraft:woodland_mansion",
+            "minecraft:jungle_pyramid",
+            "minecraft:desert_pyramid",
+            "minecraft:trail_ruins",
+            "minecraft:igloo",
+            "minecraft:ancient_city",
+            "minecraft:mineshaft",
+            "minecraft:trial_chambers"
+    );
+
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> TRADER_STRUCTURE_MAPS = BUILDER
+            .comment("Enable or disable map trades for specific structures.",
+                    "Entries are structure registry names (e.g. \"minecraft:woodland_mansion\").",
+                    "Add entries to enable, remove entries to disable.",
+                    "Add modded structures as new entries (e.g. \"modid:structure_id\").")
+            .defineList("trader.structureMaps",
+                    DEFAULT_STRUCTURE_MAPS,
+                    entry -> entry instanceof String);
+
     private static final ModConfigSpec.BooleanValue PROCESS_ALL_SUBLEVEL = BUILDER.
             comment("If enabled, all sublevels including the ones NOT created by this mod will be processed for internal physics detection."+ 
                     "\n This makes event triggers such as 'External Force' pins work regardless of the sublevel internal data. " +
@@ -84,6 +106,7 @@ public class Config {
     public static ExplosionMode explosionStrategy;
     public static int traderAngerDuration;
     public static boolean traderGuaranteedMap;
+    public static List<? extends String> traderStructureMaps;
     public static boolean processAllSublevels;
     public static boolean fragmentPromotion;
     public static double promotionRange;
@@ -101,6 +124,7 @@ public class Config {
         explosionStrategy = EXPLOSION_STRATEGY.get();
         traderAngerDuration = TRADER_ANGER_DURATION.get();
         traderGuaranteedMap = TRADER_GUARANTEED_MAP.get();
+        traderStructureMaps = TRADER_STRUCTURE_MAPS.get();
         processAllSublevels = PROCESS_ALL_SUBLEVEL.get();
         fragmentPromotion = FRAGMENT_PROMOTION.get();
         promotionRange = PROMOTION_RANGE.get();
