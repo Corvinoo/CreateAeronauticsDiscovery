@@ -106,7 +106,7 @@ public class Config {
     public static ExplosionMode explosionStrategy;
     public static int traderAngerDuration;
     public static boolean traderGuaranteedMap;
-    public static List<? extends String> traderStructureMaps;
+    public static List<? extends String> traderStructureMaps = DEFAULT_STRUCTURE_MAPS;
     public static boolean processAllSublevels;
     public static boolean fragmentPromotion;
     public static double promotionRange;
