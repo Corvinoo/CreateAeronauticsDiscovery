@@ -350,10 +350,19 @@ public class SoaringTrader extends WanderingTrader {
                 if (found != null) {
                     StructureMeta meta = KNOWN_STRUCTURES.get(structId);
                     Holder<MapDecorationType> deco = meta != null ? meta.decoration() : MapDecorationTypes.TARGET_X;
-                    String nameKey = meta != null ? meta.nameKey() : "filled_map.aeronauticsdiscovery." + loc.getPath();
                     ItemStack map = MapItem.create(serverLevel, found.getX(), found.getZ(), (byte) 2, true, true);
                     MapItemSavedData.addTargetDecoration(map, found, "+", deco);
-                    map.set(DataComponents.ITEM_NAME, Component.translatable(nameKey));
+                    if (meta != null) {
+                        map.set(DataComponents.ITEM_NAME, Component.translatable(meta.nameKey()));
+                    } else {
+                        String[] parts = loc.getPath().split("_");
+                        StringBuilder name = new StringBuilder();
+                        for (String p : parts) {
+                            name.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1)).append(' ');
+                        }
+                        name.append("Map");
+                        map.set(DataComponents.ITEM_NAME, Component.literal(name.toString()));
+                    }
                     return map;
                 }
             }
