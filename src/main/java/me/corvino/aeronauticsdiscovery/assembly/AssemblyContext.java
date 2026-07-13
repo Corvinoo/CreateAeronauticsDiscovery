@@ -66,7 +66,7 @@ public class AssemblyContext {
     }
 
     public void resetRuntimeState() {
-        this.steps.clear();
+        this.steps = new ArrayList<>();
         this.currentTick = 0;
         this.currentStepIndex = 0;
         this.subLevelId = null;
