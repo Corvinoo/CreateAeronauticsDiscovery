@@ -9,6 +9,7 @@ import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -90,7 +91,7 @@ class FlyoverSerializationTest {
         @Test
         void roundTripDefaults() {
             FlyoverEventConfig original = new FlyoverEventConfig(
-                    TEMPLATE_ID, 200, 280, 1, InitialVelocity.NONE, true);
+                    TEMPLATE_ID, 200, 280, 1, InitialVelocity.NONE, true, List.of());
 
             SerializationTestUtil.assertJsonRoundTrip(FlyoverEventConfig.CODEC, original, (a, b) -> {
                 assertEquals(a.template(), b.template());
@@ -108,7 +109,7 @@ class FlyoverSerializationTest {
                     ResourceLocation.parse("aeronauticsdiscovery:test"),
                     50, 400, 10,
                     new InitialVelocity(new Vec3(0.5, 0.0, 0.0), new Vec3(0.0, 0.1, 0.0), true),
-                    false);
+                    false, List.of());
 
             SerializationTestUtil.assertJsonRoundTrip(FlyoverEventConfig.CODEC, original, (a, b) -> {
                 assertEquals(a.template(), b.template());
@@ -125,7 +126,7 @@ class FlyoverSerializationTest {
         @Test
         void roundTripMinAltitudeOnly() {
             FlyoverEventConfig original = new FlyoverEventConfig(
-                    TEMPLATE_ID, 500, 280, 1, InitialVelocity.NONE, true);
+                    TEMPLATE_ID, 500, 280, 1, InitialVelocity.NONE, true, List.of());
 
             SerializationTestUtil.assertJsonRoundTrip(FlyoverEventConfig.CODEC, original, (a, b) -> {
                 assertEquals(500, b.minAltitude());
@@ -136,7 +137,7 @@ class FlyoverSerializationTest {
         @Test
         void roundTripLargeWeight() {
             FlyoverEventConfig original = new FlyoverEventConfig(
-                    TEMPLATE_ID, 200, 280, Integer.MAX_VALUE, InitialVelocity.NONE, true);
+                    TEMPLATE_ID, 200, 280, Integer.MAX_VALUE, InitialVelocity.NONE, true, List.of());
 
             SerializationTestUtil.assertJsonRoundTrip(FlyoverEventConfig.CODEC, original, (a, b) -> {
                 assertEquals(Integer.MAX_VALUE, b.weight());
@@ -148,7 +149,7 @@ class FlyoverSerializationTest {
             FlyoverEventConfig original = new FlyoverEventConfig(
                     TEMPLATE_ID, 200, 280, 1,
                     new InitialVelocity(new Vec3(1.0, 2.0, 3.0), new Vec3(0.1, 0.2, 0.3), true),
-                    true);
+                    true, List.of());
 
             SerializationTestUtil.assertJsonRoundTrip(FlyoverEventConfig.CODEC, original, (a, b) -> {
                 assertVec3(1.0, 2.0, 3.0, b.velocity().linear());
@@ -162,7 +163,7 @@ class FlyoverSerializationTest {
             // Velocity defaults (Vec3.ZERO, impulse=false) should survive round-trip as NONE
             FlyoverEventConfig original = new FlyoverEventConfig(
                     TEMPLATE_ID, 200, 280, 1,
-                    new InitialVelocity(Vec3.ZERO, Vec3.ZERO, false), true);
+                    new InitialVelocity(Vec3.ZERO, Vec3.ZERO, false), true, List.of());
 
             SerializationTestUtil.assertJsonRoundTrip(FlyoverEventConfig.CODEC, original, (a, b) -> {
                 assertEquals(InitialVelocity.NONE, b.velocity());
