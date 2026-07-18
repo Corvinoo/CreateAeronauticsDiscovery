@@ -5,13 +5,16 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.List;
+
 public record FlyoverEventConfig(
         ResourceLocation template,
         int minAltitude,
         int maxAltitude,
         int weight,
         InitialVelocity velocity,
-        boolean randomizeYaw
+        boolean randomizeYaw,
+        List<ResourceLocation> dimensions
 ) {
     public static final Codec<FlyoverEventConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("template").forGetter(FlyoverEventConfig::template),
@@ -19,6 +22,7 @@ public record FlyoverEventConfig(
             Codec.INT.optionalFieldOf("max_altitude", 280).forGetter(FlyoverEventConfig::maxAltitude),
             Codec.INT.optionalFieldOf("weight", 1).forGetter(FlyoverEventConfig::weight),
             InitialVelocity.CODEC.codec().optionalFieldOf("initial_velocity", InitialVelocity.NONE).forGetter(FlyoverEventConfig::velocity),
-            Codec.BOOL.optionalFieldOf("randomize_yaw", true).forGetter(FlyoverEventConfig::randomizeYaw)
+            Codec.BOOL.optionalFieldOf("randomize_yaw", true).forGetter(FlyoverEventConfig::randomizeYaw),
+            ResourceLocation.CODEC.listOf().fieldOf("dimensions").forGetter(FlyoverEventConfig::dimensions)
     ).apply(instance, FlyoverEventConfig::new));
 }
