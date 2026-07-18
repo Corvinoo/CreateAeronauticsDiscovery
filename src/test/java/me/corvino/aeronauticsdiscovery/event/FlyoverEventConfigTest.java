@@ -4,7 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
+import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,6 +17,7 @@ class FlyoverEventConfigTest {
     void deserializeMinimal() {
         JsonObject json = new JsonObject();
         json.addProperty("template", "aeronauticsdiscovery:airplane");
+        json.add("dimensions", new JsonArray());
 
         FlyoverEventConfig config = FlyoverEventConfig.CODEC
                 .decode(JsonOps.INSTANCE, json)
@@ -50,6 +54,7 @@ class FlyoverEventConfigTest {
         velocity.add("angular", angular);
         velocity.addProperty("impulse", true);
         json.add("initial_velocity", velocity);
+        json.add("dimensions", new JsonArray());
 
         FlyoverEventConfig config = FlyoverEventConfig.CODEC
                 .decode(JsonOps.INSTANCE, json)
@@ -69,6 +74,7 @@ class FlyoverEventConfigTest {
     void deserializeWithoutCooldown_backwardCompat() {
         JsonObject json = new JsonObject();
         json.addProperty("template", "aeronauticsdiscovery:balloon_loot");
+        json.add("dimensions", new JsonArray());
 
         FlyoverEventConfig config = FlyoverEventConfig.CODEC
                 .decode(JsonOps.INSTANCE, json)
@@ -83,6 +89,7 @@ class FlyoverEventConfigTest {
         JsonObject json = new JsonObject();
         json.addProperty("template", "aeronauticsdiscovery:partial");
         json.addProperty("min_altitude", 500);
+        json.add("dimensions", new JsonArray());
 
         FlyoverEventConfig config = FlyoverEventConfig.CODEC
                 .decode(JsonOps.INSTANCE, json)
@@ -99,6 +106,7 @@ class FlyoverEventConfigTest {
         JsonObject json = new JsonObject();
         json.addProperty("template", "aeronauticsdiscovery:roundtrip");
         json.addProperty("weight", 10);
+        json.add("dimensions", new JsonArray());
 
         FlyoverEventConfig config = FlyoverEventConfig.CODEC
                 .decode(JsonOps.INSTANCE, json)

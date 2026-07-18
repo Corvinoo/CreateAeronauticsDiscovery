@@ -15,7 +15,7 @@ class FlyoverEventRegistryTest {
 
     private static FlyoverEventConfig config(int weight) {
         return new FlyoverEventConfig(NS, 200, 280, weight,
-                InitialVelocity.NONE, true);
+                InitialVelocity.NONE, true, List.of());
     }
 
     @Test
