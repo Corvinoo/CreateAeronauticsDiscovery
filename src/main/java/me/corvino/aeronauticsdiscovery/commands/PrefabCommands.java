@@ -40,14 +40,16 @@ public final class PrefabCommands {
                                         null,
                                         BlockPosArgument.getBlockPos(ctx, "pos")
                                 ))
-                                .then(Commands.argument("structure", StringArgumentType.word())
-                                        .suggests(STRUCTURE_SUGGESTIONS)
-                                        .executes(ctx -> executeSpawn(
-                                                ctx.getSource(),
-                                                ResourceLocation.fromNamespaceAndPath(MODID, StringArgumentType.getString(ctx, "structure")),
-                                                BlockPosArgument.getBlockPos(ctx, "pos")
-                                        ))
-                                )
+                        .then(Commands.argument("structure", StringArgumentType.string())
+                                .suggests(STRUCTURE_SUGGESTIONS)
+                                .executes(ctx -> {
+                                    String raw = StringArgumentType.getString(ctx, "structure");
+                                    ResourceLocation id = raw.contains(":")
+                                            ? ResourceLocation.tryParse(raw)
+                                            : ResourceLocation.fromNamespaceAndPath(MODID, raw);
+                                    return executeSpawn(ctx.getSource(), id, BlockPosArgument.getBlockPos(ctx, "pos"));
+                                })
+                        )
                         )
         );
     }
