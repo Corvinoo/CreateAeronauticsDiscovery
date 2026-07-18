@@ -23,7 +23,6 @@ class FlyoverEventConfigTest {
         assertEquals("aeronauticsdiscovery:airplane", config.template().toString());
         assertEquals(200, config.minAltitude());
         assertEquals(280, config.maxAltitude());
-        assertEquals(80, config.horizontalOffset());
         assertEquals(1, config.weight());
         assertEquals(InitialVelocity.NONE, config.velocity());
         assertTrue(config.randomizeYaw());
@@ -35,7 +34,6 @@ class FlyoverEventConfigTest {
         json.addProperty("template", "aeronauticsdiscovery:test");
         json.addProperty("min_altitude", 100);
         json.addProperty("max_altitude", 300);
-        json.addProperty("horizontal_offset", 50);
         json.addProperty("weight", 5);
         json.addProperty("randomize_yaw", false);
 
@@ -61,7 +59,6 @@ class FlyoverEventConfigTest {
         assertEquals("aeronauticsdiscovery:test", config.template().toString());
         assertEquals(100, config.minAltitude());
         assertEquals(300, config.maxAltitude());
-        assertEquals(50, config.horizontalOffset());
         assertEquals(5, config.weight());
         assertFalse(config.randomizeYaw());
         assertEquals(0.5, config.velocity().linear().x(), 1e-6);
