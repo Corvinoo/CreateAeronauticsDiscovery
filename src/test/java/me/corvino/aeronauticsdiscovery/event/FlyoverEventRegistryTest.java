@@ -14,7 +14,7 @@ class FlyoverEventRegistryTest {
     private static final ResourceLocation NS = ResourceLocation.parse("aeronauticsdiscovery:test");
 
     private static FlyoverEventConfig config(int weight) {
-        return new FlyoverEventConfig(NS, 200, 280, 80, weight,
+        return new FlyoverEventConfig(NS, 200, 280, weight,
                 InitialVelocity.NONE, true);
     }
 
