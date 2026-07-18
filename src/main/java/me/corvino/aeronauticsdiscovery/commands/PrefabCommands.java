@@ -44,9 +44,21 @@ public final class PrefabCommands {
                                 .suggests(STRUCTURE_SUGGESTIONS)
                                 .executes(ctx -> {
                                     String raw = StringArgumentType.getString(ctx, "structure");
-                                    ResourceLocation id = raw.contains(":")
-                                            ? ResourceLocation.tryParse(raw)
-                                            : ResourceLocation.fromNamespaceAndPath(MODID, raw);
+                                    ResourceLocation id;
+                                    if (raw.contains(":")) {
+                                        id = ResourceLocation.tryParse(raw);
+                                    } else {
+                                        var server = ctx.getSource().getServer();
+                                        var paths = server.getResourceManager().listResources("structure", s -> s.getPath().endsWith(".nbt"));
+                                        id = paths.keySet().stream()
+                                                .filter(loc -> loc.getPath().equals("structure/" + raw + ".nbt"))
+                                                .findFirst()
+                                                .map(loc -> ResourceLocation.fromNamespaceAndPath(
+                                                        loc.getNamespace(),
+                                                        loc.getPath().replace("structure/", "").replace(".nbt", "")
+                                                ))
+                                                .orElse(ResourceLocation.fromNamespaceAndPath(MODID, raw));
+                                    }
                                     return executeSpawn(ctx.getSource(), id, BlockPosArgument.getBlockPos(ctx, "pos"));
                                 })
                         )
