@@ -48,13 +48,13 @@ public final class FlyoverCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         var debugBranch = Commands.literal("debug")
                 .executes(ctx -> spawnWithDebug(ctx.getSource(), null, null))
-                .then(Commands.argument("structure", StringArgumentType.word())
+                .then(Commands.argument("structure", StringArgumentType.string())
                         .suggests(FLYOVER_SUGGESTIONS)
                         .executes(ctx -> spawnWithDebug(ctx.getSource(), null, StringArgumentType.getString(ctx, "structure")))
                 )
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> spawnWithDebug(ctx.getSource(), EntityArgument.getPlayer(ctx, "player"), null))
-                        .then(Commands.argument("structure", StringArgumentType.word())
+                        .then(Commands.argument("structure", StringArgumentType.string())
                                 .suggests(FLYOVER_SUGGESTIONS)
                                 .executes(ctx -> spawnWithDebug(
                                         ctx.getSource(),
@@ -75,12 +75,12 @@ public final class FlyoverCommands {
                         .executes(ctx -> executeList(ctx.getSource())))
                 .then(debugBranch)
                 .executes(ctx -> spawn(ctx.getSource(), null, null, false))
-                .then(Commands.argument("structure", StringArgumentType.word())
+                .then(Commands.argument("structure", StringArgumentType.string())
                         .suggests(FLYOVER_SUGGESTIONS)
                         .executes(ctx -> spawn(ctx.getSource(), null, StringArgumentType.getString(ctx, "structure"), false)))
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> spawn(ctx.getSource(), EntityArgument.getPlayer(ctx, "player"), null, false))
-                        .then(Commands.argument("structure", StringArgumentType.word())
+                        .then(Commands.argument("structure", StringArgumentType.string())
                                 .suggests(FLYOVER_SUGGESTIONS)
                                 .executes(ctx -> spawn(
                                         ctx.getSource(),
@@ -282,13 +282,18 @@ public final class FlyoverCommands {
 
         FlyoverEventConfig config;
         if (structureName != null) {
-            ResourceLocation templateId = ResourceLocation.fromNamespaceAndPath(
-                    CreateAeronauticsDiscovery.MODID, structureName
-            );
-            config = registry.getConfigs().stream()
-                    .filter(c -> c.template().equals(templateId))
-                    .findFirst()
-                    .orElse(null);
+            if (structureName.contains(":")) {
+                ResourceLocation parsed = ResourceLocation.tryParse(structureName);
+                config = parsed != null
+                        ? registry.getConfigs().stream()
+                            .filter(c -> c.template().equals(parsed))
+                            .findFirst().orElse(null)
+                        : null;
+            } else {
+                config = registry.getConfigs().stream()
+                        .filter(c -> c.template().getPath().equals(structureName))
+                        .findFirst().orElse(null);
+            }
             if (config == null) {
                 source.sendFailure(Component.literal("Unknown flyover structure: " + structureName));
                 return 0;
