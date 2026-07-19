@@ -1,5 +1,8 @@
 package me.corvino.aeronauticsdiscovery.bridge;
 
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import net.minecraft.core.HolderLookup;
@@ -93,40 +96,44 @@ public class BridgePlankManager extends SavedData {
 
     public static void teleportAllPlanks(ServerLevel level) {
         var manager = get(level);
-        LOG.info("teleportAllPlanks called, ropes in map: {}", manager.planksByRope.size());
+        LOG.trace("teleportAllPlanks called, ropes in map: {}", manager.planksByRope.size());
 
-        var container = (dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer)
-                dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        var container = (ServerSubLevelContainer)
+                SubLevelContainer.getContainer(level);
         if (container == null) {
-            LOG.info("No container");
+            LOG.debug("No container");
             return;
         }
         var physicsSystem = container.physicsSystem();
         if (physicsSystem == null) {
-            LOG.info("No physicsSystem");
+            LOG.debug("No physicsSystem");
             return;
         }
-        var ropeManager = dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager.getOrCreate(level);
+        var ropeManager = ServerLevelRopeManager.getOrCreate(level);
         if (ropeManager == null) {
-            LOG.info("No ropeManager");
+            LOG.debug("No ropeManager");
             return;
         }
 
-        for (var ropeEntry : manager.planksByRope.entrySet()) {
+        var iter = manager.planksByRope.entrySet().iterator();
+        while (iter.hasNext()) {
+            var ropeEntry = iter.next();
             UUID ropeUUID = ropeEntry.getKey();
             var strand = ropeManager.getStrand(ropeUUID);
             if (strand == null || !strand.isActive()) {
-                LOG.info("Strand {} not found or inactive", ropeUUID);
+                LOG.debug("Strand {} not found or inactive, removing", ropeUUID);
+                iter.remove();
+                manager.setDirty();
                 continue;
             }
 
             var points = strand.getPoints();
-            LOG.info("Rope {} has {} points, {} planks", ropeUUID, points.size(), ropeEntry.getValue().size());
+            LOG.trace("Rope {} has {} points, {} planks", ropeUUID, points.size(), ropeEntry.getValue().size());
 
             for (PlankInfo info : ropeEntry.getValue()) {
                 int segIdx = info.segmentIndex() + 1;
                 if (segIdx < 1 || segIdx + 1 >= points.size()) {
-                    LOG.info("  Skipping segIdx={}, points.size={}", segIdx, points.size());
+                    LOG.debug("  Skipping segIdx={}, points.size={}", segIdx, points.size());
                     continue;
                 }
 
@@ -139,7 +146,7 @@ public class BridgePlankManager extends SavedData {
 
                 var subLevel = container.getSubLevel(info.subLevelUUID());
                 if (!(subLevel instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel ssl)) {
-                    LOG.info("  SubLevel {} not found in container", info.subLevelUUID());
+                    LOG.debug("  SubLevel {} not found in container", info.subLevelUUID());
                     continue;
                 }
 
