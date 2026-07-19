@@ -122,8 +122,8 @@ public class BridgePlankEntity extends Entity {
     }
 
     @Override
-    public boolean isPickable() {
-        return false;
+    public boolean canBeCollidedWith() {
+        return true;
     }
 
     @Override

@@ -32,7 +32,7 @@ public class BridgePlankEntityRenderer extends EntityRenderer<BridgePlankEntity>
                        PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.solid());
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
         Matrix4f pose = poseStack.last().pose();
         float r = 1.0F, g = 1.0F, b = 1.0F;
 
