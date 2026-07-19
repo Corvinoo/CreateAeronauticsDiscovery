@@ -2,6 +2,8 @@ package me.corvino.aeronauticsdiscovery;
 
 import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
+import me.corvino.aeronauticsdiscovery.bridge.BridgeInteractionHandler;
+import me.corvino.aeronauticsdiscovery.client.renderer.BridgePlankEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
@@ -108,6 +110,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
+        NeoForge.EVENT_BUS.addListener(BridgeInteractionHandler::onRightClickBlock);
         TaskScheduler.setup();
 
         SableEventPlatform.INSTANCE.onPostPhysicsTick((system, timeStep) ->
@@ -162,6 +165,7 @@ public class CreateAeronauticsDiscovery {
         public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(EntityRegistry.SOARING_TRADER.get(), SoaringTraderRenderer::new);
             event.registerEntityRenderer(EntityRegistry.PIN.get(), PinEntityRenderer::new);
+            event.registerEntityRenderer(EntityRegistry.BRIDGE_PLANK.get(), BridgePlankEntityRenderer::new);
         }
     }
 }
