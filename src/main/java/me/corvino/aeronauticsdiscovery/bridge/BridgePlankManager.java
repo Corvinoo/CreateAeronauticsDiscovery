@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.core.registries.BuiltInRegistries;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,7 @@ public class BridgePlankManager extends SavedData {
         return segmentIndex;
     }
 
-    @javax.annotation.Nullable
+    @Nullable
     public synchronized List<PlankInfo> getPlanks(UUID ropeUUID) {
         return planksByRope.get(ropeUUID);
     }
@@ -130,7 +131,10 @@ public class BridgePlankManager extends SavedData {
             var points = strand.getPoints();
             LOG.trace("Rope {} has {} points, {} planks", ropeUUID, points.size(), ropeEntry.getValue().size());
 
-            for (PlankInfo info : ropeEntry.getValue()) {
+            var planks = ropeEntry.getValue();
+            var plankIter = planks.iterator();
+            while (plankIter.hasNext()) {
+                PlankInfo info = plankIter.next();
                 int segIdx = info.segmentIndex() + 1;
                 if (segIdx < 1 || segIdx + 1 >= points.size()) {
                     LOG.debug("  Skipping segIdx={}, points.size={}", segIdx, points.size());
@@ -146,7 +150,9 @@ public class BridgePlankManager extends SavedData {
 
                 var subLevel = container.getSubLevel(info.subLevelUUID());
                 if (!(subLevel instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel ssl)) {
-                    LOG.debug("  SubLevel {} not found in container", info.subLevelUUID());
+                    LOG.debug("  SubLevel {} not found, removing plank", info.subLevelUUID());
+                    plankIter.remove();
+                    manager.setDirty();
                     continue;
                 }
 
@@ -158,8 +164,13 @@ public class BridgePlankManager extends SavedData {
                         ssl.logicalPose().position(),
                         ssl.logicalPose().orientation());
                 pipeline.resetVelocity(ssl);
+            }
 
-//                LOG.info("  Teleported slab to midpoint ({},{},{})", mx, my, mz);
+            //todo check if necessary
+            if (planks.isEmpty()) {
+                LOG.debug("Rope {} has no remaining planks, removing", ropeUUID);
+                iter.remove();
+                manager.setDirty();
             }
         }
     }
