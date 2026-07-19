@@ -3,7 +3,7 @@ package me.corvino.aeronauticsdiscovery;
 import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import me.corvino.aeronauticsdiscovery.bridge.BridgeInteractionHandler;
-import me.corvino.aeronauticsdiscovery.client.renderer.BridgePlankEntityRenderer;
+import me.corvino.aeronauticsdiscovery.bridge.BridgePlankManager;
 import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
@@ -116,6 +116,13 @@ public class CreateAeronauticsDiscovery {
         SableEventPlatform.INSTANCE.onPostPhysicsTick((system, timeStep) ->
                 SubLevelImpactManager.get(system.getLevel()).fireEvents(system.getLevel()));
 
+        SableEventPlatform.INSTANCE.onPostPhysicsTick((system, timeStep) -> {
+            var level = system.getLevel();
+            if (level != null) {
+                BridgePlankManager.teleportAllPlanks(level);
+            }
+        });
+
         modEventBus.addListener(this::onTicketControllerRegister);
 
         // Register entity attributes
@@ -165,7 +172,6 @@ public class CreateAeronauticsDiscovery {
         public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(EntityRegistry.SOARING_TRADER.get(), SoaringTraderRenderer::new);
             event.registerEntityRenderer(EntityRegistry.PIN.get(), PinEntityRenderer::new);
-            event.registerEntityRenderer(EntityRegistry.BRIDGE_PLANK.get(), BridgePlankEntityRenderer::new);
         }
     }
 }
