@@ -134,7 +134,7 @@ public class BridgePlankManager extends SavedData {
                 var p1 = points.get(segIdx + 1);
 
                 double mx = (p0.x() + p1.x()) / 2.0;
-                double my = (p0.y() + p1.y()) / 2.0 + 0.03;
+                double my = (p0.y() + p1.y()) / 2.0 + strand.getCollisionRadius() + 0.06;
                 double mz = (p0.z() + p1.z()) / 2.0;
 
                 var subLevel = container.getSubLevel(info.subLevelUUID());
@@ -150,6 +150,7 @@ public class BridgePlankManager extends SavedData {
                 pipeline.teleport(ssl,
                         ssl.logicalPose().position(),
                         ssl.logicalPose().orientation());
+                pipeline.resetVelocity(ssl);
 
 //                LOG.info("  Teleported slab to midpoint ({},{},{})", mx, my, mz);
             }
