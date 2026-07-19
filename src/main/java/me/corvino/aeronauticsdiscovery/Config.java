@@ -93,6 +93,10 @@ public class Config {
             .comment("Range in blocks from the fragment at which promotion triggers.")
             .defineInRange("flyover.promotion.range", 10.0, 1.0, 128.0);
     
+    private static final ModConfigSpec.BooleanValue PLANKS_LEVELLED = BUILDER
+            .comment("When enabled, bridge planks orientation is always horizontal")
+            .define("bridge.levelPlanks", true);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
@@ -110,6 +114,7 @@ public class Config {
     public static boolean processAllSublevels;
     public static boolean fragmentPromotion;
     public static double promotionRange;
+    public static boolean planksLevelled;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -128,6 +133,7 @@ public class Config {
         processAllSublevels = PROCESS_ALL_SUBLEVEL.get();
         fragmentPromotion = FRAGMENT_PROMOTION.get();
         promotionRange = PROMOTION_RANGE.get();
+        planksLevelled = PLANKS_LEVELLED.get();
     }
 
     public enum ExplosionMode {
