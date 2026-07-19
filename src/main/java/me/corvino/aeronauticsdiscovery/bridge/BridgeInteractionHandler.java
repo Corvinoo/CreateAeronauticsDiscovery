@@ -98,7 +98,7 @@ public class BridgeInteractionHandler {
         var p0 = points.get(segIdx);
         var p1 = points.get(segIdx + 1);
         double mx = (p0.x() + p1.x()) / 2.0;
-        double my = (p0.y() + p1.y()) / 2.0 + 0.03;
+        double my = (p0.y() + p1.y()) / 2.0 + strand.getCollisionRadius() + 0.06;
         double mz = (p0.z() + p1.z()) / 2.0;
 
         var container = (ServerSubLevelContainer) SubLevelContainer.getContainer(serverLevel);
@@ -144,6 +144,7 @@ public class BridgeInteractionHandler {
         pipeline.teleport(subLevel,
                 subLevel.logicalPose().position(),
                 subLevel.logicalPose().orientation());
+        pipeline.resetVelocity(subLevel);
         LOG.debug("Teleported subLevel to ({},{},{})", mx, my, mz);
 
         if (event.getEntity() instanceof ServerPlayer sp) {
