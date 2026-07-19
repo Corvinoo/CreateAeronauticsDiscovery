@@ -9,6 +9,7 @@ import dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot;
 import dev.simulated_team.simulated.content.blocks.rope.RopeStrandHolderBehavior;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerRopeStrand;
+import me.corvino.aeronauticsdiscovery.Config;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -137,6 +138,10 @@ public class BridgeInteractionHandler {
 
         // Pose is the world position of local origin, that's the rope midpoint itself, no offset by centerBlock
         LOG.debug("Midpoint=({},{},{})", mx, my, mz);
+
+        if (Config.planksLevelled) {
+            subLevel.logicalPose().orientation().identity();
+        }
         subLevel.logicalPose().position().set(mx, my, mz);
         subLevel.updateLastPose();
 

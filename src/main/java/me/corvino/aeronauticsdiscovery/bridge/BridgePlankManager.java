@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -156,6 +157,9 @@ public class BridgePlankManager extends SavedData {
                     continue;
                 }
 
+                if (Config.planksLevelled) {
+                    ssl.logicalPose().orientation().identity();
+                }
                 ssl.logicalPose().position().set(mx, my, mz);
                 ssl.updateLastPose();
 
