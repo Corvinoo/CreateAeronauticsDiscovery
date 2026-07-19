@@ -13,5 +13,6 @@
   "filled_map.aeronauticsdiscovery.trail_ruins": "Trail Ruins Map",
   "filled_map.aeronauticsdiscovery.igloo": "Igloo Map",
   "filled_map.aeronauticsdiscovery.ancient_city": "Ancient City Map",
-  "filled_map.aeronauticsdiscovery.mineshaft": "Mineshaft Map"
+  "filled_map.aeronauticsdiscovery.mineshaft": "Mineshaft Map",
+  "bridge.aeronauticsdiscovery.full": "Bridge is full"
 }
