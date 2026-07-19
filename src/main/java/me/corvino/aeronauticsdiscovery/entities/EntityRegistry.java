@@ -1,6 +1,5 @@
 package me.corvino.aeronauticsdiscovery.entities;
 
-import me.corvino.aeronauticsdiscovery.bridge.BridgePlankEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -37,10 +36,4 @@ public class EntityRegistry {
                     .eyeHeight(0.0F)
                     .build("pin"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<BridgePlankEntity>> BRIDGE_PLANK = ENTITIES.register("bridge_plank",
-            () -> EntityType.Builder.of(BridgePlankEntity::new, MobCategory.MISC)
-                    .noSummon()
-                    .sized(0.9F, 0.125F)
-                    .clientTrackingRange(12)
-                    .build("bridge_plank"));
 }
