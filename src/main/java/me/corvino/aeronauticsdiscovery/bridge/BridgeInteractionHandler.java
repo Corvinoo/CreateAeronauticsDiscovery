@@ -7,6 +7,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder;
 import dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot;
 import dev.simulated_team.simulated.content.blocks.rope.RopeStrandHolderBehavior;
+import dev.simulated_team.simulated.content.blocks.rope.strand.server.RopeAttachmentPoint;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerRopeStrand;
 import me.corvino.aeronauticsdiscovery.Config;
@@ -56,41 +57,55 @@ public class BridgeInteractionHandler {
 
         ServerRopeStrand strand = ropeHolder.getAttachedStrand();
         if (strand == null || !strand.isActive()) {
-            LOG.info("No active strand at {}", clickedPos);
+            LOG.trace("No active strand at {}", clickedPos);
             return;
         }
 
         if (!isSlabItem(heldItem)) {
-            LOG.info("Held item not a slab: {}", heldItem);
+            LOG.trace("Held item not a slab: {}", heldItem);
             return;
         }
 
         ServerLevel serverLevel = (ServerLevel) level;
         var ropeManager = ServerLevelRopeManager.getOrCreate(serverLevel);
         if (ropeManager == null) {
-            LOG.info("No rope manager");
+            LOG.debug("No rope manager");
             return;
         }
 
         var points = strand.getPoints();
         int maxPlanks = Math.max(0, points.size() - 2);
         if (maxPlanks <= 0) {
-            LOG.info("Not enough points ({}), skipping", points.size());
+            LOG.debug("Not enough points ({}), skipping", points.size());
             return;
         }
 
-        LOG.info("Strand has {} points, maxPlanks={}", points.size(), maxPlanks);
+        LOG.debug("Strand has {} points, maxPlanks={}", points.size(), maxPlanks);
 
-        // Find first empty segment
-        int plankIndex = 0;
+        boolean clickedEnd = false;
+        var startAttach = strand.getAttachment(RopeAttachmentPoint.START);
+        if (startAttach != null && startAttach.blockAttachment().equals(clickedPos)) {
+            clickedEnd = false;
+        } else {
+            var endAttach = strand.getAttachment(RopeAttachmentPoint.END);
+            if (endAttach != null && endAttach.blockAttachment().equals(clickedPos)) {
+                clickedEnd = true;
+            }
+        }
+
+        int plankIndex = clickedEnd ? maxPlanks - 1 : 0;
         var manager = BridgePlankManager.get(serverLevel);
         var existing = manager.getPlanks(strand.getUUID());
         if (existing != null) {
             var used = new java.util.BitSet();
             for (var info : existing) used.set(info.segmentIndex());
-            while (plankIndex < maxPlanks && used.get(plankIndex)) plankIndex++;
+            if (clickedEnd) {
+                while (plankIndex >= 0 && used.get(plankIndex)) plankIndex--;
+            } else {
+                while (plankIndex < maxPlanks && used.get(plankIndex)) plankIndex++;
+            }
         }
-        if (plankIndex >= maxPlanks) {
+        if (plankIndex >= maxPlanks || plankIndex < 0) {
             if (event.getEntity() instanceof ServerPlayer sp) {
                 sp.displayClientMessage(Component.translatable("bridge.aeronauticsdiscovery.full"), true);
             }
