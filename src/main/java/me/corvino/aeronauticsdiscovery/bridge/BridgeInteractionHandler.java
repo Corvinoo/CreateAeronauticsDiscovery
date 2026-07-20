@@ -175,11 +175,6 @@ public class BridgeInteractionHandler {
         manager.addPlank(strand.getUUID(), subLevel.getUniqueId(), plankIndex, slabState);
         LOG.debug("Registered plank: rope={} seg={} subLevel={}", strand.getUUID(), plankIndex, subLevel.getUniqueId());
 
-        container.addForceLoadTicket(subLevel,
-                dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType.COMMAND_FORCED,
-                net.minecraft.util.Unit.INSTANCE);
-        LOG.debug("Added force-load ticket");
-
         level.playSound(null, clickedPos, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 0.8F, 1.0F);
         LOG.debug("Placement complete for plankIndex={}", plankIndex);
 
