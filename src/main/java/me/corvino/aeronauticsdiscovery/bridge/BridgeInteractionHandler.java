@@ -74,7 +74,9 @@ public class BridgeInteractionHandler {
         }
 
         var points = strand.getPoints();
-        int maxPlanks = Math.max(0, points.size() - 2);
+        int availableSegments = points.size() - 2;
+        int maxPlanks = availableSegments;
+        if (maxPlanks > 3) maxPlanks--;
         if (maxPlanks <= 0) {
             LOG.debug("Not enough points ({}), skipping", points.size());
             return;
@@ -112,13 +114,9 @@ public class BridgeInteractionHandler {
             return;
         }
 
-        // Compute slab position from rope segment (segIdx skips the two anchor points)
-        int segIdx = plankIndex + 1;
-        var p0 = points.get(segIdx);
-        var p1 = points.get(segIdx + 1);
-        double mx = (p0.x() + p1.x()) / 2.0;
-        double my = (p0.y() + p1.y()) / 2.0 + strand.getCollisionRadius() + 0.06;
-        double mz = (p0.z() + p1.z()) / 2.0;
+        // Compute slab position with fractional segment spacing (one fewer plank = breathing room)
+        var pos = BridgePlankManager.computePlankPosition(points, plankIndex, strand.getCollisionRadius());
+        double mx = pos[0], my = pos[1], mz = pos[2];
 
         var container = (ServerSubLevelContainer) SubLevelContainer.getContainer(serverLevel);
         if (container == null) {
