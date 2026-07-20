@@ -4,6 +4,8 @@ import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.joml.Vector3d;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import net.minecraft.core.HolderLookup;
@@ -96,6 +98,37 @@ public class BridgePlankManager extends SavedData {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger("aeronauticsdiscovery.BridgePlankManager");
 
+    public static double[] computePlankPosition(ObjectList<Vector3d> points, int plankIndex, double collisionRadius) {
+        int M = points.size() - 2;
+        int N = M > 3 ? M - 1 : Math.max(1, M);
+        double segPos = N <= 1 ? 0 : (double) plankIndex * (M - 1) / (N - 1);
+        int seg = (int) Math.floor(segPos);
+        double frac = segPos - seg;
+        int segIdx = seg + 1;
+
+        var p0_base = points.get(segIdx);
+        var p1_base = points.get(segIdx + 1);
+        double mx_base = (p0_base.x() + p1_base.x()) / 2.0;
+        double my_base = (p0_base.y() + p1_base.y()) / 2.0;
+        double mz_base = (p0_base.z() + p1_base.z()) / 2.0;
+
+        double mx, my, mz;
+        if (frac <= 1e-10) {
+            mx = mx_base; my = my_base; mz = mz_base;
+        } else {
+            var p0_next = points.get(segIdx + 1);
+            var p1_next = points.get(segIdx + 2);
+            double mx_next = (p0_next.x() + p1_next.x()) / 2.0;
+            double my_next = (p0_next.y() + p1_next.y()) / 2.0;
+            double mz_next = (p0_next.z() + p1_next.z()) / 2.0;
+            mx = mx_base + (mx_next - mx_base) * frac;
+            my = my_base + (my_next - my_base) * frac;
+            mz = mz_base + (mz_next - mz_base) * frac;
+        }
+
+        return new double[]{mx, my + collisionRadius + 0.06, mz};
+    }
+
     public static void teleportAllPlanks(ServerLevel level) {
         var manager = get(level);
         LOG.trace("teleportAllPlanks called, ropes in map: {}", manager.planksByRope.size());
@@ -136,18 +169,8 @@ public class BridgePlankManager extends SavedData {
             var plankIter = planks.iterator();
             while (plankIter.hasNext()) {
                 PlankInfo info = plankIter.next();
-                int segIdx = info.segmentIndex() + 1;
-                if (segIdx < 1 || segIdx + 1 >= points.size()) {
-                    LOG.debug("  Skipping segIdx={}, points.size={}", segIdx, points.size());
-                    continue;
-                }
-
-                var p0 = points.get(segIdx);
-                var p1 = points.get(segIdx + 1);
-
-                double mx = (p0.x() + p1.x()) / 2.0;
-                double my = (p0.y() + p1.y()) / 2.0 + strand.getCollisionRadius() + 0.06;
-                double mz = (p0.z() + p1.z()) / 2.0;
+                var pos = computePlankPosition(points, info.segmentIndex(), strand.getCollisionRadius());
+                double mx = pos[0], my = pos[1], mz = pos[2];
 
                 var subLevel = container.getSubLevel(info.subLevelUUID());
                 if (!(subLevel instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel ssl)) {
