@@ -34,19 +34,23 @@ public class BridgeInteractionHandler {
 
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         Level level = event.getLevel();
-        if (level.isClientSide) return;
-
         BlockPos clickedPos = event.getPos();
-        LOG.info("RightClickBlock at {}", clickedPos);
 
         if (!(level.getBlockEntity(clickedPos) instanceof SmartBlockEntity smartBlockEntity)) {
-            LOG.info("No SmartBlockEntity at {}", clickedPos);
             return;
         }
 
         RopeStrandHolderBehavior ropeHolder = smartBlockEntity.getBehaviour(RopeStrandHolderBehavior.TYPE);
         if (ropeHolder == null) {
-            LOG.info("No RopeStrandHolderBehavior at {}", clickedPos);
+            return;
+        }
+
+        ItemStack heldItem = event.getEntity().getItemInHand(event.getHand());
+
+        if (level.isClientSide) {
+            if (isSlabItem(heldItem)) {
+                event.setCanceled(true);
+            }
             return;
         }
 
@@ -56,7 +60,6 @@ public class BridgeInteractionHandler {
             return;
         }
 
-        ItemStack heldItem = event.getEntity().getItemInHand(event.getHand());
         if (!isSlabItem(heldItem)) {
             LOG.info("Held item not a slab: {}", heldItem);
             return;
