@@ -155,9 +155,8 @@ public class BridgeInteractionHandler {
         LOG.debug("Midpoint=({},{},{})", mx, my, mz);
 
         if (Config.planksLevelled) {
-            subLevel.logicalPose().orientation().identity(); 
-//            int segIdx = (int) pos[3];
-//            setSlopeOrientation(subLevel.logicalPose().orientation(), subLevel.getUniqueId(), points.get(segIdx), points.get(segIdx + 1));
+            int segIdx = (int) pos[3];
+            BridgeUtility.setYawOrientation(subLevel.logicalPose().orientation(), points.get(segIdx), points.get(segIdx + 1));
         }
         subLevel.logicalPose().position().set(mx, my, mz);
         subLevel.updateLastPose();

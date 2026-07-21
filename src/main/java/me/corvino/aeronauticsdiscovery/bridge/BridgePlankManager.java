@@ -199,8 +199,7 @@ public class BridgePlankManager extends SavedData {
                 }
 
                 if (Config.planksLevelled) {
-                    ssl.logicalPose().orientation().identity(); 
-//                    setSlopeOrientation(ssl.logicalPose().orientation(), info.subLevelUUID(), points.get(segIdx), points.get(segIdx + 1));
+                    BridgeUtility.setYawOrientation(ssl.logicalPose().orientation(), points.get(segIdx), points.get(segIdx + 1));
                 }
                 ssl.logicalPose().position().set(mx, my, mz);
                 ssl.updateLastPose();

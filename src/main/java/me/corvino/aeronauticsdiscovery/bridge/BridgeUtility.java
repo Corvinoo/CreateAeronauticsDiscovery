@@ -14,6 +14,13 @@ public class BridgeUtility {
 
     private static final Map<UUID, Vector3d> lastRightBySubLevel = new ConcurrentHashMap<>();
 
+    public static void setYawOrientation(Quaterniond dest, Vector3dc p0, Vector3dc p1) {
+        double dx = p1.x() - p0.x();
+        double dz = p1.z() - p0.z();
+        if (dx * dx + dz * dz < 1.0e-18) return;
+        dest.rotationY(Math.atan2(-dz, dx));
+    }
+
     public static void setSlopeOrientation(Quaterniond dest, UUID subLevelUUID, Vector3dc p0, Vector3dc p1) {
         Vector3d forward = new Vector3d(p1).sub(p0);
         if (forward.lengthSquared() < 1.0e-9) {
