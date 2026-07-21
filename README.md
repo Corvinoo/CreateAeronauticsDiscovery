@@ -99,6 +99,7 @@ Each JSON file registers one flyover event. Create one per airship template you 
 This is the actual build; the `template` field in your flyover JSON must match `<namespace>:<template_name>`.
 
 Contraptions on the structure must already **receive redstone/rotational power** but **not be assembled** before exporting to nbt; **entities** should also be exported.
+The NBT should be exported with the templated oriented **towards north** in game.
 
 Note that making some Create contraptions work properly from a template can be finicky, and not every Create/Create Aeronautics block is exported correctly into nbt.
 Always make sure they are being imported correctly into the game and that they remain functional before adding them as flyovers.
@@ -142,7 +143,7 @@ For example, to replace the built-in airplane with your own:
 Only include the files you want to change; if you just want a different spawn setting but keep the original template, only include the `.json` file.
 
 The currently bundled flyover files are: 
-- `ariplane.json`/ `ariplane.json` = Default plane
+- `ariplane.json`/ `ariplane.nbt` = Default plane
 
 (This will be updated in the future to reflect new events added to the mod)
 
