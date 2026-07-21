@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static me.corvino.aeronauticsdiscovery.bridge.BridgeUtility.setSlopeOrientation;
 
 public class BridgePlankManager extends SavedData {
 
@@ -33,7 +32,7 @@ public class BridgePlankManager extends SavedData {
 
     private final Map<UUID, List<PlankInfo>> planksByRope = new Object2ObjectOpenHashMap<>();
 
-    public record PlankInfo(int segmentIndex, UUID subLevelUUID, BlockState slabState) {}
+    public record PlankInfo(int plankIndex, UUID subLevelUUID, BlockState slabState) {}
 
     public static SavedData.Factory<BridgePlankManager> factory() {
         return new SavedData.Factory<>(BridgePlankManager::new, BridgePlankManager::load);
@@ -53,14 +52,14 @@ public class BridgePlankManager extends SavedData {
                 List<PlankInfo> infos = new ArrayList<>();
                 for (int i = 0; i < list.size(); i++) {
                     CompoundTag entry = list.getCompound(i);
-                    int segIdx = entry.getInt("segment_index");
+                    int plankIdx = entry.getInt("plank_index");
                     UUID slUUID = entry.getUUID("sub_level_uuid");
                     BlockState slabState = Blocks.OAK_SLAB.defaultBlockState();
                     if (entry.contains("slab_block")) {
                         var block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(entry.getString("slab_block")));
                         if (block != null) slabState = block.defaultBlockState();
                     }
-                    infos.add(new PlankInfo(segIdx, slUUID, slabState));
+                    infos.add(new PlankInfo(plankIdx, slUUID, slabState));
                 }
                 manager.planksByRope.put(ropeUUID, infos);
             }
@@ -75,7 +74,7 @@ public class BridgePlankManager extends SavedData {
             ListTag list = new ListTag();
             for (PlankInfo info : entry.getValue()) {
                 CompoundTag plankEntry = new CompoundTag();
-                plankEntry.putInt("segment_index", info.segmentIndex());
+                plankEntry.putInt("plank_index", info.plankIndex());
                 plankEntry.putUUID("sub_level_uuid", info.subLevelUUID());
                 plankEntry.putString("slab_block", BuiltInRegistries.BLOCK.getKey(info.slabState().getBlock()).toString());
                 list.add(plankEntry);
@@ -86,11 +85,11 @@ public class BridgePlankManager extends SavedData {
         return tag;
     }
 
-    public synchronized int addPlank(UUID ropeUUID, UUID subLevelUUID, int segmentIndex, BlockState slabState) {
+    public synchronized int addPlank(UUID ropeUUID, UUID subLevelUUID, int plankIndex, BlockState slabState) {
         var list = planksByRope.computeIfAbsent(ropeUUID, k -> new ArrayList<>());
-        list.add(new PlankInfo(segmentIndex, subLevelUUID, slabState));
+        list.add(new PlankInfo(plankIndex, subLevelUUID, slabState));
         setDirty();
-        return segmentIndex;
+        return plankIndex;
     }
 
     @Nullable
@@ -98,43 +97,55 @@ public class BridgePlankManager extends SavedData {
         return planksByRope.get(ropeUUID);
     }
 
+    private static final double PLANK_SPACING = 1.25;
+    private static final double PLANK_VERTICAL_OFFSET = 0.06;
+
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger("aeronauticsdiscovery.BridgePlankManager");
 
-    public static int computeSegmentIndex(ObjectList<Vector3d> points, int plankIndex) {
-        int M = points.size() - 2;
-        int N = M > 3 ? M - 1 : Math.max(1, M);
-        double segPos = N <= 1 ? 0 : (double) plankIndex * (M - 1) / (N - 1);
-        return (int) Math.floor(segPos) + 1;
+    public static double computeRopeLength(ObjectList<Vector3d> points) {
+        double length = 0;
+        for (int i = 0; i < points.size() - 1; i++) {
+            var p0 = points.get(i);
+            var p1 = points.get(i + 1);
+            double dx = p1.x() - p0.x();
+            double dy = p1.y() - p0.y();
+            double dz = p1.z() - p0.z();
+            length += Math.sqrt(dx * dx + dy * dy + dz * dz);
+        }
+        return length;
+    }
+
+    public static int computeMaxPlanks(ObjectList<Vector3d> points) {
+        return Math.max(1, (int) (computeRopeLength(points) / PLANK_SPACING));
     }
 
     public static double[] computePlankPosition(ObjectList<Vector3d> points, int plankIndex, double collisionRadius) {
-        int segIdx = computeSegmentIndex(points, plankIndex);
-        int M = points.size() - 2;
-        int N = M > 3 ? M - 1 : Math.max(1, M);
-        double segPos = N <= 1 ? 0 : (double) plankIndex * (M - 1) / (N - 1);
-        double frac = segPos - (segIdx - 1);
+        double ropeLength = computeRopeLength(points);
+        int totalPlanks = Math.max(1, (int) (ropeLength / PLANK_SPACING));
+        double t = (double) (plankIndex + 1) / (totalPlanks + 1);
+        double targetDist = t * ropeLength;
 
-        var p0_base = points.get(segIdx);
-        var p1_base = points.get(segIdx + 1);
-        double mx_base = (p0_base.x() + p1_base.x()) / 2.0;
-        double my_base = (p0_base.y() + p1_base.y()) / 2.0;
-        double mz_base = (p0_base.z() + p1_base.z()) / 2.0;
-
-        double mx, my, mz;
-        if (frac <= 1e-10) {
-            mx = mx_base; my = my_base; mz = mz_base;
-        } else {
-            var p0_next = points.get(segIdx + 1);
-            var p1_next = points.get(segIdx + 2);
-            double mx_next = (p0_next.x() + p1_next.x()) / 2.0;
-            double my_next = (p0_next.y() + p1_next.y()) / 2.0;
-            double mz_next = (p0_next.z() + p1_next.z()) / 2.0;
-            mx = mx_base + (mx_next - mx_base) * frac;
-            my = my_base + (my_next - my_base) * frac;
-            mz = mz_base + (mz_next - mz_base) * frac;
+        double accumulated = 0;
+        for (int i = 0; i < points.size() - 1; i++) {
+            var p0 = points.get(i);
+            var p1 = points.get(i + 1);
+            double dx = p1.x() - p0.x();
+            double dy = p1.y() - p0.y();
+            double dz = p1.z() - p0.z();
+            double segLen = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (segLen < 1e-10) continue;
+            if (accumulated + segLen >= targetDist) {
+                double frac = (targetDist - accumulated) / segLen;
+                double mx = p0.x() + dx * frac;
+                double my = p0.y() + dy * frac;
+                double mz = p0.z() + dz * frac;
+                return new double[]{mx, my + collisionRadius + PLANK_VERTICAL_OFFSET, mz, (double) i};
+            }
+            accumulated += segLen;
         }
 
-        return new double[]{mx, my + collisionRadius + 0.06, mz};
+        var last = points.get(points.size() - 1);
+        return new double[]{last.x(), last.y() + collisionRadius + PLANK_VERTICAL_OFFSET, last.z(), (double) (points.size() - 2)};
     }
 
     public static void teleportAllPlanks(ServerLevel level) {
@@ -175,8 +186,9 @@ public class BridgePlankManager extends SavedData {
             var plankIter = planks.iterator();
             while (plankIter.hasNext()) {
                 PlankInfo info = plankIter.next();
-                var pos = computePlankPosition(points, info.segmentIndex(), strand.getCollisionRadius());
+                var pos = computePlankPosition(points, info.plankIndex(), strand.getCollisionRadius());
                 double mx = pos[0], my = pos[1], mz = pos[2];
+                int segIdx = (int) pos[3];
 
                 var subLevel = container.getSubLevel(info.subLevelUUID());
                 if (!(subLevel instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel ssl)) {
@@ -187,9 +199,8 @@ public class BridgePlankManager extends SavedData {
                 }
 
                 if (Config.planksLevelled) {
-                    // ssl.logicalPose().orientation().identity(); || todo actual "levelled" logic, add branch for this later
-                    int segIdx = computeSegmentIndex(points, info.segmentIndex());
-                    setSlopeOrientation(ssl.logicalPose().orientation(), info.subLevelUUID(), points.get(segIdx), points.get(segIdx + 1));
+                    ssl.logicalPose().orientation().identity(); 
+//                    setSlopeOrientation(ssl.logicalPose().orientation(), info.subLevelUUID(), points.get(segIdx), points.get(segIdx + 1));
                 }
                 ssl.logicalPose().position().set(mx, my, mz);
                 ssl.updateLastPose();
