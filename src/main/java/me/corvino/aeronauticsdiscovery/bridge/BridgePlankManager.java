@@ -122,7 +122,7 @@ public class BridgePlankManager extends SavedData {
     public static double[] computePlankPosition(ObjectList<Vector3d> points, int plankIndex, double collisionRadius) {
         double ropeLength = computeRopeLength(points);
         int totalPlanks = Math.max(1, (int) (ropeLength / PLANK_SPACING));
-        double t = (double) (plankIndex + 1) / (totalPlanks + 1);
+        double t = (plankIndex + 0.5) / totalPlanks;
         double targetDist = t * ropeLength;
 
         double accumulated = 0;
