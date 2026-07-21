@@ -29,6 +29,9 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
+import static me.corvino.aeronauticsdiscovery.bridge.BridgePlankManager.computeSegmentIndex;
+import static me.corvino.aeronauticsdiscovery.bridge.BridgeUtility.setSlopeOrientation;
+
 public class BridgeInteractionHandler {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger("aeronauticsdiscovery.BridgeInteractionHandler");
@@ -156,7 +159,10 @@ public class BridgeInteractionHandler {
         LOG.debug("Midpoint=({},{},{})", mx, my, mz);
 
         if (Config.planksLevelled) {
-            subLevel.logicalPose().orientation().identity();
+            //subLevel.logicalPose().orientation().identity(); || todo actual "levelled" logic, add branch for this later
+            
+            int segIdx = BridgePlankManager.computeSegmentIndex(points, plankIndex);
+            setSlopeOrientation(subLevel.logicalPose().orientation(), subLevel.getUniqueId(), points.get(segIdx), points.get(segIdx + 1));
         }
         subLevel.logicalPose().position().set(mx, my, mz);
         subLevel.updateLastPose();
