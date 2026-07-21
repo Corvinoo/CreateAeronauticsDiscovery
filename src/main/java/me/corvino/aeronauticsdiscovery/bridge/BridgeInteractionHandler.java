@@ -29,12 +29,12 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
-import static me.corvino.aeronauticsdiscovery.bridge.BridgePlankManager.computeSegmentIndex;
-import static me.corvino.aeronauticsdiscovery.bridge.BridgeUtility.setSlopeOrientation;
 
 public class BridgeInteractionHandler {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger("aeronauticsdiscovery.BridgeInteractionHandler");
+
+    private static final float PLACE_SOUND_VOLUME = 0.8F;
 
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         Level level = event.getLevel();
@@ -77,9 +77,7 @@ public class BridgeInteractionHandler {
         }
 
         var points = strand.getPoints();
-        int availableSegments = points.size() - 2;
-        int maxPlanks = availableSegments;
-        if (maxPlanks > 3) maxPlanks--;
+        int maxPlanks = BridgePlankManager.computeMaxPlanks(points);
         if (maxPlanks <= 0) {
             LOG.debug("Not enough points ({}), skipping", points.size());
             return;
@@ -89,9 +87,7 @@ public class BridgeInteractionHandler {
 
         boolean clickedEnd = false;
         var startAttach = strand.getAttachment(RopeAttachmentPoint.START);
-        if (startAttach != null && startAttach.blockAttachment().equals(clickedPos)) {
-            clickedEnd = false;
-        } else {
+        if (startAttach == null || !startAttach.blockAttachment().equals(clickedPos)) {
             var endAttach = strand.getAttachment(RopeAttachmentPoint.END);
             if (endAttach != null && endAttach.blockAttachment().equals(clickedPos)) {
                 clickedEnd = true;
@@ -103,7 +99,7 @@ public class BridgeInteractionHandler {
         var existing = manager.getPlanks(strand.getUUID());
         if (existing != null) {
             var used = new java.util.BitSet();
-            for (var info : existing) used.set(info.segmentIndex());
+            for (var info : existing) used.set(info.plankIndex());
             if (clickedEnd) {
                 while (plankIndex >= 0 && used.get(plankIndex)) plankIndex--;
             } else {
@@ -117,7 +113,7 @@ public class BridgeInteractionHandler {
             return;
         }
 
-        // Compute slab position with fractional segment spacing (one fewer plank = breathing room)
+        // Compute slab position at equal arc-length intervals along the rope
         var pos = BridgePlankManager.computePlankPosition(points, plankIndex, strand.getCollisionRadius());
         double mx = pos[0], my = pos[1], mz = pos[2];
 
@@ -159,10 +155,9 @@ public class BridgeInteractionHandler {
         LOG.debug("Midpoint=({},{},{})", mx, my, mz);
 
         if (Config.planksLevelled) {
-            //subLevel.logicalPose().orientation().identity(); || todo actual "levelled" logic, add branch for this later
-            
-            int segIdx = BridgePlankManager.computeSegmentIndex(points, plankIndex);
-            setSlopeOrientation(subLevel.logicalPose().orientation(), subLevel.getUniqueId(), points.get(segIdx), points.get(segIdx + 1));
+            subLevel.logicalPose().orientation().identity(); 
+//            int segIdx = (int) pos[3];
+//            setSlopeOrientation(subLevel.logicalPose().orientation(), subLevel.getUniqueId(), points.get(segIdx), points.get(segIdx + 1));
         }
         subLevel.logicalPose().position().set(mx, my, mz);
         subLevel.updateLastPose();
@@ -181,7 +176,7 @@ public class BridgeInteractionHandler {
         manager.addPlank(strand.getUUID(), subLevel.getUniqueId(), plankIndex, slabState);
         LOG.debug("Registered plank: rope={} seg={} subLevel={}", strand.getUUID(), plankIndex, subLevel.getUniqueId());
 
-        level.playSound(null, clickedPos, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 0.8F, 1.0F);
+        level.playSound(null, clickedPos, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, PLACE_SOUND_VOLUME, 1.0F);
         LOG.debug("Placement complete for plankIndex={}", plankIndex);
 
         if (!event.getEntity().hasInfiniteMaterials()) {
