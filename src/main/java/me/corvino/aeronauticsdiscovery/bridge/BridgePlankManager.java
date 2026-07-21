@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static me.corvino.aeronauticsdiscovery.bridge.BridgeUtility.setSlopeOrientation;
+
 public class BridgePlankManager extends SavedData {
 
     private static final String DATA_NAME = CreateAeronauticsDiscovery.MODID + "_bridge_planks";
@@ -98,13 +100,19 @@ public class BridgePlankManager extends SavedData {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger("aeronauticsdiscovery.BridgePlankManager");
 
-    public static double[] computePlankPosition(ObjectList<Vector3d> points, int plankIndex, double collisionRadius) {
+    public static int computeSegmentIndex(ObjectList<Vector3d> points, int plankIndex) {
         int M = points.size() - 2;
         int N = M > 3 ? M - 1 : Math.max(1, M);
         double segPos = N <= 1 ? 0 : (double) plankIndex * (M - 1) / (N - 1);
-        int seg = (int) Math.floor(segPos);
-        double frac = segPos - seg;
-        int segIdx = seg + 1;
+        return (int) Math.floor(segPos) + 1;
+    }
+
+    public static double[] computePlankPosition(ObjectList<Vector3d> points, int plankIndex, double collisionRadius) {
+        int segIdx = computeSegmentIndex(points, plankIndex);
+        int M = points.size() - 2;
+        int N = M > 3 ? M - 1 : Math.max(1, M);
+        double segPos = N <= 1 ? 0 : (double) plankIndex * (M - 1) / (N - 1);
+        double frac = segPos - (segIdx - 1);
 
         var p0_base = points.get(segIdx);
         var p1_base = points.get(segIdx + 1);
@@ -179,7 +187,9 @@ public class BridgePlankManager extends SavedData {
                 }
 
                 if (Config.planksLevelled) {
-                    ssl.logicalPose().orientation().identity();
+                    // ssl.logicalPose().orientation().identity(); || todo actual "levelled" logic, add branch for this later
+                    int segIdx = computeSegmentIndex(points, info.segmentIndex());
+                    setSlopeOrientation(ssl.logicalPose().orientation(), info.subLevelUUID(), points.get(segIdx), points.get(segIdx + 1));
                 }
                 ssl.logicalPose().position().set(mx, my, mz);
                 ssl.updateLastPose();
@@ -191,7 +201,6 @@ public class BridgePlankManager extends SavedData {
                 pipeline.resetVelocity(ssl);
             }
 
-            //todo check if necessary
             if (planks.isEmpty()) {
                 LOG.debug("Rope {} has no remaining planks, removing", ropeUUID);
                 iter.remove();
