@@ -122,6 +122,30 @@ New templates will appear in tab-completion automatically after `/reload`.
 
 ---
 
+## Override existing events via datapack
+
+You can also replace the mod's built-in events from a datapack. Minecraft applies datapack resources on top of mod resources, so placing a file at the same path overwrites the original.
+
+For example, to replace the built-in airplane with your own:
+
+```
+<datapack_name>/
+|-- pack.mcmeta
+`-- data/
+    `-- aeronauticsdiscovery/              // use the mod's namespace
+        |-- flyover_events/
+        |   `-- airplane.json              // overrides the bundled event config
+        `-- structure/
+            `-- airplane.nbt               // overrides the bundled template
+```
+
+Only include the files you want to change; if you just want a different spawn setting but keep the original template, only include the `.json` file.
+
+The currently bundled flyover files are: 
+- `ariplane.json`/ `ariplane.json` = Default plane
+
+(This will be updated in the future to reflect new events added to the mod)
+
 ## Credits structures
 Default plane nbt: @bitmochibit
 
