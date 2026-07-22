@@ -29,6 +29,8 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
+import javax.annotation.Nullable;
+
 
 public class BridgeInteractionHandler {
 
@@ -113,67 +115,13 @@ public class BridgeInteractionHandler {
             return;
         }
 
-        // Compute slab position at equal arc-length intervals along the rope
-        var pos = BridgePlankManager.computePlankPosition(points, plankIndex, strand.getCollisionRadius());
-        double mx = pos[0], my = pos[1], mz = pos[2];
-
-        var container = (ServerSubLevelContainer) SubLevelContainer.getContainer(serverLevel);
-        if (container == null) {
-            LOG.info("No SubLevelContainer");
-            return;
-        }
-
-        var subLevel = (ServerSubLevel) container.allocateNewSubLevel(new dev.ryanhcode.sable.companion.math.Pose3d());
-        subLevel.setName("bridge_plank_" + plankIndex);
-        LOG.debug("Created subLevel {} name={}", subLevel.getUniqueId(), subLevel.getName());
-
-        // Add chunk and place slab at local origin
         BlockState slabState = getSlabState(heldItem);
-        var plot = (ServerLevelPlot) subLevel.getPlot();
-        var centerChunk = plot.getCenterChunk();
-        plot.newEmptyChunk(centerChunk);
-        LOG.debug("Created chunk {} in subLevel {}", centerChunk, subLevel.getUniqueId());
-
-        var center = plot.getCenterBlock();
-        var accessor = plot.getEmbeddedLevelAccessor();
-        accessor.setBlock(BlockPos.ZERO, slabState, 3);
-        BlockState placed = accessor.getBlockState(BlockPos.ZERO);
-        LOG.debug("Placed slab {} at ZERO, readback={}", slabState, placed);
-
-        // center is ONLY used here, to locate the chunk holder in the plot's own local storage space so its bounding box gets updated; it must never be used for pose math
-        ChunkPos centerChunkPos = new ChunkPos(center);
-        PlotChunkHolder holder = plot.getChunkHolder(plot.toLocal(centerChunkPos));
-        if (holder != null) {
-            int localX = center.getX() & 15;
-            int localZ = center.getZ() & 15;
-            holder.handleBlockChange(localX, center.getY(), localZ, Blocks.AIR.defaultBlockState(), slabState);
-            LOG.debug("Updated chunk holder bounding box via handleBlockChange at local ({},{},{})", localX, center.getY(), localZ);
-        }
-        plot.updateBoundingBox();
-
-        // Pose is the world position of local origin, that's the rope midpoint itself, no offset by centerBlock
-        LOG.debug("Midpoint=({},{},{})", mx, my, mz);
-
-        if (Config.planksLevelled) {
-            int segIdx = (int) pos[3];
-            BridgeUtility.setYawOrientation(subLevel.logicalPose().orientation(), points.get(segIdx), points.get(segIdx + 1));
-        }
-        subLevel.logicalPose().position().set(mx, my, mz);
-        subLevel.updateLastPose();
-
-        var pipeline = container.physicsSystem().getPipeline();
-        pipeline.teleport(subLevel,
-                subLevel.logicalPose().position(),
-                subLevel.logicalPose().orientation());
-        pipeline.resetVelocity(subLevel);
-        LOG.debug("Teleported subLevel to ({},{},{})", mx, my, mz);
+        var subLevel = createPlank(serverLevel, strand, plankIndex, slabState);
+        if (subLevel == null) return;
 
         if (event.getEntity() instanceof ServerPlayer sp) {
             subLevel.getTrackingPlayers().add(sp.getGameProfile().getId());
         }
-
-        manager.addPlank(strand.getUUID(), subLevel.getUniqueId(), plankIndex, slabState);
-        LOG.debug("Registered plank: rope={} seg={} subLevel={}", strand.getUUID(), plankIndex, subLevel.getUniqueId());
 
         level.playSound(null, clickedPos, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, PLACE_SOUND_VOLUME, 1.0F);
         LOG.debug("Placement complete for plankIndex={}", plankIndex);
@@ -191,6 +139,65 @@ public class BridgeInteractionHandler {
             state = state.setValue(SlabBlock.TYPE, SlabType.BOTTOM);
         }
         return state;
+    }
+
+    @Nullable
+    public static ServerSubLevel createPlank(ServerLevel serverLevel, ServerRopeStrand strand, int plankIndex, BlockState slabState) {
+        var points = strand.getPoints();
+        var pos = BridgePlankManager.computePlankPosition(points, plankIndex, strand.getCollisionRadius());
+        double mx = pos[0], my = pos[1], mz = pos[2];
+
+        var container = (ServerSubLevelContainer) SubLevelContainer.getContainer(serverLevel);
+        if (container == null) {
+            LOG.info("No SubLevelContainer");
+            return null;
+        }
+
+        var subLevel = (ServerSubLevel) container.allocateNewSubLevel(new dev.ryanhcode.sable.companion.math.Pose3d());
+        subLevel.setName("bridge_plank_" + plankIndex);
+        LOG.debug("Created subLevel {} name={}", subLevel.getUniqueId(), subLevel.getName());
+
+        var plot = (ServerLevelPlot) subLevel.getPlot();
+        var centerChunk = plot.getCenterChunk();
+        plot.newEmptyChunk(centerChunk);
+        LOG.debug("Created chunk {} in subLevel {}", centerChunk, subLevel.getUniqueId());
+
+        var center = plot.getCenterBlock();
+        var accessor = plot.getEmbeddedLevelAccessor();
+        accessor.setBlock(BlockPos.ZERO, slabState, 3);
+        LOG.debug("Placed slab {} at ZERO", slabState);
+
+        ChunkPos centerChunkPos = new ChunkPos(center);
+        PlotChunkHolder holder = plot.getChunkHolder(plot.toLocal(centerChunkPos));
+        if (holder != null) {
+            int localX = center.getX() & 15;
+            int localZ = center.getZ() & 15;
+            holder.handleBlockChange(localX, center.getY(), localZ, Blocks.AIR.defaultBlockState(), slabState);
+            LOG.debug("Updated chunk holder bounding box via handleBlockChange at local ({},{},{})", localX, center.getY(), localZ);
+        }
+        plot.updateBoundingBox();
+
+        LOG.debug("Midpoint=({},{},{})", mx, my, mz);
+
+        if (Config.planksLevelled) {
+            int segIdx = (int) pos[3];
+            BridgeUtility.setYawOrientation(subLevel.logicalPose().orientation(), points.get(segIdx), points.get(segIdx + 1));
+        }
+        subLevel.logicalPose().position().set(mx, my, mz);
+        subLevel.updateLastPose();
+
+        var pipeline = container.physicsSystem().getPipeline();
+        pipeline.teleport(subLevel,
+                subLevel.logicalPose().position(),
+                subLevel.logicalPose().orientation());
+        pipeline.resetVelocity(subLevel);
+        LOG.debug("Teleported subLevel to ({},{},{})", mx, my, mz);
+
+        var manager = BridgePlankManager.get(serverLevel);
+        manager.addPlank(strand.getUUID(), subLevel.getUniqueId(), plankIndex, slabState);
+        LOG.debug("Registered plank: rope={} seg={} subLevel={}", strand.getUUID(), plankIndex, subLevel.getUniqueId());
+
+        return subLevel;
     }
 
     private static boolean isSlabItem(ItemStack stack) {

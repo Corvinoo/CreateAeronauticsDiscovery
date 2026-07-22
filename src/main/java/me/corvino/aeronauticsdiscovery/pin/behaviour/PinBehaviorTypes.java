@@ -40,6 +40,7 @@ public final class PinBehaviorTypes {
         touch(ExplosiveBehavior.TYPE);
         touch(MobSpawnPointBehavior.TYPE);
         touch(SeatMobBehavior.TYPE);
+        touch(RopeConnectorBehavior.TYPE);
     }
 
     private static void touch(PinBehaviorType<?> type) {
