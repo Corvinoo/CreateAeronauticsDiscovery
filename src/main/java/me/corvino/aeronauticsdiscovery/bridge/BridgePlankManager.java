@@ -19,6 +19,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.core.registries.BuiltInRegistries;
 
+import dev.ryanhcode.sable.Sable;
+import net.minecraft.core.BlockPos;
+import dev.ryanhcode.sable.sublevel.SubLevel;
+import net.neoforged.neoforge.event.level.BlockEvent;
+
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
@@ -165,6 +170,18 @@ public class BridgePlankManager extends SavedData {
             }
         }
         if (dirty) manager.setDirty();
+    }
+
+    public static boolean isBridgePlankSubLevel(ServerLevel level, BlockPos pos) {
+        SubLevel subLevel = Sable.HELPER.getContaining(level, pos);
+        return subLevel != null && subLevel.getName() != null && subLevel.getName().startsWith("bridge_plank_");
+    }
+
+    public static void onEntityPlace(BlockEvent.EntityPlaceEvent event) {
+        if (event.getLevel() instanceof ServerLevel serverLevel
+                && isBridgePlankSubLevel(serverLevel, event.getPos())) {
+            event.setCanceled(true);
+        }
     }
 
     public static void teleportAllPlanks(ServerLevel level) {

@@ -112,6 +112,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(BridgeInteractionHandler::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(BridgePlankManager::onEntityPlace);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.LevelEvent.Save event) -> {
             if (event.getLevel() instanceof ServerLevel serverLevel) {
                 BridgePlankManager.cleanupDeadEntries(serverLevel);
