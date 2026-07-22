@@ -3,6 +3,10 @@ package me.corvino.aeronauticsdiscovery.pin.behaviour;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot;
 import dev.simulated_team.simulated.content.blocks.rope.RopeStrandHolderBehavior;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerRopeStrand;
 import me.corvino.aeronauticsdiscovery.bridge.BridgeInteractionHandler;
@@ -16,10 +20,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -57,12 +64,8 @@ public record RopeConnectorBehavior(
     public void onTrigger(PinEntity self, PinTrigger trigger) {
         if (!(self.level() instanceof ServerLevel serverLevel)) return;
 
-        BlockPos pos = self.blockPosition();
-
-        if (!(serverLevel.getBlockEntity(pos) instanceof SmartBlockEntity smartBlockEntity)) return;
-        RopeStrandHolderBehavior holder = smartBlockEntity.getBehaviour(RopeStrandHolderBehavior.TYPE);
+        RopeStrandHolderBehavior holder = findRopeHolder(self, serverLevel);
         if (holder == null) return;
-
         if (holder.isAttached()) return;
 
         RopeStrandHolderBehavior partnerHolder = findAvailablePartner(self, serverLevel);
@@ -77,23 +80,60 @@ public record RopeConnectorBehavior(
 
     @Nullable
     private RopeStrandHolderBehavior findAvailablePartner(PinEntity self, ServerLevel serverLevel) {
-        AABB searchBounds = new AABB(self.blockPosition()).inflate(this.maxRange);
-        Vec3 myPos = self.position();
+        Vec3 myWorldPos = worldPosition(self, serverLevel);
+        AABB searchBounds = new AABB(myWorldPos, myWorldPos).inflate(this.maxRange);
         double rangeSq = this.maxRange * this.maxRange;
 
         for (PinEntity candidate : serverLevel.getEntitiesOfClass(PinEntity.class, searchBounds, p -> p.isAlive() && p != self)) {
             PinBehavior<?> behavior = candidate.resolveBehavior();
             if (!(behavior instanceof RopeConnectorBehavior other)) continue;
             if (other.channel != this.channel) continue;
-            if (candidate.position().distanceToSqr(myPos) > rangeSq) continue;
 
-            if (!(serverLevel.getBlockEntity(candidate.blockPosition()) instanceof SmartBlockEntity candidateBE)) continue;
-            RopeStrandHolderBehavior candidateHolder = candidateBE.getBehaviour(RopeStrandHolderBehavior.TYPE);
+            if (worldPosition(candidate, serverLevel).distanceToSqr(myWorldPos) > rangeSq) continue;
+
+            RopeStrandHolderBehavior candidateHolder = findRopeHolder(candidate, serverLevel);
             if (candidateHolder == null || candidateHolder.isAttached()) continue;
 
             return candidateHolder;
         }
         return null;
+    }
+
+    private static Vec3 worldPosition(PinEntity pin, ServerLevel serverLevel) {
+        SubLevel sl = Sable.HELPER.getContaining(serverLevel, pin.position());
+        if (sl instanceof ServerSubLevel ssl) {
+            Vector3dc worldPos = ssl.logicalPose().transformPosition(
+                    new Vector3d(pin.getX(), pin.getY(), pin.getZ())
+            );
+            return new Vec3(worldPos.x(), worldPos.y(), worldPos.z());
+        }
+        return pin.position();
+    }
+
+    @Nullable
+    private RopeStrandHolderBehavior findRopeHolder(PinEntity pin, ServerLevel serverLevel) {
+        BlockEntity be = findBlockEntity(serverLevel, pin.blockPosition(), pin);
+        if (be instanceof SmartBlockEntity smart) {
+            return smart.getBehaviour(RopeStrandHolderBehavior.TYPE);
+        }
+        return null;
+    }
+
+    @Nullable
+    private static BlockEntity findBlockEntity(ServerLevel level, BlockPos worldPos, PinEntity pin) {
+        BlockEntity be = level.getBlockEntity(worldPos);
+        if (be != null) return be;
+
+        SubLevel sl = Sable.HELPER.getContaining(level, pin.position());
+        if (!(sl instanceof ServerSubLevel ssl)) return null;
+        if (!(ssl.getPlot() instanceof ServerLevelPlot plot)) return null;
+
+        Vector3dc localPos = ssl.logicalPose().transformPositionInverse(
+                new Vector3d(pin.getX(), pin.getY(), pin.getZ())
+        );
+        BlockPos localBlockPos = BlockPos.containing(localPos.x(), localPos.y(), localPos.z());
+
+        return plot.getEmbeddedLevelAccessor().getBlockEntity(localBlockPos);
     }
 
     private void createAutoBridge(ServerLevel serverLevel, RopeStrandHolderBehavior holder) {
