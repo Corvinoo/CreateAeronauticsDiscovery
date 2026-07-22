@@ -148,6 +148,25 @@ public class BridgePlankManager extends SavedData {
         return new double[]{last.x(), last.y() + collisionRadius + PLANK_VERTICAL_OFFSET, last.z(), (double) (points.size() - 2)};
     }
 
+    public static void cleanupDeadEntries(ServerLevel level) {
+        var manager = get(level);
+        var ropeManager = ServerLevelRopeManager.getOrCreate(level);
+        if (ropeManager == null) return;
+        boolean dirty = false;
+        var iter = manager.planksByRope.entrySet().iterator();
+        while (iter.hasNext()) {
+            var entry = iter.next();
+            UUID ropeUUID = entry.getKey();
+            var strand = ropeManager.getStrand(ropeUUID);
+            if (strand == null || !strand.isActive()) {
+                LOG.trace("Cleaning up dead rope {} at save time", ropeUUID);
+                iter.remove();
+                dirty = true;
+            }
+        }
+        if (dirty) manager.setDirty();
+    }
+
     public static void teleportAllPlanks(ServerLevel level) {
         var manager = get(level);
         LOG.trace("teleportAllPlanks called, ropes in map: {}", manager.planksByRope.size());
@@ -175,7 +194,7 @@ public class BridgePlankManager extends SavedData {
             UUID ropeUUID = ropeEntry.getKey();
             var strand = ropeManager.getStrand(ropeUUID);
             if (strand == null || !strand.isActive()) {
-                LOG.debug("Strand {} not found or inactive, will retry next tick", ropeUUID);
+                LOG.trace("Strand {} not found or inactive (null={}), will retry next tick", ropeUUID, strand == null);
                 continue;
             }
 
@@ -217,5 +236,7 @@ public class BridgePlankManager extends SavedData {
                 manager.setDirty();
             }
         }
+
+
     }
 }
