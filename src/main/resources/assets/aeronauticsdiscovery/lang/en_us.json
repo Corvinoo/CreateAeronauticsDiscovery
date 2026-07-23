@@ -14,5 +14,6 @@
   "filled_map.aeronauticsdiscovery.igloo": "Igloo Map",
   "filled_map.aeronauticsdiscovery.ancient_city": "Ancient City Map",
   "filled_map.aeronauticsdiscovery.mineshaft": "Mineshaft Map",
-  "bridge.aeronauticsdiscovery.full": "Bridge is full"
+  "bridge.aeronauticsdiscovery.full": "Bridge is full",
+  "bridge.aeronauticsdiscovery.cannot_place": "Cannot place blocks on bridge"
 }
