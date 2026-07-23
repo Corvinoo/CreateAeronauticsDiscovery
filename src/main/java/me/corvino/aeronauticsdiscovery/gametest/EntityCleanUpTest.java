@@ -8,6 +8,9 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.gametest.FlyoverTestDriver.FlyoverContext;
 import me.corvino.aeronauticsdiscovery.gametest.FlyoverTestDriver.FlyoverState;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER_TEST;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -52,7 +55,7 @@ public class EntityCleanUpTest {
             }
         }
 
-        LOG.info("[FLYOVER_TEST] {} ACTIVE: {} PinEntities, {} total tagged entities in sub-level bounds",
+        ModLog.info(FLYOVER_TEST, "{} ACTIVE: {} PinEntities, {} total tagged entities in sub-level bounds",
                 ctx.tier().name(), pinned, tagged);
 
         if (tagged == 0) {
@@ -75,7 +78,7 @@ public class EntityCleanUpTest {
             if (!flyoverId.equals(data.getUUID(SUBLEVEL_ID_TAG))) continue;
             leaked++;
             if (leaked <= 3) {
-                LOG.warn("[FLYOVER_TEST] {} leaked entity: {} ({}) at {}",
+                ModLog.warn(FLYOVER_TEST, "{} leaked entity: {} ({}) at {}",
                         tier, entity, entity.getType(), entity.blockPosition());
             }
         }
@@ -86,7 +89,7 @@ public class EntityCleanUpTest {
                     tier, leaked, flyoverId));
         }
 
-        LOG.info("[FLYOVER_TEST] {} entity cleanup: 0 leaked entities", tier);
+        ModLog.info(FLYOVER_TEST, "{} entity cleanup: 0 leaked entities", tier);
     }
 
     private static AABB computeSearchBounds(FlyoverContext ctx) {

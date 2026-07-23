@@ -2,8 +2,9 @@ package me.corvino.aeronauticsdiscovery.pin.behaviour;
 
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.content.contraptions.actors.seat.SeatBlock;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -48,8 +49,8 @@ public record SeatMobBehavior(ResourceLocation mobId) implements PinBehavior<Sea
 
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(this.mobId);
         if (type == null) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[SeatMobBehavior] Unknown entity type '{}' at {}", this.mobId, pos);
+            ModLog.warn(PIN,
+                    "Unknown entity type '{}' at {}", this.mobId, pos);
             return;
         }
 
@@ -62,8 +63,8 @@ public record SeatMobBehavior(ResourceLocation mobId) implements PinBehavior<Sea
                     self.getPersistentData().getUUID(SUBLEVEL_ID_TAG));
         }
         if (!serverLevel.addFreshEntity(mob)) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[SeatMobBehavior] Failed to spawn mob at {}", pos);
+            ModLog.warn(PIN,
+                    "Failed to spawn mob at {}", pos);
             return;
         }
 

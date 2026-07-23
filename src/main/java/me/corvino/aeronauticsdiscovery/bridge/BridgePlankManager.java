@@ -12,6 +12,8 @@ import net.minecraft.world.InteractionResult;
 import org.joml.Vector3d;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.BRIDGE;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -29,8 +31,6 @@ import net.minecraft.core.BlockPos;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -113,8 +113,6 @@ public class BridgePlankManager extends SavedData {
     private static final double PLANK_SPACING = 1.25;
     private static final double PLANK_VERTICAL_OFFSET = 0.06;
 
-    private static final Logger LOG = LoggerFactory.getLogger("aeronauticsdiscovery.BridgePlankManager");
-
     public static double computeRopeLength(ObjectList<Vector3d> points) {
         double length = 0;
         for (int i = 0; i < points.size() - 1; i++) {
@@ -172,7 +170,7 @@ public class BridgePlankManager extends SavedData {
             UUID ropeUUID = entry.getKey();
             var strand = ropeManager.getStrand(ropeUUID);
             if (strand == null || !strand.isActive()) {
-                LOG.trace("Cleaning up dead rope {} at save time", ropeUUID);
+                ModLog.trace(BRIDGE, "Cleaning up dead rope {} at save time", ropeUUID);
                 iter.remove();
                 dirty = true;
             }
@@ -183,9 +181,9 @@ public class BridgePlankManager extends SavedData {
     public static void onRopeDestroyed(ServerLevel level, UUID ropeUUID) {
         var manager = get(level);
         var planks = manager.planksByRope.get(ropeUUID);
-        LOG.warn("[BRIDGE] onRopeDestroyed called for ropeUUID={}, planks found={}", ropeUUID, planks != null ? planks.size() : 0);
+        ModLog.warn(BRIDGE, "onRopeDestroyed called for ropeUUID={}, planks found={}", ropeUUID, planks != null ? planks.size() : 0);
         if (planks == null) {
-            LOG.warn("[BRIDGE] onRopeDestroyed: no planks found for ropeUUID={}, returning", ropeUUID);
+            ModLog.warn(BRIDGE, "onRopeDestroyed: no planks found for ropeUUID={}, returning", ropeUUID);
             return;
         }
 
@@ -193,28 +191,28 @@ public class BridgePlankManager extends SavedData {
         if (container != null) {
             for (PlankInfo info : planks) {
                 var subLevel = container.getSubLevel(info.subLevelUUID());
-                LOG.warn("[BRIDGE] onRopeDestroyed: plank idx={}, subLevelUUID={}, found={}, name before={}",
+                ModLog.warn(BRIDGE, "onRopeDestroyed: plank idx={}, subLevelUUID={}, found={}, name before={}",
                         info.plankIndex(), info.subLevelUUID(), subLevel != null,
                         subLevel instanceof ServerSubLevel ssl ? ssl.getName() : "N/A");
                 if (subLevel instanceof ServerSubLevel ssl) {
                     ssl.setName(null);
-                    LOG.warn("[BRIDGE] onRopeDestroyed: cleared name for subLevelUUID={}", info.subLevelUUID());
+                    ModLog.warn(BRIDGE, "onRopeDestroyed: cleared name for subLevelUUID={}", info.subLevelUUID());
                 }
             }
         } else {
-            LOG.warn("[BRIDGE] onRopeDestroyed: container was null, could not clear names");
+            ModLog.warn(BRIDGE, "onRopeDestroyed: container was null, could not clear names");
         }
 
         manager.planksByRope.remove(ropeUUID);
         manager.setDirty();
-        LOG.warn("[BRIDGE] onRopeDestroyed: removed rope entry for {}, map now has {} entries", ropeUUID, manager.planksByRope.size());
+        ModLog.warn(BRIDGE, "onRopeDestroyed: removed rope entry for {}, map now has {} entries", ropeUUID, manager.planksByRope.size());
     }
 
     public static boolean isBridgePlankSubLevel(Level level, BlockPos pos) {
         SubLevel subLevel = Sable.HELPER.getContaining(level, pos);
         boolean result = subLevel != null && subLevel.getName() != null && subLevel.getName().startsWith("bridge_plank_");
         if (result) {
-            LOG.warn("[BRIDGE] isBridgePlankSubLevel=true at {} subLevel={} name='{}' isServer={}",
+            ModLog.warn(BRIDGE, "isBridgePlankSubLevel=true at {} subLevel={} name='{}' isServer={}",
                     pos, subLevel.getUniqueId(), subLevel.getName(), level instanceof ServerLevel);
         }
         return result;
@@ -225,7 +223,7 @@ public class BridgePlankManager extends SavedData {
         Level level = event.getLevel();
         BlockPos placePos = event.getPos().relative(event.getFace());
         if (isBridgePlankSubLevel(level, placePos)) {
-            LOG.warn("[BRIDGE] onRightClickBlock CANCELLING at {} on side {}", placePos, level.isClientSide ? "CLIENT" : "SERVER");
+            ModLog.warn(BRIDGE, "onRightClickBlock CANCELLING at {} on side {}", placePos, level.isClientSide ? "CLIENT" : "SERVER");
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.PASS);
             if (event.getEntity() instanceof ServerPlayer sp) {
@@ -236,22 +234,22 @@ public class BridgePlankManager extends SavedData {
 
     public static void teleportAllPlanks(ServerLevel level) {
         var manager = get(level);
-        LOG.trace("teleportAllPlanks called, ropes in map: {}", manager.planksByRope.size());
+        ModLog.trace(BRIDGE, "teleportAllPlanks called, ropes in map: {}", manager.planksByRope.size());
 
         var container = (ServerSubLevelContainer)
                 SubLevelContainer.getContainer(level);
         if (container == null) {
-            LOG.debug("No container");
+            ModLog.debug(BRIDGE, "No container");
             return;
         }
         var physicsSystem = container.physicsSystem();
         if (physicsSystem == null) {
-            LOG.debug("No physicsSystem");
+            ModLog.debug(BRIDGE, "No physicsSystem");
             return;
         }
         var ropeManager = ServerLevelRopeManager.getOrCreate(level);
         if (ropeManager == null) {
-            LOG.debug("No ropeManager");
+            ModLog.debug(BRIDGE, "No ropeManager");
             return;
         }
 
@@ -268,7 +266,7 @@ public class BridgePlankManager extends SavedData {
             }
 
             var points = strand.getPoints();
-            LOG.trace("Rope {} has {} points, {} planks", ropeUUID, points.size(), ropeEntry.getValue().size());
+            ModLog.trace(BRIDGE, "Rope {} has {} points, {} planks", ropeUUID, points.size(), ropeEntry.getValue().size());
 
             var planks = ropeEntry.getValue();
             var plankIter = planks.iterator();
@@ -280,7 +278,7 @@ public class BridgePlankManager extends SavedData {
 
                 var subLevel = container.getSubLevel(info.subLevelUUID());
                 if (!(subLevel instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel ssl)) {
-                    LOG.debug("  SubLevel {} not found, removing orphaned plank", info.subLevelUUID());
+                    ModLog.debug(BRIDGE, "  SubLevel {} not found, removing orphaned plank", info.subLevelUUID());
                     plankIter.remove();
                     manager.setDirty();
                     continue;
@@ -300,7 +298,7 @@ public class BridgePlankManager extends SavedData {
             }
 
             if (planks.isEmpty()) {
-                LOG.debug("Rope {} has no remaining planks, removing", ropeUUID);
+                ModLog.debug(BRIDGE, "Rope {} has no remaining planks, removing", ropeUUID);
                 iter.remove();
                 manager.setDirty();
             }

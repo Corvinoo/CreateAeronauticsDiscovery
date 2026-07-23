@@ -7,7 +7,10 @@ import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.companion.math.JOMLConversion;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
 import me.corvino.aeronauticsdiscovery.util.StructureSearchWorker;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.TRADE;
 import net.createmod.catnip.data.Couple;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -309,7 +312,7 @@ public class SoaringTrader extends WanderingTrader {
         if (!(this.level() instanceof ServerLevel serverLevel)) return null;
 
         List<? extends String> ids = me.corvino.aeronauticsdiscovery.Config.traderStructureMaps;
-        me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] ids={}", ids);
+        ModLog.debug(TRADE, "ids={}", ids);
         if (ids.isEmpty()) return null;
 
         Registry<Structure> registry = serverLevel.registryAccess().registryOrThrow(Registries.STRUCTURE);
@@ -340,17 +343,17 @@ public class SoaringTrader extends WanderingTrader {
                                    ChunkGeneratorStructureState state, long seed, String structId) {
         ResourceLocation loc = ResourceLocation.parse(structId);
         ResourceKey<Structure> key = ResourceKey.create(Registries.STRUCTURE, loc);
-        me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] tryStructure: {}", structId);
+        ModLog.debug(TRADE, "tryStructure: {}", structId);
         var holderOpt = registry.getHolder(key);
         if (holderOpt.isEmpty()) {
-            me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.warn("[TRADE] unknown structure: {}", structId);
+            ModLog.warn(TRADE, "unknown structure: {}", structId);
             return null;
         }
         for (StructurePlacement sp : state.getPlacementsForStructure(holderOpt.get())) {
             if (sp instanceof RandomSpreadStructurePlacement rssp) {
                 BlockPos found = StructureSearchWorker.searchNearest(
                         serverLevel, holderOpt.get().value(), rssp, seed, this.blockPosition(), 50, 800);
-                me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] searchNearest({}) = {}", structId, found);
+                ModLog.debug(TRADE, "searchNearest({}) = {}", structId, found);
                 if (found != null) {
                     StructureMeta meta = KNOWN_STRUCTURES.get(structId);
                     Holder<MapDecorationType> deco = meta != null ? meta.decoration() : MapDecorationTypes.TARGET_X;
@@ -371,7 +374,7 @@ public class SoaringTrader extends WanderingTrader {
                 }
             }
         }
-        me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER.debug("[TRADE] no placement found for {}", structId);
+        ModLog.debug(TRADE, "no placement found for {}", structId);
         return null;
     }
 

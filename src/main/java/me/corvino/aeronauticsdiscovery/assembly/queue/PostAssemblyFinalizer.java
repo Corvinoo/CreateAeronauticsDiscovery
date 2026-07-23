@@ -5,6 +5,8 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PHYSICS;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
@@ -67,8 +69,8 @@ final class PostAssemblyFinalizer {
             angular = rotateVec3(angular, ctx.yawRadians);
         }
 
-        CreateAeronauticsDiscovery.LOGGER.info(
-                "[PHYSICS] Applying velocity to '{}': linear={}, angular={}, impulse={}",
+        ModLog.info(PHYSICS,
+                "Applying velocity to '{}': linear={}, angular={}, impulse={}",
                 ctx.templateId, linear, angular, velocity.impulse());
 
         if (velocity.impulse()) {

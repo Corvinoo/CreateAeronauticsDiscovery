@@ -1,12 +1,13 @@
 package me.corvino.aeronauticsdiscovery.pin;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehavior;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorType;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
 import me.corvino.aeronauticsdiscovery.pin.EmitterConfig;
 import me.corvino.aeronauticsdiscovery.pin.TriggerMask;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -108,16 +109,16 @@ public class PinEntity extends Entity {
 
         PinBehaviorType<?> type = PinBehaviorTypes.byId(this.behaviorId);
         if (type == null) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[PinEntity] Unknown behavior id '{}' at {} - was a mod removed/renamed?",
+            ModLog.warn(PIN,
+                    "Unknown behavior id '{}' at {} - was a mod removed/renamed?",
                     this.behaviorId, this.blockPosition());
             return null;
         }
 
         var decoded = type.codec().parse(net.minecraft.nbt.NbtOps.INSTANCE, this.config);
         if (decoded.error().isPresent()) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[PinEntity] Failed to decode config for behavior '{}' at {}: {}",
+            ModLog.warn(PIN,
+                    "Failed to decode config for behavior '{}' at {}: {}",
                     this.behaviorId, this.blockPosition(), decoded.error().get().message());
             return null;
         }

@@ -1,7 +1,8 @@
 package me.corvino.aeronauticsdiscovery.assembly;
 
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -26,8 +27,8 @@ public record AssemblyPipeline(String name, Supplier<List<AssemblyStep>> stepsFa
                 switch (result) {
                     case WAITING -> { return AssemblyResult.WAITING; }
                     case FAIL -> {
-                        CreateAeronauticsDiscovery.LOGGER.debug(
-                                "[PIPELINE:{}] Step '{}' FAILED for template '{}'",
+                        ModLog.debug(PIPELINE,
+                                "Step '{}' FAILED for template '{}'",
                                 name, step.getClass().getSimpleName(), ctx.templateId);
                         cleanup(ctx, ctx.currentStepIndex);
                         return AssemblyResult.FAIL;
@@ -35,14 +36,14 @@ public record AssemblyPipeline(String name, Supplier<List<AssemblyStep>> stepsFa
                     case SUCCESS -> ctx.currentStepIndex++;
                 }
             } catch (Exception e) {
-                CreateAeronauticsDiscovery.LOGGER.error(
-                        "[PIPELINE:{}] Exception occurred in '{}' for template '{}'",
+                ModLog.error(PIPELINE,
+                        "Exception occurred in '{}' for template '{}'",
                         name, step.getClass().getSimpleName(), ctx.templateId, e);
                 try {
                     cleanup(ctx, ctx.currentStepIndex);
                 } catch (Exception ce) {
-                    CreateAeronauticsDiscovery.LOGGER.error(
-                            "[PIPELINE:{}] COULD NOT CLEANUP TEMPLATE '{}'", name, ctx.templateId, ce);
+                    ModLog.error(PIPELINE,
+                            "COULD NOT CLEANUP TEMPLATE '{}'", name, ctx.templateId, ce);
                 }
                 return AssemblyResult.FAIL;
             }
@@ -56,8 +57,8 @@ public record AssemblyPipeline(String name, Supplier<List<AssemblyStep>> stepsFa
             try {
                 ctx.steps.get(i).abort(ctx);
             } catch (Exception e) {
-                CreateAeronauticsDiscovery.LOGGER.error(
-                        "[PIPELINE:{}] STEP '{}' CLEANUP FAILED!!",
+                ModLog.error(PIPELINE,
+                        "STEP '{}' CLEANUP FAILED!!",
                         name, ctx.steps.get(i).getClass().getSimpleName(), e);
             }
         }
