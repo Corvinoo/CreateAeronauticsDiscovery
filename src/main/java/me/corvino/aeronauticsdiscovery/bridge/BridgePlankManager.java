@@ -268,10 +268,23 @@ public class BridgePlankManager extends SavedData {
             var points = strand.getPoints();
             ModLog.trace(BRIDGE, "Rope {} has {} points, {} planks", ropeUUID, points.size(), ropeEntry.getValue().size());
 
+            int maxPlanks = computeMaxPlanks(points);
             var planks = ropeEntry.getValue();
             var plankIter = planks.iterator();
             while (plankIter.hasNext()) {
                 PlankInfo info = plankIter.next();
+
+                if (info.plankIndex() >= maxPlanks) {
+                    ModLog.debug(BRIDGE, "Dropping excess plank idx={} (maxPlanks={}) rope={}", info.plankIndex(), maxPlanks, ropeUUID);
+                    var subLevel = container.getSubLevel(info.subLevelUUID());
+                    if (subLevel instanceof ServerSubLevel ssl) {
+                        ssl.setName(null);
+                    }
+                    plankIter.remove();
+                    manager.setDirty();
+                    continue;
+                }
+
                 var pos = computePlankPosition(points, info.plankIndex(), strand.getCollisionRadius());
                 double mx = pos[0], my = pos[1], mz = pos[2];
                 int segIdx = (int) pos[3];
