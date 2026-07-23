@@ -2,6 +2,7 @@ package me.corvino.aeronauticsdiscovery.bridge;
 
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -179,9 +180,44 @@ public class BridgePlankManager extends SavedData {
         if (dirty) manager.setDirty();
     }
 
+    public static void onRopeDestroyed(ServerLevel level, UUID ropeUUID) {
+        var manager = get(level);
+        var planks = manager.planksByRope.get(ropeUUID);
+        LOG.warn("[BRIDGE] onRopeDestroyed called for ropeUUID={}, planks found={}", ropeUUID, planks != null ? planks.size() : 0);
+        if (planks == null) {
+            LOG.warn("[BRIDGE] onRopeDestroyed: no planks found for ropeUUID={}, returning", ropeUUID);
+            return;
+        }
+
+        var container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
+        if (container != null) {
+            for (PlankInfo info : planks) {
+                var subLevel = container.getSubLevel(info.subLevelUUID());
+                LOG.warn("[BRIDGE] onRopeDestroyed: plank idx={}, subLevelUUID={}, found={}, name before={}",
+                        info.plankIndex(), info.subLevelUUID(), subLevel != null,
+                        subLevel instanceof ServerSubLevel ssl ? ssl.getName() : "N/A");
+                if (subLevel instanceof ServerSubLevel ssl) {
+                    ssl.setName(null);
+                    LOG.warn("[BRIDGE] onRopeDestroyed: cleared name for subLevelUUID={}", info.subLevelUUID());
+                }
+            }
+        } else {
+            LOG.warn("[BRIDGE] onRopeDestroyed: container was null, could not clear names");
+        }
+
+        manager.planksByRope.remove(ropeUUID);
+        manager.setDirty();
+        LOG.warn("[BRIDGE] onRopeDestroyed: removed rope entry for {}, map now has {} entries", ropeUUID, manager.planksByRope.size());
+    }
+
     public static boolean isBridgePlankSubLevel(Level level, BlockPos pos) {
         SubLevel subLevel = Sable.HELPER.getContaining(level, pos);
-        return subLevel != null && subLevel.getName() != null && subLevel.getName().startsWith("bridge_plank_");
+        boolean result = subLevel != null && subLevel.getName() != null && subLevel.getName().startsWith("bridge_plank_");
+        if (result) {
+            LOG.warn("[BRIDGE] isBridgePlankSubLevel=true at {} subLevel={} name='{}' isServer={}",
+                    pos, subLevel.getUniqueId(), subLevel.getName(), level instanceof ServerLevel);
+        }
+        return result;
     }
 
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
@@ -189,6 +225,7 @@ public class BridgePlankManager extends SavedData {
         Level level = event.getLevel();
         BlockPos placePos = event.getPos().relative(event.getFace());
         if (isBridgePlankSubLevel(level, placePos)) {
+            LOG.warn("[BRIDGE] onRightClickBlock CANCELLING at {} on side {}", placePos, level.isClientSide ? "CLIENT" : "SERVER");
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.PASS);
             if (event.getEntity() instanceof ServerPlayer sp) {
@@ -223,8 +260,10 @@ public class BridgePlankManager extends SavedData {
             var ropeEntry = iter.next();
             UUID ropeUUID = ropeEntry.getKey();
             var strand = ropeManager.getStrand(ropeUUID);
-            if (strand == null || !strand.isActive()) {
-                LOG.trace("Strand {} not found or inactive (null={}), will retry next tick", ropeUUID, strand == null);
+            if (strand == null) {
+                continue;
+            }
+            if (!strand.isActive()) {
                 continue;
             }
 
