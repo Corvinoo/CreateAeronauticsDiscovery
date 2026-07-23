@@ -4,7 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -64,13 +65,13 @@ public class FlyoverEventRegistry extends SimpleJsonResourceReloadListener {
                         .getOrThrow(error -> new RuntimeException("Failed to decode " + entry.getKey() + ": " + error))
                         .getFirst();
                 list.add(config);
-                CreateAeronauticsDiscovery.LOGGER.debug("[FLYOVER] Loaded config for template '{}' from '{}'", config.template(), entry.getKey());
+                ModLog.debug(FLYOVER, "Loaded config for template '{}' from '{}'", config.template(), entry.getKey());
             } catch (Exception e) {
-                CreateAeronauticsDiscovery.LOGGER.error("[FLYOVER] Failed to load config from '{}': {}", entry.getKey(), e.getMessage());
+                ModLog.error(FLYOVER, "Failed to load config from '{}': {}", entry.getKey(), e.getMessage());
             }
         }
         this.configs = List.copyOf(list);
-        CreateAeronauticsDiscovery.LOGGER.info("[FLYOVER] Loaded {} flyover event config(s)", list.size());
+        ModLog.info(FLYOVER, "Loaded {} flyover event config(s)", list.size());
     }
 
     public static void onAddReloadListeners(AddReloadListenerEvent event) {

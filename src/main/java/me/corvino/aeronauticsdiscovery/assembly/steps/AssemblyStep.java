@@ -1,8 +1,9 @@
 package me.corvino.aeronauticsdiscovery.assembly.steps;
 
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 
@@ -32,8 +33,8 @@ public abstract class AssemblyStep {
         if (maxTickOfExecution < 0) maxTickOfExecution = ctx.currentTick + timeoutTicks();
 
         if (ctx.currentTick > maxTickOfExecution) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[{}] Step '{}' timeout after {} tick(s), rollback..",
+            ModLog.warn(PIPELINE,
+                    "{}: Step '{}' timeout after {} tick(s), rollback..",
                     getClass().getSimpleName(), ctx.templateId, timeoutTicks());
             onAbort(ctx);
             return AssemblyResult.FAIL;
@@ -69,8 +70,8 @@ public abstract class AssemblyStep {
                 }
                 case OpResult.Skip s -> cursor += s.count();
                 case OpResult.Fail f -> {
-                    CreateAeronauticsDiscovery.LOGGER.warn(
-                            "[{}] Sequence failed at operation {}: {}",
+                    ModLog.warn(PIPELINE,
+                            "Sequence failed at operation {}: {}",
                             getClass().getSimpleName(), cursor, f.reason());
                     return AssemblyResult.FAIL;
                 }

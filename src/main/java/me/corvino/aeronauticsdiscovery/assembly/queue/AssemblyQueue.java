@@ -4,7 +4,10 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyPipeline;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
 import net.minecraft.core.HolderLookup;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.QUEUE;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
@@ -121,8 +124,8 @@ public class AssemblyQueue extends SavedData {
     }
 
     private void discardEntry(ListIterator<Entry> it, Entry entry) {
-        CreateAeronauticsDiscovery.LOGGER.warn(
-                "[QUEUE] Discarding '{}' (src={}) after {} failed attempts",
+        ModLog.warn(
+                QUEUE, "Discarding '{}' (src={}) after {} failed attempts",
                 entry.templateId(), entry.context().source, entry.retryCount());
         it.remove();
         setDirty();
@@ -131,13 +134,13 @@ public class AssemblyQueue extends SavedData {
     private void applyResult(ServerLevel level, ListIterator<Entry> it, Entry entry, AssemblyContext ctx, AssemblyResult result) {
         switch (result) {
             case SUCCESS -> {
-                CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] SUCCESS: '{}' (src={})", ctx.templateId, ctx.source);
+                ModLog.debug(QUEUE, "SUCCESS: '{}' (src={})", ctx.templateId, ctx.source);
                 PostAssemblyFinalizer.run(level, ctx);
                 it.remove();
                 setDirty();
             }
             case FAIL -> {
-                CreateAeronauticsDiscovery.LOGGER.warn("[QUEUE] FAIL: '{}' (src={}, attempt {}/{})",
+                ModLog.warn(QUEUE, "FAIL: '{}' (src={}, attempt {}/{})",
                         ctx.templateId, ctx.source, entry.retryCount() + 1, ctx.maxRetries);
                 it.set(entry.withRetryCount(entry.retryCount() + 1));
                 setDirty();

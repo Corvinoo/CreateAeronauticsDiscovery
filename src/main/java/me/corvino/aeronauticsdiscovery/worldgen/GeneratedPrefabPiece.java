@@ -1,11 +1,13 @@
 package me.corvino.aeronauticsdiscovery.worldgen;
 
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.GEN;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.QUEUE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -72,7 +74,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
     ) {
         super.postProcess(level, structureManager, chunkGenerator, random, bounds, chunkPos, pivot);
 
-        CreateAeronauticsDiscovery.LOGGER.info("[GEN] Placed Prefab Template '{}' at {} in chunk {}. Rotation: {}",
+        ModLog.info(GEN, "Placed Prefab Template '{}' at {} in chunk {}. Rotation: {}",
             this.templateName, this.templatePosition, chunkPos, this.placeSettings.getRotation());
 
         this.enqueueAssemblies(level);
@@ -116,15 +118,15 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                                 .assemblerPos(worldPos)
                                 .build());
 
-                CreateAeronauticsDiscovery.LOGGER.info("[QUEUE] Queued assembly for PhysicsAssembler at {} (Template: {})",
+                ModLog.info(QUEUE, "Queued assembly for PhysicsAssembler at {} (Template: {})",
                         worldPos, templateId);
             }
         }
 
         if (assemblerCount == 0 && firstNonAir != null) { 
-            CreateAeronauticsDiscovery.LOGGER.debug("[QUEUE] No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
+            ModLog.debug(QUEUE, "No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
                     templateId, firstNonAir);
-            queue.enqueue(Pipelines.WORLDGEN, //todo merge two queue into single branch for clarity, probably we do not necessarily need assembler
+            queue.enqueue(Pipelines.WORLDGEN,
                     AssemblyContext.builder()
                             .level(serverLevel)
                             .anchor(firstNonAir)
@@ -134,7 +136,7 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
                             .assemblerPos(firstNonAir)
                             .build());
         } else if (assemblerCount == 0) {
-            CreateAeronauticsDiscovery.LOGGER.warn("[WARN] Template '{}' placed with NO blocks at all!", templateId);
+            ModLog.warn(GEN, "Template '{}' placed with NO blocks at all!", templateId);
         }
     }
 }

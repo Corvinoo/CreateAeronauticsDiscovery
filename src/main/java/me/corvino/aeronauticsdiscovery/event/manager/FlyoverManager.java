@@ -13,6 +13,8 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -29,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery.LOGGER;
 
 public class FlyoverManager extends SavedData {
 
@@ -85,7 +85,7 @@ public class FlyoverManager extends SavedData {
         FlyoverData entry = FlyoverData.fresh(subLevel.getUniqueId(), templateId);
         flyovers.put(entry.subLevelId(), entry);
         setDirty();
-        LOGGER.info("[FLYOVER] Registered '{}' (id={}) - despawns after {} ticks if player does not approach it",
+        ModLog.info(FLYOVER, "Registered '{}' (id={}) - despawns after {} ticks if player does not approach it",
                 templateId, subLevel.getUniqueId(), Config.flyoverMaxLifetimeTicks);
     }
 
@@ -171,7 +171,7 @@ public class FlyoverManager extends SavedData {
         if (entry.isExpired(maxLifetime)) return; // already capped
         entry.incrementTick();
         if (entry.isExpired(maxLifetime)) {
-            LOGGER.debug("[FLYOVER] {} ('{}') expired while unloaded - will despawn on next chunk load",
+            ModLog.debug(FLYOVER, "{} ('{}') expired while unloaded - will despawn on next chunk load",
                     entry.subLevelId(), entry.templateId());
         }
     }
@@ -180,7 +180,7 @@ public class FlyoverManager extends SavedData {
         UUID id;
         while ((id = externalRemovalQueue.poll()) != null) {
             if (!pendingRemoval.contains(id) && flyovers.containsKey(id)) {
-                LOGGER.info("[FLYOVER] Removing {} via external request", id);
+                ModLog.info(FLYOVER, "Removing {} via external request", id);
                 pendingRemoval.add(id);
                 ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
                 if (container != null) {
@@ -192,7 +192,7 @@ public class FlyoverManager extends SavedData {
 
 
     private void release(FlyoverData entry, ServerSubLevel subLevel) {
-        LOGGER.info("[FLYOVER] Releasing {} ('{}') - player approached - handing off to Sable",
+        ModLog.info(FLYOVER, "Releasing {} ('{}') - player approached - handing off to Sable",
                 entry.subLevelId(), entry.templateId());
         PinNetwork.clear(entry.subLevelId());
 
@@ -212,14 +212,14 @@ public class FlyoverManager extends SavedData {
 
     private void beginDespawn(FlyoverData entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
         UUID id = entry.subLevelId();
-        LOGGER.info("[FLYOVER] Despawning {} ('{}') - {}", id, entry.templateId(), reason.describe());
+        ModLog.info(FLYOVER, "Despawning {} ('{}') - {}", id, entry.templateId(), reason.describe());
         removeSubLevelFromWorld(subLevel);
     }
 
     private void removeForceTicket(ServerSubLevel subLevel) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
-            LOGGER.warn("[FLYOVER] Cannot remove force ticket for {} - SubLevelContainer unavailable",
+            ModLog.warn(FLYOVER, "Cannot remove force ticket for {} - SubLevelContainer unavailable",
                     subLevel.getUniqueId());
             return;
         }
@@ -229,7 +229,7 @@ public class FlyoverManager extends SavedData {
     private void removeSubLevelFromWorld(ServerSubLevel subLevel) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
-            LOGGER.warn("[FLYOVER] Cannot remove SubLevel {} - SubLevelContainer unavailable",
+            ModLog.warn(FLYOVER, "Cannot remove SubLevel {} - SubLevelContainer unavailable",
                     subLevel.getUniqueId());
             return;
         }
@@ -277,7 +277,7 @@ public class FlyoverManager extends SavedData {
             ListTag list = tag.getList(TAG_KEY, 10 /* CompoundTag */);
             FlyoverData.CODEC.listOf()
                     .parse(NbtOps.INSTANCE, list)
-                    .resultOrPartial(err -> LOGGER.warn("[FLYOVER] Failed to parse flyover data: {}", err))
+                    .resultOrPartial(err -> ModLog.warn(FLYOVER, "Failed to parse flyover data: {}", err))
                     .ifPresent(entries -> entries.forEach(e -> manager.flyovers.put(e.subLevelId(), e)));
         }
         return manager;

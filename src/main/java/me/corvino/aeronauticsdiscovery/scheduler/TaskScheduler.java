@@ -1,6 +1,7 @@
 package me.corvino.aeronauticsdiscovery.scheduler;
 
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.GENERAL;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -23,7 +24,7 @@ public final class TaskScheduler {
      * Call during mod init to trigger class loading before the first server tick.
      */
     public static void setup() {
-        CreateAeronauticsDiscovery.LOGGER.info("Loading task scheduler...");
+        ModLog.info(GENERAL, "Loading task scheduler...");
     }
 
     static {

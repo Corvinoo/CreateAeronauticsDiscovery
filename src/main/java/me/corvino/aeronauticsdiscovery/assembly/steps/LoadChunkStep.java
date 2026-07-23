@@ -1,8 +1,9 @@
 package me.corvino.aeronauticsdiscovery.assembly.steps;
 
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
 import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
 import net.minecraft.world.level.ChunkPos;
 
@@ -20,8 +21,8 @@ public class LoadChunkStep extends AssemblyStep {
         seq
                 .run(this::computeBoundsAndForceTickets)
                 .waitUntil(this::allChunksTicking)
-                .run(ctx -> CreateAeronauticsDiscovery.LOGGER.info(
-                        "[LoadChunkStep] All chunks are ticking for '{}'", ctx.templateId));
+                .run(ctx -> ModLog.info(PIPELINE,
+                        "All chunks are ticking for '{}'", ctx.templateId));
     }
 
     private void computeBoundsAndForceTickets(AssemblyContext ctx) {
@@ -39,8 +40,8 @@ public class LoadChunkStep extends AssemblyStep {
                     notReady++;
             }
         if (notReady > 0) {
-            CreateAeronauticsDiscovery.LOGGER.debug(
-                    "[LoadChunkStep] {} chunk(s) not ticking for '{}', waiting..",
+            ModLog.debug(PIPELINE,
+                    "{} chunk(s) not ticking for '{}', waiting..",
                     notReady, ctx.templateId);
             return false;
         }

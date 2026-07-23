@@ -5,9 +5,10 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.Config;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverData;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
@@ -323,7 +324,7 @@ public final class FlyoverCommands {
 
             return 1;
         } catch (Exception e) {
-            CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Command failed: {}", e.getMessage());
+            ModLog.warn(FLYOVER, "Command failed: {}", e.getMessage());
             source.sendFailure(Component.literal("Failed to enqueue flyover: " + e.getMessage()));
             return 0;
         }
