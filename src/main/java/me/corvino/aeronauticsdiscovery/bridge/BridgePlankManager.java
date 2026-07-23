@@ -169,8 +169,8 @@ public class BridgePlankManager extends SavedData {
             var entry = iter.next();
             UUID ropeUUID = entry.getKey();
             var strand = ropeManager.getStrand(ropeUUID);
-            if (strand == null || !strand.isActive()) {
-                ModLog.trace(BRIDGE, "Cleaning up dead rope {} at save time", ropeUUID);
+            if (strand == null) {
+                ModLog.debug(BRIDGE, "Cleaning up dead rope {} (strand no longer exists)", ropeUUID);
                 iter.remove();
                 dirty = true;
             }
@@ -291,9 +291,7 @@ public class BridgePlankManager extends SavedData {
 
                 var subLevel = container.getSubLevel(info.subLevelUUID());
                 if (!(subLevel instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel ssl)) {
-                    ModLog.debug(BRIDGE, "  SubLevel {} not found, removing orphaned plank", info.subLevelUUID());
-                    plankIter.remove();
-                    manager.setDirty();
+                    ModLog.trace(BRIDGE, "  SubLevel {} not loaded yet, skipping", info.subLevelUUID());
                     continue;
                 }
 
