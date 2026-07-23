@@ -5,6 +5,9 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.ServerLevelRopeManager;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import org.joml.Vector3d;
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
@@ -14,6 +17,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -22,7 +26,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import dev.ryanhcode.sable.Sable;
 import net.minecraft.core.BlockPos;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -105,7 +112,7 @@ public class BridgePlankManager extends SavedData {
     private static final double PLANK_SPACING = 1.25;
     private static final double PLANK_VERTICAL_OFFSET = 0.06;
 
-    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger("aeronauticsdiscovery.BridgePlankManager");
+    private static final Logger LOG = LoggerFactory.getLogger("aeronauticsdiscovery.BridgePlankManager");
 
     public static double computeRopeLength(ObjectList<Vector3d> points) {
         double length = 0;
@@ -172,15 +179,21 @@ public class BridgePlankManager extends SavedData {
         if (dirty) manager.setDirty();
     }
 
-    public static boolean isBridgePlankSubLevel(ServerLevel level, BlockPos pos) {
+    public static boolean isBridgePlankSubLevel(Level level, BlockPos pos) {
         SubLevel subLevel = Sable.HELPER.getContaining(level, pos);
         return subLevel != null && subLevel.getName() != null && subLevel.getName().startsWith("bridge_plank_");
     }
 
-    public static void onEntityPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getLevel() instanceof ServerLevel serverLevel
-                && isBridgePlankSubLevel(serverLevel, event.getPos())) {
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getFace() == null) return;
+        Level level = event.getLevel();
+        BlockPos placePos = event.getPos().relative(event.getFace());
+        if (isBridgePlankSubLevel(level, placePos)) {
             event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.PASS);
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                sp.displayClientMessage(Component.translatable("bridge.aeronauticsdiscovery.cannot_place"), true);
+            }
         }
     }
 
