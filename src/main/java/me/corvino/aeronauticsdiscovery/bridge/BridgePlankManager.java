@@ -178,6 +178,20 @@ public class BridgePlankManager extends SavedData {
         if (dirty) manager.setDirty();
     }
 
+
+    public static void removePlankBySubLevel(ServerLevel level, UUID subLevelUUID) {
+        var manager = get(level);
+        boolean dirty = false;
+        for (var entry : manager.planksByRope.entrySet()) {
+            var removed = entry.getValue().removeIf(info -> info.subLevelUUID().equals(subLevelUUID));
+            if (removed) {
+                ModLog.debug(BRIDGE, "Removed plank entry for subLevel {} from rope {}", subLevelUUID, entry.getKey());
+                dirty = true;
+            }
+        }
+        if (dirty) manager.setDirty();
+    }
+
     public static void onRopeDestroyed(ServerLevel level, UUID ropeUUID) {
         var manager = get(level);
         var planks = manager.planksByRope.get(ropeUUID);
