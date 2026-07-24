@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import me.corvino.aeronauticsdiscovery.bridge.BridgeInteractionHandler;
 import me.corvino.aeronauticsdiscovery.bridge.BridgePlankManager;
+import me.corvino.aeronauticsdiscovery.bridge.BridgeSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
@@ -113,6 +114,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(BridgeInteractionHandler::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(BridgePlankManager::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(BridgeSubLevelObserver::onLevelTick);
 //        NeoForge.EVENT_BUS.addListener(BridgePlankManager::onEntityPlace);
         TaskScheduler.setup();
 
