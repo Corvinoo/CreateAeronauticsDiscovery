@@ -1,8 +1,10 @@
 package me.corvino.aeronauticsdiscovery.pin;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehavior;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
@@ -87,7 +89,7 @@ public final class PinNetwork {
             try {
                 task.run();
             } catch (Exception e) {
-                CreateAeronauticsDiscovery.LOGGER.error("[PinNetwork] Delayed trigger task failed", e);
+                ModLog.error(PIN, "Delayed trigger task failed", e);
             }
         }
     }

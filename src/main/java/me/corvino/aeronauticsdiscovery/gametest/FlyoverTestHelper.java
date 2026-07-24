@@ -1,11 +1,11 @@
 package me.corvino.aeronauticsdiscovery.gametest;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.Config;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -23,16 +23,15 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.level.ForcedChunksSavedData;
 import net.minecraft.world.level.block.Rotation;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 import java.lang.reflect.Field;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER_TEST;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public final class FlyoverTestHelper {
-
-    public static final Logger LOG = CreateAeronauticsDiscovery.LOGGER;
 
     public static final ResourceLocation TEMPLATE_ID =
             ResourceLocation.parse("aeronauticsdiscovery:airplane");
@@ -85,7 +84,7 @@ public final class FlyoverTestHelper {
         player.teleportTo(level, origin.getX(), origin.getY(), origin.getZ(),
                           Set.of(), 0.0F, 0.0F);
 
-        LOG.info("[FLYOVER_TEST] Registered player '{}' (uuid={}) at ({}, {}, {})",
+        ModLog.info(FLYOVER_TEST, "Registered player '{}' (uuid={}) at ({}, {}, {})",
                  profile.getName(), profile.getId(), origin.getX(), origin.getY(), origin.getZ());
         return player;
     }
@@ -100,7 +99,7 @@ public final class FlyoverTestHelper {
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to unregister player", e);
         }
-        LOG.info("[FLYOVER_TEST] Unregistered player '{}'", player.getGameProfile().getName());
+        ModLog.info(FLYOVER_TEST, "Unregistered player '{}'", player.getGameProfile().getName());
     }
 
     public static void configureServer(ServerLevel level, int viewChunks, int simChunks) {
@@ -131,14 +130,14 @@ public final class FlyoverTestHelper {
         int dZ = target.getZ() - origin.getZ();
         int dist = (int) Math.sqrt(dX * dX + dZ * dZ);
 
-        LOG.info("==============================================");
-        LOG.info("[FLYOVER_TEST] === {} ===", tier);
-        LOG.info("[FLYOVER_TEST] Server viewDist={}b, simDist={}b",
+        ModLog.info(FLYOVER_TEST, "==============================================");
+        ModLog.info(FLYOVER_TEST, "=== {} ===", tier);
+        ModLog.info(FLYOVER_TEST, "Server viewDist={}b, simDist={}b",
                  info.viewDistBlocks(), info.simDistBlocks());
-        LOG.info("[FLYOVER_TEST] Origin: ({}, {}, {})", origin.getX(), origin.getY(), origin.getZ());
-        LOG.info("[FLYOVER_TEST] Target: ({}, {}, {})", target.getX(), target.getY(), target.getZ());
-        LOG.info("[FLYOVER_TEST] Distance: {} blocks", dist);
-        LOG.info("[FLYOVER_TEST] Template: {}", TEMPLATE_ID);
+        ModLog.info(FLYOVER_TEST, "Origin: ({}, {}, {})", origin.getX(), origin.getY(), origin.getZ());
+        ModLog.info(FLYOVER_TEST, "Target: ({}, {}, {})", target.getX(), target.getY(), target.getZ());
+        ModLog.info(FLYOVER_TEST, "Distance: {} blocks", dist);
+        ModLog.info(FLYOVER_TEST, "Template: {}", TEMPLATE_ID);
     }
 
     // ========================================================================

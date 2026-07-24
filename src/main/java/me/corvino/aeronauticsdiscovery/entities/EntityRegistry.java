@@ -35,4 +35,5 @@ public class EntityRegistry {
                     .sized(1.1F, 1.1F)
                     .eyeHeight(0.0F)
                     .build("pin"));
+
 }

@@ -6,6 +6,9 @@ import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.Config;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER_TEST;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
@@ -110,7 +113,7 @@ public class FlyoverTestDriver {
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to read template palette", e);
         }
-        LOG.info("[FLYOVER_TEST] Loaded {} expected non-air blocks from template {}",
+        ModLog.info(FLYOVER_TEST, "Loaded {} expected non-air blocks from template {}",
                  map.size(), TEMPLATE_ID);
         return map;
     }
@@ -144,7 +147,7 @@ public class FlyoverTestDriver {
         if (tierIdx >= tiers.size()) {
             Config.flyoverMaxLifetimeTicks = originalLifetime;
             unregisterPlayer(level, player);
-            LOG.info("[FLYOVER_TEST] === ALL TIERS PASSED ===");
+            ModLog.info(FLYOVER_TEST, "=== ALL TIERS PASSED ===");
             return true;
         }
 
@@ -181,14 +184,14 @@ public class FlyoverTestDriver {
                     .findFirst()
                     .orElse(null);
                 if (activeFlyoverId == null) {
-                    LOG.warn("[FLYOVER_TEST] {} no flyover registered in FlyoverManager!", tc.name());
+                    ModLog.warn(FLYOVER_TEST, "{} no flyover registered in FlyoverManager!", tc.name());
                     tierIdx++;
                     state = STATE_SETUP;
                     throw new GameTestAssertException(tc.name() + " no flyover registered — skipping");
                 }
                 state = STATE_ACTIVE;
             } else if (timedOut) {
-                LOG.warn("[FLYOVER_TEST] {} TIMEOUT (queue={})", tc.name(), qs);
+                ModLog.warn(FLYOVER_TEST, "{} TIMEOUT (queue={})", tc.name(), qs);
                 tierIdx++;
                 state = STATE_SETUP;
                 throw new GameTestAssertException(tc.name() + " timed out, advancing");
@@ -206,7 +209,7 @@ public class FlyoverTestDriver {
                 throw new GameTestAssertException(tc.name() + ": flyover sub-level not found in container!");
             }
 
-            LOG.info("[FLYOVER_TEST] {} reached ACTIVE: sub-level {}",
+            ModLog.info(FLYOVER_TEST, "{} reached ACTIVE: sub-level {}",
                      tc.name(), activeFlyoverId);
             state = STATE_DESPAWN_WAITING;
 
@@ -239,11 +242,11 @@ public class FlyoverTestDriver {
             if (subLevelLeak || ticketLeak) {
                 String msg = String.format("%s LEAK! sublevelInContainer=%s, forceLoaded=%s",
                     tc.name(), subLevelLeak, ticketLeak);
-                LOG.error("[FLYOVER_TEST] {}", msg);
+                ModLog.error(FLYOVER_TEST, "{}", msg);
                 throw new GameTestAssertException(msg);
             }
 
-            LOG.info("[FLYOVER_TEST] === {} PASSED ===", tc.name());
+            ModLog.info(FLYOVER_TEST, "=== {} PASSED ===", tc.name());
 
             fireHooks(FlyoverState.VERIFY, tc);
 

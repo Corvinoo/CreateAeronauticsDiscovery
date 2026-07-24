@@ -1,7 +1,8 @@
 package me.corvino.aeronauticsdiscovery.event;
 
 import me.corvino.aeronauticsdiscovery.Config;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -97,12 +98,12 @@ public final class MacroChunkTracker {
         try {
             FlyoverEventScheduler.spawnForPlayer(level, config, player, RANDOM);
             spawned = true;
-            CreateAeronauticsDiscovery.LOGGER.info(
-                    "[FLYOVER] Spawned '{}' in macro chunk {} near player {}",
+            ModLog.info(FLYOVER,
+                    "Spawned '{}' in macro chunk {} near player {}",
                     config.template(), chunkKey, player.getName().getString());
         } catch (Exception e) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[FLYOVER] Failed to spawn '{}' near '{}': {}",
+            ModLog.warn(FLYOVER,
+                    "Failed to spawn '{}' near '{}': {}",
                     config.template(), player.getName().getString(), e.getMessage());
         }
 

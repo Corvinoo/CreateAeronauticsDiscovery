@@ -415,6 +415,7 @@ public class    PinWandItem extends Item {
             case FLOAT -> String.valueOf(config.getFloat(field.key()));
             case DOUBLE -> String.valueOf(config.getDouble(field.key()));
             case INTEGER -> String.valueOf(config.getInt(field.key()));
+            case BOOLEAN -> String.valueOf(config.getBoolean(field.key()));
             case STRING -> config.getString(field.key());
             case RESOURCE_LOCATION -> config.getString(field.key());
         };
@@ -425,6 +426,7 @@ public class    PinWandItem extends Item {
             case FLOAT -> config.putFloat(field.key(), Float.parseFloat(raw));
             case DOUBLE -> config.putDouble(field.key(), Double.parseDouble(raw));
             case INTEGER -> config.putInt(field.key(), Integer.parseInt(raw));
+            case BOOLEAN -> config.putBoolean(field.key(), Boolean.parseBoolean(raw));
             case STRING -> config.putString(field.key(), raw);
             case RESOURCE_LOCATION -> config.putString(field.key(), ResourceLocation.parse(raw).toString());
         }

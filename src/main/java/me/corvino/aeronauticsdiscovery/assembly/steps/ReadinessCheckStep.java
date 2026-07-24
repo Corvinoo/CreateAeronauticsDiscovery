@@ -1,7 +1,8 @@
 package me.corvino.aeronauticsdiscovery.assembly.steps;
 
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -34,8 +35,8 @@ public class ReadinessCheckStep extends AssemblyStep {
     @Override
     protected void onAbort(AssemblyContext ctx) {
         if (failing != null) {
-            CreateAeronauticsDiscovery.LOGGER.debug(
-                    "[ReadinessCheckStep] '{}' is not ready, missing: {}", ctx.templateId, failing);
+            ModLog.debug(PIPELINE,
+                    "{}: '{}' is not ready, missing: {}", ctx.templateId, failing);
         }
     }
 

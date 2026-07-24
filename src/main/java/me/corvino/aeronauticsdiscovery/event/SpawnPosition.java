@@ -1,6 +1,7 @@
 package me.corvino.aeronauticsdiscovery.event;
 
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -94,7 +95,7 @@ public final class SpawnPosition {
 
 //            debugVisualizeRay(level, from, to, hit, miss);
 
-            CreateAeronauticsDiscovery.LOGGER.debug(
+            ModLog.debug(FLYOVER,
                     "[OBSTACLE_CHECK] pos={} yaw={} from={} to={} dir=({}, {}) result={} hit={}",
                     pos, Math.toDegrees(yawRadians),
                     from, to,

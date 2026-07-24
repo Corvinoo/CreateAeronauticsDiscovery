@@ -10,8 +10,10 @@ import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
 import net.minecraft.core.Registry;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.BUOYANCY;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -62,16 +64,16 @@ public final class BuoyancyStabilizationManager {
             totalBalloons++;
             SubLevel balloonSubLevel = Sable.HELPER.getContaining(level, balloon.getControllerPos());
             if (balloonSubLevel == null) {
-                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] balloon {} has null sublevel at {}", balloon.getControllerPos(), level.dimension().location());
+                ModLog.debug(BUOYANCY, "balloon {} has null sublevel at {}", balloon.getControllerPos(), level.dimension().location());
                 continue;
             }
             if (balloonSubLevel.getUniqueId().equals(subLevel.getUniqueId())) {
-                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] found balloon {} (heaters={}, isValid={}) for sublevel {}",
+                ModLog.debug(BUOYANCY, "found balloon {} (heaters={}, isValid={}) for sublevel {}",
                         balloon.getControllerPos(), balloon.getHeaters().size(), balloon.isValid(), subLevel.getUniqueId());
                 return balloon;
             }
         }
-        CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] findBalloon: scanned {} balloon(s) in map, found NONE for sublevel {}",
+        ModLog.debug(BUOYANCY, "findBalloon: scanned {} balloon(s) in map, found NONE for sublevel {}",
                 totalBalloons, subLevel.getUniqueId());
         return null;
     }
@@ -122,7 +124,7 @@ public final class BuoyancyStabilizationManager {
             balloon = findBalloon(subLevel);
             stabilizer.balloon = balloon;
             if (balloon == null) {
-                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} substep {}s - still no balloon found",
+                ModLog.debug(BUOYANCY, "{} substep {}s - still no balloon found",
                         subLevel.getUniqueId(), (int) stabilizer.elapsedSeconds);
             }
         }
@@ -133,7 +135,7 @@ public final class BuoyancyStabilizationManager {
                     stabilizer.peakTargetVolume = target;
                 }
                 if (stabilizer.peakTargetVolume > 0.05 && target <= 0.05) {
-                    CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} target volume dropped from {} to {} - releasing",
+                    ModLog.debug(BUOYANCY, "{} target volume dropped from {} to {} - releasing",
                             subLevel.getUniqueId(), String.format("%.2f", stabilizer.peakTargetVolume), String.format("%.2f", target));
                     releaseCleanly(handle);
                     stabilizer.stabilized = true;
@@ -141,7 +143,7 @@ public final class BuoyancyStabilizationManager {
                 }
             }
             if (!balloon.isValid()) {
-                CreateAeronauticsDiscovery.LOGGER.debug("[BUOYANCY] {} balloon invalid - releasing",
+                ModLog.debug(BUOYANCY, "{} balloon invalid - releasing",
                         subLevel.getUniqueId());
                 releaseCleanly(handle);
                 stabilizer.stabilized = true;
@@ -161,8 +163,8 @@ public final class BuoyancyStabilizationManager {
 
         if (reachedStability || timedOut) {
             if (timedOut && !reachedStability) {
-                CreateAeronauticsDiscovery.LOGGER.debug(
-                        "[BUOYANCY] {} released after {}s without reaching stable lift",
+                ModLog.debug(
+                        BUOYANCY, "{} released after {}s without reaching stable lift",
                         subLevel.getUniqueId(), stabilizer.config.maxHoldSeconds());
             }
             releaseCleanly(handle);

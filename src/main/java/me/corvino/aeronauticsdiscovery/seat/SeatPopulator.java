@@ -3,8 +3,10 @@ package me.corvino.aeronauticsdiscovery.seat;
 import com.simibubi.create.content.contraptions.actors.seat.SeatBlock;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.entities.SoaringTrader;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.SEAT;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -29,7 +31,7 @@ public final class SeatPopulator {
 
             SoaringTrader trader = SOARING_TRADER.get().create(level);
             if (trader == null) {
-                CreateAeronauticsDiscovery.LOGGER.warn("[SeatPopulator] Failed to create trader at {}", seatPos);
+                ModLog.warn(SEAT, "Failed to create trader at {}", seatPos);
                 continue;
             }
 
@@ -38,7 +40,7 @@ public final class SeatPopulator {
 //            trader.setPersistenceRequired(); //fixes random despawn
 
             if (!level.addFreshEntity(trader)) {
-                CreateAeronauticsDiscovery.LOGGER.warn("[SeatPopulator] addFreshEntity failed at {}", seatPos);
+                ModLog.warn(SEAT, "addFreshEntity failed at {}", seatPos);
             }
         }
     }
@@ -57,7 +59,7 @@ public final class SeatPopulator {
                     .ifPresent(seatPos -> {
                         if (!trader.isAlive()) return;
                         SeatBlock.sitDown(level, seatPos, trader);
-                        CreateAeronauticsDiscovery.LOGGER.debug("[SeatPopulator] Trader sit at {}", seatPos);
+                        ModLog.debug(SEAT, "Trader sit at {}", seatPos);
                     });
         });
     }

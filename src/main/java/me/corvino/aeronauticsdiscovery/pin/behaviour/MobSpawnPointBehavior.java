@@ -1,8 +1,9 @@
 package me.corvino.aeronauticsdiscovery.pin.behaviour;
 
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -40,8 +41,8 @@ public record MobSpawnPointBehavior(ResourceLocation mobId) implements PinBehavi
 
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(this.mobId);
         if (type == null) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[MobSpawnPointBehavior] Unknown entity type '{}' at {}", this.mobId, self.blockPosition());
+            ModLog.warn(PIN,
+                    "Unknown entity type '{}' at {}", this.mobId, self.blockPosition());
             return;
         }
 
