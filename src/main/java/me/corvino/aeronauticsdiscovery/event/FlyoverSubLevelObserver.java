@@ -1,6 +1,7 @@
 package me.corvino.aeronauticsdiscovery.event;
 
 import dev.ryanhcode.sable.Sable;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
@@ -10,6 +11,9 @@ import me.corvino.aeronauticsdiscovery.child.ChildRole;
 import me.corvino.aeronauticsdiscovery.child.ChildSubLevelManager;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
+import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -61,9 +65,31 @@ public class FlyoverSubLevelObserver implements SubLevelObserver {
         ServerLevel level = ssl.getLevel();
 
         UUID flyoverRoot = pendingSplitFlyoverRoot.remove(level);
-        if (flyoverRoot == null) return;
+        if (flyoverRoot != null) {
+            ChildSubLevelManager.tagAs(ssl, ChildRole.TRANSIENT, flyoverRoot);
+            return;
+        }
 
-        ChildSubLevelManager.tagAs(ssl, ChildRole.TRANSIENT, flyoverRoot);
+        removedStraySublevel(ssl, level);
+    }
+
+    private static void removedStraySublevel(ServerSubLevel ssl, ServerLevel level) {
+        UUID slUUID = ssl.getUniqueId();
+        TaskScheduler.getInstance().runSyncLater(() -> {
+            SubLevelContainer container = SubLevelContainer.getContainer(level);
+            if (container == null) return;
+            SubLevel loaded = container.getSubLevel(slUUID);
+            if (!(loaded instanceof ServerSubLevel target)) return;
+            CompoundTag tag = target.getUserDataTag();
+            if (tag == null || !tag.hasUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG)) return;
+
+            UUID parentId = tag.getUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG);
+            if (container.getSubLevel(parentId) != null) return;
+            if (ChildSubLevelManager.getRole(target) == ChildRole.PERSISTENT) return;
+
+            ModLog.debug(FLYOVER, "Removing orphaned transient stray sublevel {} (parent {} not found)", slUUID, parentId);
+            container.removeSubLevel(target, SubLevelRemovalReason.REMOVED);
+        }, 1);
     }
 
     @Override
