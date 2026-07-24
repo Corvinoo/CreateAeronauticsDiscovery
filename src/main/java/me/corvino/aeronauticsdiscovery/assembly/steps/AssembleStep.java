@@ -10,9 +10,10 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -52,15 +53,15 @@ public class AssembleStep extends AssemblyStep {
         try {
             result = SimAssemblyHelper.assembleFromSingleBlock(ctx.level, pos, toAssemble, true, true);
         } catch (AssemblyException e) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[AssembleStep] AssemblyException for '{}' at pos {}: {}",
+            ModLog.warn(PIPELINE,
+                    "AssemblyException for '{}' at pos {}: {}",
                     ctx.templateId, toAssemble, e.getMessage());
             return;
         }
 
         if (result == null) {
-            CreateAeronauticsDiscovery.LOGGER.warn(
-                    "[AssembleStep] Simulated could not assemble '{}' at {}", ctx.templateId, toAssemble);
+            ModLog.warn(PIPELINE,
+                    "Simulated could not assemble '{}' at {}", ctx.templateId, toAssemble);
             return;
         }
 

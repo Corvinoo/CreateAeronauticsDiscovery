@@ -4,7 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PHYSICS;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -50,19 +51,19 @@ public class PrefabPhysicsRegistry extends SimpleJsonResourceReloadListener {
                 ResourceLocation template = config.template();
 
                 if (map.containsKey(template)) {
-                    CreateAeronauticsDiscovery.LOGGER.warn("[PHYSICS] Duplicate config for template '{}' (file '{}'), overriding", template, fileId);
+                    ModLog.warn(PHYSICS, "Duplicate config for template '{}' (file '{}'), overriding", template, fileId);
                 }
 
                 map.put(template, config);
-                CreateAeronauticsDiscovery.LOGGER.debug("[PHYSICS] Loaded config for template '{}' from '{}': velocity={}, impulse={}",
+                ModLog.debug(PHYSICS, "Loaded config for template '{}' from '{}': velocity={}, impulse={}",
                         template, fileId, config.initialVelocity().linear(), config.initialVelocity().impulse());
             } catch (Exception e) {
-                CreateAeronauticsDiscovery.LOGGER.error("[PHYSICS] Failed to load config from '{}': {}", fileId, e.getMessage());
+                ModLog.error(PHYSICS, "Failed to load config from '{}': {}", fileId, e.getMessage());
             }
         }
 
         this.configs = Map.copyOf(map);
-        CreateAeronauticsDiscovery.LOGGER.info("[PHYSICS] Loaded {} prefab physics config(s)", map.size());
+        ModLog.info(PHYSICS, "Loaded {} prefab physics config(s)", map.size());
     }
 
     public static void onAddReloadListeners(AddReloadListenerEvent event) {

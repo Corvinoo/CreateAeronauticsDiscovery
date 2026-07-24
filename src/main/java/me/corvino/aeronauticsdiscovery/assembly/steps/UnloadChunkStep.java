@@ -1,10 +1,11 @@
 package me.corvino.aeronauticsdiscovery.assembly.steps;
 
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
 
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
 
 public class UnloadChunkStep extends AssemblyStep {
     @Override
@@ -23,7 +24,7 @@ public class UnloadChunkStep extends AssemblyStep {
                 FlyoverManager.ticketController.forceChunk(ctx.level, ctx.anchor, cx, cz, false, true);
             }
 
-        CreateAeronauticsDiscovery.LOGGER.debug("[UnloadChunkStep] Unloaded {} chunks for '{}'",
+        ModLog.debug(PIPELINE, "Unloaded {} chunks for '{}'",
                 (bounds.maxX() - bounds.minX() + 1) * (bounds.maxZ() - bounds.minZ() + 1),
                 ctx.templateId);
     }

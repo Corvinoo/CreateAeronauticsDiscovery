@@ -1,9 +1,10 @@
 package me.corvino.aeronauticsdiscovery.event;
 
 import me.corvino.aeronauticsdiscovery.Config;
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
 import net.minecraft.server.level.ServerLevel;
@@ -59,10 +60,10 @@ public final class FlyoverEventScheduler {
         
         if(spawnPos != null) {
             spawnAtPosition(level, config, spawnPos);
-            CreateAeronauticsDiscovery.LOGGER.debug("Found good spawn point for flyover at {}", spawnPos.pos());
+            ModLog.debug(FLYOVER, "Found good spawn point for flyover at {}", spawnPos.pos());
         }
         else {
-            CreateAeronauticsDiscovery.LOGGER.debug("Could not find good spawn point in {} attempts for flyover, skipping", MaxAttempt);
+            ModLog.debug(FLYOVER, "Could not find good spawn point in {} attempts for flyover, skipping", MaxAttempt);
         }
     }
 
@@ -70,7 +71,7 @@ public final class FlyoverEventScheduler {
             ServerLevel level, FlyoverEventConfig config, SpawnPosition spawnPos
     ) {
         if (isFlatWorld(level)) {
-            CreateAeronauticsDiscovery.LOGGER.warn("[FLYOVER] Skipping flyover in flat world");
+            ModLog.warn(FLYOVER, "Skipping flyover in flat world");
             return;
         }
 
@@ -89,7 +90,7 @@ public final class FlyoverEventScheduler {
 
         AssemblyQueue.get(level).enqueue(Pipelines.FLYOVER, ctx);
 
-        CreateAeronauticsDiscovery.LOGGER.debug("[FLYOVER] Enqueued '{}' at {}", config.template(), spawnPos.pos());
+        ModLog.debug(FLYOVER, "Enqueued '{}' at {}", config.template(), spawnPos.pos());
     }
 
     private static int offsetFromViewDistance(ServerLevel level) {

@@ -1,11 +1,13 @@
 package me.corvino.aeronauticsdiscovery.assembly.queue;
 
-import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyPipeline;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
+import me.corvino.aeronauticsdiscovery.util.ModLog;
 import net.minecraft.core.BlockPos;
+
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.QUEUE;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -64,7 +66,7 @@ final class AssemblyEntrySerializer {
             ServerLevel level = server.getLevel(levelKey);
 
             if (level == null) {
-                CreateAeronauticsDiscovery.LOGGER.error("[QUEUE] Level {} not found for assembly {}", levelLoc, tag.getUUID("entryId"));
+                ModLog.error(QUEUE, "Level {} not found for assembly {}", levelLoc, tag.getUUID("entryId"));
                 return Optional.empty();
             }
 
@@ -92,7 +94,7 @@ final class AssemblyEntrySerializer {
             int retryCount = tag.getInt("RetryCount");
             return Optional.of(new AssemblyQueue.Entry(templateId, pipeline, ctx, retryCount));
         } catch (Exception e) {
-            CreateAeronauticsDiscovery.LOGGER.error("[QUEUE] Failed to deserialize entry: {}", e.getMessage());
+            ModLog.error(QUEUE, "Failed to deserialize entry: {}", e.getMessage());
             return Optional.empty();
         }
     }

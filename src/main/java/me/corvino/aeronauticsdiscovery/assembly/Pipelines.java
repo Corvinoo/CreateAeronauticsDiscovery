@@ -20,13 +20,13 @@ public final class Pipelines {
             new AddForceLoadTicketStep(),
             new ConvertPhysicsBarrelStep(),
             new CleanUpItemEntities(),
-//            new PopulateSeatsStep(),
             new UnloadChunkStep()
     )));
 
     public static final AssemblyPipeline WORLDGEN = register(new AssemblyPipeline("worldgen", () -> List.of(
             new LoadChunkStep(),
             new ReadinessCheckStep(),
+            new FindAssemblyStartStep(),
             new AssembleStep(),
             new StabilizeBuoyancyStep(),
             new UnloadChunkStep() 
@@ -42,7 +42,6 @@ public final class Pipelines {
             new AddForceLoadTicketStep(),
             new ConvertPhysicsBarrelStep(),
             new CleanUpItemEntities(),
-//            new PopulateSeatsStep(),
             new UnloadChunkStep()
     )));
 

@@ -84,13 +84,6 @@ public class FlyoverUtils {
             chunkKeys.add(holder.getPos().toLong());
         }
 
-        var bounds = ChunkLoadingHelper.calculateChunkBounds(subLevel);
-        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
-            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
-                chunkKeys.add(ChunkPos.asLong(cx, cz));
-            }
-        }
-
         return chunkKeys;
     }
 

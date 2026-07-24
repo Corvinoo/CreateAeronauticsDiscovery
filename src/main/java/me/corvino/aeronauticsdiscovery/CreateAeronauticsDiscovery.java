@@ -2,19 +2,17 @@ package me.corvino.aeronauticsdiscovery;
 
 import com.mojang.logging.LogUtils;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
+import me.corvino.aeronauticsdiscovery.bridge.BridgeInteractionHandler;
+import me.corvino.aeronauticsdiscovery.bridge.BridgePlankManager;
+import me.corvino.aeronauticsdiscovery.bridge.BridgeSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
+import me.corvino.aeronauticsdiscovery.commands.*;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
 import me.corvino.aeronauticsdiscovery.pin.PinSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.pin.trigger.ProjectileImpactTrigger;
 import me.corvino.aeronauticsdiscovery.pin.trigger.SubLevelImpactTrigger;
-import me.corvino.aeronauticsdiscovery.commands.CleanChildSubLevelsCommand;
-import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
-import me.corvino.aeronauticsdiscovery.commands.PinTestCommand;
-import me.corvino.aeronauticsdiscovery.commands.PinWandCommand;
-import me.corvino.aeronauticsdiscovery.commands.PipelineDebugCommand;
-import me.corvino.aeronauticsdiscovery.commands.PrefabCommands;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
@@ -27,6 +25,7 @@ import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.physics.SubLevelImpactManager;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
+import net.minecraft.server.level.ServerLevel;
 import dev.ryanhcode.sable.platform.SableEventPlatform;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -108,10 +107,21 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
+        NeoForge.EVENT_BUS.addListener(BridgeInteractionHandler::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(BridgePlankManager::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(BridgeSubLevelObserver::onLevelTick);
+//        NeoForge.EVENT_BUS.addListener(BridgePlankManager::onEntityPlace);
         TaskScheduler.setup();
 
         SableEventPlatform.INSTANCE.onPostPhysicsTick((system, timeStep) ->
                 SubLevelImpactManager.get(system.getLevel()).fireEvents(system.getLevel()));
+
+        SableEventPlatform.INSTANCE.onPostPhysicsTick((system, timeStep) -> {
+            var level = system.getLevel();
+            if (level != null) {
+                BridgePlankManager.teleportAllPlanks(level);
+            }
+        });
 
         modEventBus.addListener(this::onTicketControllerRegister);
 
@@ -120,6 +130,7 @@ public class CreateAeronauticsDiscovery {
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.SERVER, LogConfig.SPEC);
     }
 
     void onTicketControllerRegister(RegisterTicketControllersEvent event) {
@@ -149,6 +160,7 @@ public class CreateAeronauticsDiscovery {
         CleanChildSubLevelsCommand.register(event.getDispatcher());
         PinWandCommand.register(event.getDispatcher());
         PinTestCommand.register(event.getDispatcher());
+        InspectSubLevelCommand.register(event.getDispatcher());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent

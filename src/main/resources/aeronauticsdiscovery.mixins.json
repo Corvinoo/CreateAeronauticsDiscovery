@@ -10,6 +10,7 @@
     "hook.SubLevelAssemblyHelperMixin",
     "hook.ProjectileCanHitPinMixin",
     "hook.BlockWithSubLevelCallbackMixin",
+    "hook.RopeStrandHolderBehaviorMixin",
     "patch.AquiferMixin"
   ],
   "client": [
