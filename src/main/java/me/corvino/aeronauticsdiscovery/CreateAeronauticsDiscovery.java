@@ -7,17 +7,12 @@ import me.corvino.aeronauticsdiscovery.bridge.BridgePlankManager;
 import me.corvino.aeronauticsdiscovery.bridge.BridgeSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
+import me.corvino.aeronauticsdiscovery.commands.*;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
 import me.corvino.aeronauticsdiscovery.pin.PinSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.pin.trigger.ProjectileImpactTrigger;
 import me.corvino.aeronauticsdiscovery.pin.trigger.SubLevelImpactTrigger;
-import me.corvino.aeronauticsdiscovery.commands.CleanChildSubLevelsCommand;
-import me.corvino.aeronauticsdiscovery.commands.DebugCommands;
-import me.corvino.aeronauticsdiscovery.commands.PinTestCommand;
-import me.corvino.aeronauticsdiscovery.commands.PinWandCommand;
-import me.corvino.aeronauticsdiscovery.commands.PipelineDebugCommand;
-import me.corvino.aeronauticsdiscovery.commands.PrefabCommands;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
@@ -165,6 +160,7 @@ public class CreateAeronauticsDiscovery {
         CleanChildSubLevelsCommand.register(event.getDispatcher());
         PinWandCommand.register(event.getDispatcher());
         PinTestCommand.register(event.getDispatcher());
+        InspectSubLevelCommand.register(event.getDispatcher());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
