@@ -25,6 +25,7 @@ import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.physics.SubLevelImpactManager;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
+import me.corvino.aeronauticsdiscovery.worldgen.VillageStructurePoolInjector;
 import net.minecraft.server.level.ServerLevel;
 import dev.ryanhcode.sable.platform.SableEventPlatform;
 import net.minecraft.core.registries.Registries;
@@ -111,6 +112,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(BridgePlankManager::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(BridgeSubLevelObserver::onLevelTick);
 //        NeoForge.EVENT_BUS.addListener(BridgePlankManager::onEntityPlace);
+        NeoForge.EVENT_BUS.addListener(VillageStructurePoolInjector::onServerAboutToStart);
         TaskScheduler.setup();
 
         SableEventPlatform.INSTANCE.onPostPhysicsTick((system, timeStep) ->
