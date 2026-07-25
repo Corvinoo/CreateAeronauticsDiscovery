@@ -98,7 +98,7 @@ public class Config {
             .define("bridge.levelPlanks", true);
 
     private static final ModConfigSpec.BooleanValue ALLOW_PLANK_PLACEMENT = BUILDER
-            .comment("When enabled, players can add planks to bridges by right-clicking on rope anchors with slabs")
+            .comment("When enabled, players can add planks to ropes by right-clicking on rope anchors with slabs")
             .define("bridge.allowPlankPlacement", true);
 
     static final ModConfigSpec SPEC = BUILDER.build();
