@@ -1,7 +1,7 @@
 package me.corvino.aeronauticsdiscovery;
 
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventConfig;
-import me.corvino.aeronauticsdiscovery.event.manager.FlyoverData;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverEntry;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
 import net.minecraft.resources.ResourceLocation;
@@ -39,9 +39,9 @@ class FlyoverSerializationTest {
 
         @Test
         void roundTripFresh() {
-            FlyoverData original = FlyoverData.fresh(SUB_LEVEL_ID, TEMPLATE_ID);
+            FlyoverEntry original = FlyoverEntry.fresh(SUB_LEVEL_ID, TEMPLATE_ID);
 
-            SerializationTestUtil.assertNbtRoundTrip(FlyoverData.CODEC, original, (a, b) -> {
+            SerializationTestUtil.assertNbtRoundTrip(FlyoverEntry.CODEC, original, (a, b) -> {
                 assertEquals(a.subLevelId(), b.subLevelId());
                 assertEquals(0, b.lifeTicks());
                 assertEquals(a.templateId(), b.templateId());
@@ -50,10 +50,10 @@ class FlyoverSerializationTest {
 
         @Test
         void roundTripAfterSomeTicks() {
-            FlyoverData original = FlyoverData.fresh(SUB_LEVEL_ID, TEMPLATE_ID);
+            FlyoverEntry original = FlyoverEntry.fresh(SUB_LEVEL_ID, TEMPLATE_ID);
             for (int i = 0; i < 42; i++) original.incrementTick();
 
-            SerializationTestUtil.assertNbtRoundTrip(FlyoverData.CODEC, original, (a, b) -> {
+            SerializationTestUtil.assertNbtRoundTrip(FlyoverEntry.CODEC, original, (a, b) -> {
                 assertEquals(a.subLevelId(), b.subLevelId());
                 assertEquals(42, b.lifeTicks());
                 assertEquals(a.templateId(), b.templateId());
@@ -62,9 +62,9 @@ class FlyoverSerializationTest {
 
         @Test
         void roundTripMaxLifeTicks() {
-            FlyoverData original = new FlyoverData(SUB_LEVEL_ID, Integer.MAX_VALUE, TEMPLATE_ID);
+            FlyoverEntry original = new FlyoverEntry(SUB_LEVEL_ID, Integer.MAX_VALUE, TEMPLATE_ID);
 
-            SerializationTestUtil.assertNbtRoundTrip(FlyoverData.CODEC, original, (a, b) -> {
+            SerializationTestUtil.assertNbtRoundTrip(FlyoverEntry.CODEC, original, (a, b) -> {
                 assertEquals(a.subLevelId(), b.subLevelId());
                 assertEquals(Integer.MAX_VALUE, b.lifeTicks());
                 assertEquals(a.templateId(), b.templateId());
@@ -73,9 +73,9 @@ class FlyoverSerializationTest {
 
         @Test
         void roundTripNegativeLifeTicks() {
-            FlyoverData original = new FlyoverData(SUB_LEVEL_ID, -1, TEMPLATE_ID);
+            FlyoverEntry original = new FlyoverEntry(SUB_LEVEL_ID, -1, TEMPLATE_ID);
             // Negative ticks should round-trip faithfully (even if not a normal state)
-            SerializationTestUtil.assertNbtRoundTrip(FlyoverData.CODEC, original, (a, b) -> {
+            SerializationTestUtil.assertNbtRoundTrip(FlyoverEntry.CODEC, original, (a, b) -> {
                 assertEquals(-1, b.lifeTicks());
             });
         }

@@ -149,6 +149,7 @@ The currently bundled flyover files are:
 
 ## Credits structures
 Default plane nbt: @bitmochibit
+Village balloon construction nbt: @MR CAT
 
 ## Attributions
 
