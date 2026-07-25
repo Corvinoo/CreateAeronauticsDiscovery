@@ -5,12 +5,11 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.Config;
-import me.corvino.aeronauticsdiscovery.event.manager.FlyoverData;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverEntry;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import net.minecraft.ChatFormatting;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -247,9 +246,9 @@ public final class FlyoverCommands {
         }
 
         source.sendSuccess(() -> Component.literal("=== Active Flyovers (" + all.size() + ") ==="), false);
-        for (Map.Entry<UUID, FlyoverData> entry : all.entrySet()) {
+        for (Map.Entry<UUID, FlyoverEntry> entry : all.entrySet()) {
             UUID id = entry.getKey();
-            FlyoverData data = entry.getValue();
+            FlyoverEntry data = entry.getValue();
             SubLevel subLevel = manager.getSubLevel(id);
             boolean alive = subLevel != null && !subLevel.isRemoved();
             int remaining = Config.flyoverMaxLifetimeTicks - data.lifeTicks();
@@ -340,7 +339,7 @@ public final class FlyoverCommands {
         if (flyoverId != null) {
             ServerLevel level = player.serverLevel();
             FlyoverManager manager = FlyoverManager.get(level);
-            @Nullable FlyoverData data = manager.getEntry(flyoverId);
+            @Nullable FlyoverEntry data = manager.getEntry(flyoverId);
             SubLevel subLevel = manager.getSubLevel(flyoverId);
 
             boolean alive = data != null && subLevel != null && !subLevel.isRemoved();

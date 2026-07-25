@@ -41,7 +41,7 @@ public class FlyoverManager extends SavedData {
     private static final String DATA_NAME = CreateAeronauticsDiscovery.MODID + "_flyovers";
     private static final String TAG_KEY = "Flyovers";
 
-    final Map<UUID, FlyoverData> flyovers = new LinkedHashMap<>();
+    final Map<UUID, FlyoverEntry> flyovers = new LinkedHashMap<>();
     private final Queue<UUID> externalRemovalQueue = new LinkedList<>();
 
     private ServerLevel level;
@@ -82,7 +82,7 @@ public class FlyoverManager extends SavedData {
 
     // Adds flyover to tracking
     public void addFlyover(SubLevel subLevel, ResourceLocation templateId) {
-        FlyoverData entry = FlyoverData.fresh(subLevel.getUniqueId(), templateId);
+        FlyoverEntry entry = FlyoverEntry.fresh(subLevel.getUniqueId(), templateId);
         flyovers.put(entry.subLevelId(), entry);
         setDirty();
         ModLog.info(FLYOVER, "Registered '{}' (id={}) - despawns after {} ticks if player does not approach it",
@@ -98,7 +98,7 @@ public class FlyoverManager extends SavedData {
     }
 
     @Nullable
-    public FlyoverData getEntry(UUID subLevelId) {
+    public FlyoverEntry getEntry(UUID subLevelId) {
         return flyovers.get(subLevelId);
     }
 
@@ -111,7 +111,7 @@ public class FlyoverManager extends SavedData {
         return found instanceof ServerSubLevel ssl ? ssl : null;
     }
 
-    public Map<UUID, FlyoverData> getAllFlyovers() {
+    public Map<UUID, FlyoverEntry> getAllFlyovers() {
         return Collections.unmodifiableMap(flyovers);
     }
 
@@ -121,7 +121,7 @@ public class FlyoverManager extends SavedData {
         final int maxLifetime = Config.flyoverMaxLifetimeTicks;
         final List<UUID> pendingRemoval = new ArrayList<>();
 
-        for (FlyoverData entry : List.copyOf(flyovers.values())) {
+        for (FlyoverEntry entry : List.copyOf(flyovers.values())) {
             tickEntry(entry, maxLifetime, pendingRemoval);
         }
 
@@ -134,7 +134,7 @@ public class FlyoverManager extends SavedData {
     }
 
     // Increments tick for flyover or removes them
-    private void tickEntry(FlyoverData entry, int maxLifetime, List<UUID> pendingRemoval) {
+    private void tickEntry(FlyoverEntry entry, int maxLifetime, List<UUID> pendingRemoval) {
         ServerSubLevel subLevel = getSubLevel(entry.subLevelId());
 
         if (subLevel == null) {
@@ -167,7 +167,7 @@ public class FlyoverManager extends SavedData {
     }
 
     // Advances lifetime for a flyover whose SubLevel is not currently loaded
-    private void tickWhileUnloaded(FlyoverData entry, int maxLifetime) {
+    private void tickWhileUnloaded(FlyoverEntry entry, int maxLifetime) {
         if (entry.isExpired(maxLifetime)) return; // already capped
         entry.incrementTick();
         if (entry.isExpired(maxLifetime)) {
@@ -191,7 +191,7 @@ public class FlyoverManager extends SavedData {
     }
 
 
-    private void release(FlyoverData entry, ServerSubLevel subLevel) {
+    private void release(FlyoverEntry entry, ServerSubLevel subLevel) {
         ModLog.info(FLYOVER, "Releasing {} ('{}') - player approached - handing off to Sable",
                 entry.subLevelId(), entry.templateId());
         PinNetwork.clear(entry.subLevelId());
@@ -210,7 +210,7 @@ public class FlyoverManager extends SavedData {
         removeForceTicket(subLevel);
     }
 
-    private void beginDespawn(FlyoverData entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
+    private void beginDespawn(FlyoverEntry entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
         UUID id = entry.subLevelId();
         ModLog.info(FLYOVER, "Despawning {} ('{}') - {}", id, entry.templateId(), reason.describe());
         removeSubLevelFromWorld(subLevel);
@@ -266,8 +266,8 @@ public class FlyoverManager extends SavedData {
 
     @Override
     public @NotNull CompoundTag save(CompoundTag tag, HolderLookup.@NotNull Provider provider) {
-        List<FlyoverData> snapshot = List.copyOf(flyovers.values());
-        tag.put(TAG_KEY, FlyoverData.CODEC.listOf().encodeStart(NbtOps.INSTANCE, snapshot).getOrThrow());
+        List<FlyoverEntry> snapshot = List.copyOf(flyovers.values());
+        tag.put(TAG_KEY, FlyoverEntry.CODEC.listOf().encodeStart(NbtOps.INSTANCE, snapshot).getOrThrow());
         return tag;
     }
 
@@ -275,7 +275,7 @@ public class FlyoverManager extends SavedData {
         FlyoverManager manager = new FlyoverManager(level);
         if (tag.contains(TAG_KEY, 9 /* ListTag */)) {
             ListTag list = tag.getList(TAG_KEY, 10 /* CompoundTag */);
-            FlyoverData.CODEC.listOf()
+            FlyoverEntry.CODEC.listOf()
                     .parse(NbtOps.INSTANCE, list)
                     .resultOrPartial(err -> ModLog.warn(FLYOVER, "Failed to parse flyover data: {}", err))
                     .ifPresent(entries -> entries.forEach(e -> manager.flyovers.put(e.subLevelId(), e)));
