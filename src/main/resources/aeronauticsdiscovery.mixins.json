@@ -7,6 +7,7 @@
   "mixins": [
     "accessor.LevelAccessor",
     "accessor.PersistentEntitySectionManagerAccessor",
+    "accessor.StructureTemplatePoolAccessor",
     "hook.SubLevelAssemblyHelperMixin",
     "hook.ProjectileCanHitPinMixin",
     "hook.BlockWithSubLevelCallbackMixin",
