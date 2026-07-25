@@ -60,6 +60,10 @@ public class BridgeInteractionHandler {
             return;
         }
 
+        if (!Config.allowPlankPlacement) {
+            return;
+        }
+
         ServerRopeStrand strand = ropeHolder.getAttachedStrand();
         if (strand == null || !strand.isActive()) {
             LOG.trace("No active strand at {}", clickedPos);
