@@ -97,6 +97,10 @@ public class Config {
             .comment("When enabled, bridge planks orientation is always horizontal")
             .define("bridge.levelPlanks", true);
 
+    private static final ModConfigSpec.BooleanValue ALLOW_PLANK_PLACEMENT = BUILDER
+            .comment("When enabled, players can add planks to bridges by right-clicking on rope anchors with slabs")
+            .define("bridge.allowPlankPlacement", true);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
@@ -115,6 +119,7 @@ public class Config {
     public static boolean fragmentPromotion;
     public static double promotionRange;
     public static boolean planksLevelled;
+    public static boolean allowPlankPlacement;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -134,6 +139,7 @@ public class Config {
         fragmentPromotion = FRAGMENT_PROMOTION.get();
         promotionRange = PROMOTION_RANGE.get();
         planksLevelled = PLANKS_LEVELLED.get();
+        allowPlankPlacement = ALLOW_PLANK_PLACEMENT.get();
     }
 
     public enum ExplosionMode {
