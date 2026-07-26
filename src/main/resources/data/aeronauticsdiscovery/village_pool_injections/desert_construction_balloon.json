@@ -1,0 +1,6 @@
+{
+  "target_pool": "minecraft:village/desert/houses",
+  "template": "aeronauticsdiscovery:village/desert_construction_balloon",
+  "weight": 1,
+  "projection": "rigid"
+}

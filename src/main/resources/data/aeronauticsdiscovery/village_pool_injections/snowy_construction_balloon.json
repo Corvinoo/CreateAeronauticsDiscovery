@@ -1,0 +1,6 @@
+{
+  "target_pool": "minecraft:village/snowy/houses",
+  "template": "aeronauticsdiscovery:village/snowy_construction_balloon",
+  "weight": 1,
+  "projection": "rigid"
+}

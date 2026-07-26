@@ -1,6 +1,6 @@
 {
   "target_pool": "minecraft:village/plains/houses",
-  "template": "aeronauticsdiscovery:village_balloon",
+  "template": "aeronauticsdiscovery:village/plains_construction_balloon",
   "weight": 1,
   "projection": "rigid"
 }
