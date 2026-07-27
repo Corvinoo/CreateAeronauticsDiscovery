@@ -7,6 +7,7 @@ import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.companion.math.JOMLConversion;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.SubLevel;
+import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import me.corvino.aeronauticsdiscovery.util.StructureSearchWorker;
 
@@ -281,7 +282,7 @@ public class SoaringTrader extends WanderingTrader {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (!this.level().isClientSide && source.getEntity() instanceof ServerPlayer)
-            makeAngry(me.corvino.aeronauticsdiscovery.Config.traderAngerDuration);
+            makeAngry(Config.traderAngerDuration);
         return super.hurt(source, amount);
     }
 
@@ -311,7 +312,7 @@ public class SoaringTrader extends WanderingTrader {
     private ItemStack buildMapTrade() {
         if (!(this.level() instanceof ServerLevel serverLevel)) return null;
 
-        List<? extends String> ids = me.corvino.aeronauticsdiscovery.Config.traderStructureMaps;
+        List<? extends String> ids = Config.traderStructureMaps;
         ModLog.debug(TRADE, "ids={}", ids);
         if (ids.isEmpty()) return null;
 
@@ -319,7 +320,7 @@ public class SoaringTrader extends WanderingTrader {
         ChunkGeneratorStructureState state = serverLevel.getChunkSource().getGeneratorState();
         long seed = state.getLevelSeed();
 
-        if (me.corvino.aeronauticsdiscovery.Config.traderGuaranteedMap) {
+        if (Config.traderGuaranteedMap) {
             List<String> shuffled = new ArrayList<>(ids);
             for (int i = shuffled.size() - 1; i > 0; i--) {
                 int j = this.random.nextInt(i + 1);
