@@ -1,6 +1,6 @@
 {
   "target_pool": "minecraft:village/savanna/houses",
   "template": "aeronauticsdiscovery:village/savanna_construction_balloon",
-  "weight": 1,
+  "weight": 4,
   "projection": "rigid"
 }

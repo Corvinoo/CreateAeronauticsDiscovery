@@ -1,6 +1,6 @@
 {
   "target_pool": "minecraft:village/taiga/houses",
   "template": "aeronauticsdiscovery:village/taiga_construction_balloon",
-  "weight": 1,
+  "weight": 4,
   "projection": "rigid"
 }
