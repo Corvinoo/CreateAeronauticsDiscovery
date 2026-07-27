@@ -24,6 +24,7 @@ import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.physics.SubLevelImpactManager;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
+import me.corvino.aeronauticsdiscovery.loot.ModLootFunctions;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
 import me.corvino.aeronauticsdiscovery.worldgen.VillageStructurePoolInjector;
 import net.minecraft.server.level.ServerLevel;
@@ -92,6 +93,7 @@ public class CreateAeronauticsDiscovery {
         ENTITIES.register(modEventBus);
         ModWorldgen.STRUCTURE_TYPES.register(modEventBus);
         ModWorldgen.STRUCTURE_PIECE_TYPES.register(modEventBus);
+        ModLootFunctions.LOOT_FUNCTION_TYPES.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
