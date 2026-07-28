@@ -268,7 +268,7 @@ Pins can be embedded in `.nbt` structure templates, so that they activate automa
 
 ### Testing pins
 
-If manually trigger a pin, look at it and run:
+If you want to manually trigger a pin, look at it and run:
 ```
 /pintest
 ```
