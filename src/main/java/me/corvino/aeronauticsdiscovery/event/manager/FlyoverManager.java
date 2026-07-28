@@ -13,6 +13,7 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
+import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import net.minecraft.core.HolderLookup;
@@ -213,6 +214,11 @@ public class FlyoverManager extends SavedData {
     private void beginDespawn(FlyoverEntry entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {
         UUID id = entry.subLevelId();
         ModLog.info(FLYOVER, "Despawning {} ('{}') - {}", id, entry.templateId(), reason.describe());
+
+        ServerLevel level = subLevel.getLevel();
+        var bounds = ChunkLoadingHelper.calculateChunkBounds(subLevel);
+        FlyoverUtils.removeAllEntitiesInLevelAwaitingChunks(level, id, bounds);
+
         removeSubLevelFromWorld(subLevel);
     }
 
