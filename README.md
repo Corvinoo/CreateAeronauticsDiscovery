@@ -106,6 +106,9 @@ Always make sure they are being imported correctly into the game and that they r
 
 You can add Pins using the PinWand item (or commands) to add custom controllable behaviors on the structure before exporting to nbt.
 
+> [!NOTE]
+> For a guide on how to use Pins, refer to [this file](./PIN_GUIDE.md)
+
 ### 4. Testing the custom flyover
 > [!WARNING]
 > Always test custom events in a new world first to make sure nothing unexpected happens. 
