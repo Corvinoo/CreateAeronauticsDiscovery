@@ -1,30 +1,20 @@
 package me.corvino.aeronauticsdiscovery.assembly.steps;
 
 import com.simibubi.create.content.contraptions.AssemblyException;
-import dev.ryanhcode.sable.Sable;
-import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
-import me.corvino.aeronauticsdiscovery.assembly.AssemblyResult;
+import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
-import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.BarrelBlock;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.phys.AABB;
-
-import java.util.List;
-import java.util.Objects;
 
 import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 

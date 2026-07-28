@@ -134,8 +134,23 @@ public class FlyoverUtils {
         ServerLevel level = subLevel.getLevel();
         UUID subLevelId = subLevel.getUniqueId();
         var bounds = ChunkLoadingHelper.calculateChunkBounds(subLevel);
+        return removeAllEntitiesInLevelAwaitingChunks(level, subLevelId, bounds);
+    }
+
+    // unlike removeAllEntitiesInSublevelAwaitingChunks this uses injected bounds instead of relying on the sublevel
+    public static CompletableFuture<Void> removeAllEntitiesInLevelAwaitingChunks(
+            ServerLevel level, UUID subLevelId, ChunkLoadingHelper.ChunkBounds bounds) {
+
+        LongSet chunkKeys = new LongOpenHashSet();
+        for (int cx = bounds.minX(); cx <= bounds.maxX(); cx++) {
+            for (int cz = bounds.minZ(); cz <= bounds.maxZ(); cz++) {
+                chunkKeys.add(ChunkPos.asLong(cx, cz));
+            }
+        }
 
         forEachChunk(level, subLevelId, bounds.minX(), bounds.minZ(), bounds.maxX(), bounds.maxZ(), true);
+
+        Predicate<Entity> filter = buildEntityFilter(subLevelId, null, true);
 
         CompletableFuture<Void> result = TaskScheduler.getInstance().runSyncRepeatingUntil(future -> {
             boolean allReady = true;
@@ -149,7 +164,7 @@ public class FlyoverUtils {
             }
 
             if (allReady) {
-                removeAllEntitiesInSublevel(subLevel, false);
+                removeEntitiesInChunks(level, chunkKeys, filter);
                 future.complete(null);
             }
         }, 20, 100_000);
