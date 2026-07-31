@@ -153,6 +153,7 @@ public class CreateAeronauticsDiscovery {
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
+        FlyoverEventScheduler.applyWorldTypeDefault(event.getServer());
     }
 
     @SubscribeEvent

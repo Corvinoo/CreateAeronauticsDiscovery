@@ -7,6 +7,7 @@ import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Rotation;
@@ -27,6 +28,11 @@ public final class FlyoverEventScheduler {
     public static boolean toggleEnabled() {
         ENABLED = !ENABLED;
         return ENABLED;
+    }
+
+    public static void applyWorldTypeDefault(MinecraftServer server) {
+        ServerLevel overworld = server.overworld();
+        ENABLED = overworld == null || !isFlatWorld(overworld);
     }
 
     public static void onLevelTick(LevelTickEvent.Post event) {
@@ -70,11 +76,6 @@ public final class FlyoverEventScheduler {
     public static void spawnAtPosition(
             ServerLevel level, FlyoverEventConfig config, SpawnPosition spawnPos
     ) {
-        if (isFlatWorld(level)) {
-            ModLog.warn(FLYOVER, "Skipping flyover in flat world");
-            return;
-        }
-
         AssemblyContext ctx = AssemblyContext.builder()
                 .level(level)
                 .anchor(spawnPos.pos())
