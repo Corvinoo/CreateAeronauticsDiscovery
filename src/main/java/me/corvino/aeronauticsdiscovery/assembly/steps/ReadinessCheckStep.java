@@ -51,7 +51,9 @@ public class ReadinessCheckStep extends AssemblyStep {
     }
 
     private static boolean hasHoneyGlueEntity(ServerLevel level, BoundingBox bounds) {
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(HONEY_GLUE_ID);
+        var optType = BuiltInRegistries.ENTITY_TYPE.getOptional(HONEY_GLUE_ID);
+        if (optType.isEmpty()) return true;
+        EntityType<?> type = optType.get();
         AABB aabb = new AABB(
                 bounds.minX() - 1, bounds.minY() - 1, bounds.minZ() - 1,
                 bounds.maxX() + 1, bounds.maxY() + 1, bounds.maxZ() + 1);
