@@ -66,13 +66,16 @@ final class AssemblyEntrySerializer {
             ServerLevel level = server.getLevel(levelKey);
 
             if (level == null) {
-                ModLog.error(QUEUE, "Level {} not found for assembly {}", levelLoc, tag.getUUID("entryId"));
+                ModLog.error(QUEUE, "Level {} not found for assembly {}", levelLoc, templateId);
                 return Optional.empty();
             }
 
+            var anchorOpt = NbtUtils.readBlockPos(tag, "Anchor");
+            if (anchorOpt.isEmpty()) return Optional.empty();
+
             AssemblyContext ctx = AssemblyContext.builder()
                     .level(level)
-                    .anchor(NbtUtils.readBlockPos(tag, "Anchor").orElse(null))
+                    .anchor(anchorOpt.get())
                     .templateId(templateId)
                     .source(source)
                     .rotationTemplate(tag.contains("Rotation") ? Rotation.valueOf(tag.getString("Rotation")) : null)
