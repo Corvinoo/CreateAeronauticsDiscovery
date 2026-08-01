@@ -161,65 +161,71 @@ public class BridgePlankManager extends SavedData {
 
     public static void cleanupDeadEntries(ServerLevel level) {
         var manager = get(level);
-        var ropeManager = ServerLevelRopeManager.getOrCreate(level);
-        if (ropeManager == null) return;
-        boolean dirty = false;
-        var iter = manager.planksByRope.entrySet().iterator();
-        while (iter.hasNext()) {
-            var entry = iter.next();
-            UUID ropeUUID = entry.getKey();
-            var strand = ropeManager.getStrand(ropeUUID);
-            if (strand == null) {
-                ModLog.debug(BRIDGE, "Cleaning up dead rope {} (strand no longer exists)", ropeUUID);
-                iter.remove();
-                dirty = true;
+        synchronized (manager) {
+            var ropeManager = ServerLevelRopeManager.getOrCreate(level);
+            if (ropeManager == null) return;
+            boolean dirty = false;
+            var iter = manager.planksByRope.entrySet().iterator();
+            while (iter.hasNext()) {
+                var entry = iter.next();
+                UUID ropeUUID = entry.getKey();
+                var strand = ropeManager.getStrand(ropeUUID);
+                if (strand == null) {
+                    ModLog.debug(BRIDGE, "Cleaning up dead rope {} (strand no longer exists)", ropeUUID);
+                    iter.remove();
+                    dirty = true;
+                }
             }
+            if (dirty) manager.setDirty();
         }
-        if (dirty) manager.setDirty();
     }
 
 
     public static void removePlankBySubLevel(ServerLevel level, UUID subLevelUUID) {
         var manager = get(level);
-        boolean dirty = false;
-        for (var entry : manager.planksByRope.entrySet()) {
-            var removed = entry.getValue().removeIf(info -> info.subLevelUUID().equals(subLevelUUID));
-            if (removed) {
-                ModLog.debug(BRIDGE, "Removed plank entry for subLevel {} from rope {}", subLevelUUID, entry.getKey());
-                dirty = true;
+        synchronized (manager) {
+            boolean dirty = false;
+            for (var entry : manager.planksByRope.entrySet()) {
+                var removed = entry.getValue().removeIf(info -> info.subLevelUUID().equals(subLevelUUID));
+                if (removed) {
+                    ModLog.debug(BRIDGE, "Removed plank entry for subLevel {} from rope {}", subLevelUUID, entry.getKey());
+                    dirty = true;
+                }
             }
+            if (dirty) manager.setDirty();
         }
-        if (dirty) manager.setDirty();
     }
 
     public static void onRopeDestroyed(ServerLevel level, UUID ropeUUID) {
         var manager = get(level);
-        var planks = manager.planksByRope.get(ropeUUID);
-        ModLog.warn(BRIDGE, "onRopeDestroyed called for ropeUUID={}, planks found={}", ropeUUID, planks != null ? planks.size() : 0);
-        if (planks == null) {
-            ModLog.warn(BRIDGE, "onRopeDestroyed: no planks found for ropeUUID={}, returning", ropeUUID);
-            return;
-        }
-
-        var container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
-        if (container != null) {
-            for (PlankInfo info : planks) {
-                var subLevel = container.getSubLevel(info.subLevelUUID());
-                ModLog.warn(BRIDGE, "onRopeDestroyed: plank idx={}, subLevelUUID={}, found={}, name before={}",
-                        info.plankIndex(), info.subLevelUUID(), subLevel != null,
-                        subLevel instanceof ServerSubLevel ssl ? ssl.getName() : "N/A");
-                if (subLevel instanceof ServerSubLevel ssl) {
-                    ssl.setName(null);
-                    ModLog.warn(BRIDGE, "onRopeDestroyed: cleared name for subLevelUUID={}", info.subLevelUUID());
-                }
+        synchronized (manager) {
+            var planks = manager.planksByRope.get(ropeUUID);
+            ModLog.warn(BRIDGE, "onRopeDestroyed called for ropeUUID={}, planks found={}", ropeUUID, planks != null ? planks.size() : 0);
+            if (planks == null) {
+                ModLog.warn(BRIDGE, "onRopeDestroyed: no planks found for ropeUUID={}, returning", ropeUUID);
+                return;
             }
-        } else {
-            ModLog.warn(BRIDGE, "onRopeDestroyed: container was null, could not clear names");
-        }
 
-        manager.planksByRope.remove(ropeUUID);
-        manager.setDirty();
-        ModLog.warn(BRIDGE, "onRopeDestroyed: removed rope entry for {}, map now has {} entries", ropeUUID, manager.planksByRope.size());
+            var container = (ServerSubLevelContainer) SubLevelContainer.getContainer(level);
+            if (container != null) {
+                for (PlankInfo info : planks) {
+                    var subLevel = container.getSubLevel(info.subLevelUUID());
+                    ModLog.warn(BRIDGE, "onRopeDestroyed: plank idx={}, subLevelUUID={}, found={}, name before={}",
+                            info.plankIndex(), info.subLevelUUID(), subLevel != null,
+                            subLevel instanceof ServerSubLevel ssl ? ssl.getName() : "N/A");
+                    if (subLevel instanceof ServerSubLevel ssl) {
+                        ssl.setName(null);
+                        ModLog.warn(BRIDGE, "onRopeDestroyed: cleared name for subLevelUUID={}", info.subLevelUUID());
+                    }
+                }
+            } else {
+                ModLog.warn(BRIDGE, "onRopeDestroyed: container was null, could not clear names");
+            }
+
+            manager.planksByRope.remove(ropeUUID);
+            manager.setDirty();
+            ModLog.warn(BRIDGE, "onRopeDestroyed: removed rope entry for {}, map now has {} entries", ropeUUID, manager.planksByRope.size());
+        }
     }
 
     public static boolean isBridgePlankSubLevel(Level level, BlockPos pos) {
@@ -248,6 +254,7 @@ public class BridgePlankManager extends SavedData {
 
     public static void teleportAllPlanks(ServerLevel level) {
         var manager = get(level);
+        synchronized (manager) {
         ModLog.trace(BRIDGE, "teleportAllPlanks called, ropes in map: {}", manager.planksByRope.size());
 
         var container = (ServerSubLevelContainer)
@@ -327,6 +334,7 @@ public class BridgePlankManager extends SavedData {
                 iter.remove();
                 manager.setDirty();
             }
+        }
         }
 
 
