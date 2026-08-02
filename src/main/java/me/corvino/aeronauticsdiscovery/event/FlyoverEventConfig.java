@@ -3,7 +3,9 @@ package me.corvino.aeronauticsdiscovery.event;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
 
@@ -27,4 +29,12 @@ public record FlyoverEventConfig(
             ResourceLocation.CODEC.listOf().fieldOf("dimensions").forGetter(FlyoverEventConfig::dimensions),
             BiomeFilter.CODEC.optionalFieldOf("biome_filter", BiomeFilter.ALL).forGetter(FlyoverEventConfig::biomeFilter)
     ).apply(instance, FlyoverEventConfig::new));
+
+    public boolean isEligible(ServerLevel level, BlockPos pos) {
+        if (!dimensions().isEmpty()
+                && !dimensions().contains(level.dimension().location())) {
+            return false;
+        }
+        return biomeFilter().matches(level, pos);
+    }
 }

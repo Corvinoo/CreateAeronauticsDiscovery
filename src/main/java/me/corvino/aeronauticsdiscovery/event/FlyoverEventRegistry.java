@@ -6,7 +6,9 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -40,6 +42,13 @@ public class FlyoverEventRegistry extends SimpleJsonResourceReloadListener {
 
     public FlyoverEventConfig pickRandom(Random random) {
         return pickRandom(configs, random);
+    }
+
+    public FlyoverEventConfig pickRandomEligible(Random random, ServerLevel level, BlockPos pos) {
+        List<FlyoverEventConfig> eligible = configs.stream()
+                .filter(config -> config.isEligible(level, pos))
+                .toList();
+        return pickRandom(eligible, random);
     }
 
     static FlyoverEventConfig pickRandom(List<FlyoverEventConfig> configs, Random random) {
