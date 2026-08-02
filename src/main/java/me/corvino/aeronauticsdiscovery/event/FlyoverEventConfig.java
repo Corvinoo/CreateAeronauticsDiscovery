@@ -14,7 +14,8 @@ public record FlyoverEventConfig(
         int weight,
         InitialVelocity velocity,
         boolean randomizeYaw,
-        List<ResourceLocation> dimensions
+        List<ResourceLocation> dimensions,
+        BiomeFilter biomeFilter
 ) {
     public static final Codec<FlyoverEventConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("template").forGetter(FlyoverEventConfig::template),
@@ -23,6 +24,7 @@ public record FlyoverEventConfig(
             Codec.INT.optionalFieldOf("weight", 1).forGetter(FlyoverEventConfig::weight),
             InitialVelocity.CODEC.codec().optionalFieldOf("initial_velocity", InitialVelocity.NONE).forGetter(FlyoverEventConfig::velocity),
             Codec.BOOL.optionalFieldOf("randomize_yaw", true).forGetter(FlyoverEventConfig::randomizeYaw),
-            ResourceLocation.CODEC.listOf().fieldOf("dimensions").forGetter(FlyoverEventConfig::dimensions)
+            ResourceLocation.CODEC.listOf().fieldOf("dimensions").forGetter(FlyoverEventConfig::dimensions),
+            BiomeFilter.CODEC.optionalFieldOf("biome_filter", BiomeFilter.ALL).forGetter(FlyoverEventConfig::biomeFilter)
     ).apply(instance, FlyoverEventConfig::new));
 }

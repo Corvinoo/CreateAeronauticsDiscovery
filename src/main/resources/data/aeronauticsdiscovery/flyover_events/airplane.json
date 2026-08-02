@@ -8,5 +8,8 @@
     "angular": [0.0, 0.0, 0.0],
     "impulse": false
   },
-  "dimensions": ["minecraft:overworld"]
+  "dimensions": ["minecraft:overworld"],
+  "biome_filter": {                       
+    "exclude": ["minecraft:jagged_peaks", "minecraft:frozen_peaks", "minecraft:stony_peaks", "windswept_savanna"]          
+  }
 }

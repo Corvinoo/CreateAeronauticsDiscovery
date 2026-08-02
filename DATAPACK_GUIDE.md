@@ -57,7 +57,11 @@ Each JSON file registers one flyover event. Create one per airship template you 
     ],
     "impulse": false
   },
-  "dimensions": ["minecraft:overworld"]   // The dimensions in which the flyover is allowed to spawn, leaving an empty list '[]' allows every dimension.
+  "dimensions": ["minecraft:overworld"],  // The dimensions in which the flyover is allowed to spawn, leaving an empty list '[]' allows every dimension.
+  "biome_filter": {                       // Optional. Restricts which biomes the flyover can spawn over, checked at the player's position.
+    "only": ["minecraft:desert"]          //   using "only" -> spawn ONLY over these biomes. Using "exclude" instead:
+  }                                       //   "exclude": ["minecraft:ocean"] -> spawn over every biome except these.
+                                          //   Omitting propriety will allow every biome in the allowed dimension(s).
 }
 ```
 

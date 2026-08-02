@@ -50,6 +50,10 @@ public final class FlyoverEventScheduler {
             return;
         }
 
+        if (!config.biomeFilter().matches(level, player.blockPosition())) {
+            return;
+        }
+
         final int MaxAttempt = 5;
         SpawnPosition.Builder builder = SpawnPosition.builder()
                 .center(player.blockPosition())
