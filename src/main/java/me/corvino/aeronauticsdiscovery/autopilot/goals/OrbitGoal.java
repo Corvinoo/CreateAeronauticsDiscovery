@@ -1,6 +1,8 @@
 package me.corvino.aeronauticsdiscovery.autopilot.goals;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
@@ -37,18 +39,19 @@ import java.util.Objects;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.AUTOPILOT;
 
 /**
- * Orbits the nearest instance of a {@code target} structure (an id like {@code minecraft:village_plains}
- * or a {@code #tag} like {@code #minecraft:village}) at a fixed {@code radius}. The center is resolved
- * lazily the first tick the goal runs, then cached for the lifetime of the configured goal instance;
- * if no matching structure is found within search range the goal reports no opinion and the craft
- * flies straight.
+ * Orbits a {@code target} at a fixed {@code radius}. The target is either a structure reference
+ * (an id like {@code minecraft:village_plains} or a {@code #tag} like {@code #minecraft:village}),
+ * resolved as the nearest matching structure, or an explicit {@code [x, z]} coordinate pair. The
+ * center is resolved lazily the first tick the goal runs, then cached for the lifetime of the
+ * configured goal instance; if a structure target is not found within search range the goal reports
+ * no opinion and the craft flies straight.
  * <p>
  * Steering is a pursuit controller on the craft's horizontal velocity: the desired heading is the
  * orbit tangent at the craft's angle around the center, pulled radially by {@code (radius - distance)}
  * so the craft returns to the ring. The signed heading error is mapped to a roll (bank) bias, so this
  * is a {@link GoalCategory#FLIGHT_PATH} goal and composes with an {@code altitude} goal.
  *
- * @param target    structure id or {@code #tag} to orbit around
+ * @param target    structure id, {@code #tag}, or {@code [x, z]} pair to orbit around
  * @param radius    orbit radius in blocks
  * @param direction orbit handedness, {@link OrbitDirection#CW} or {@link OrbitDirection#CCW}
  * @param maxBank   maximum roll/bank bias in radians
@@ -68,6 +71,32 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
                 direction -> direction.name().toLowerCase(Locale.ROOT));
     }
 
+    /** Where to orbit around: a structure reference or a fixed {@code [x, z]} point. */
+    public sealed interface OrbitTarget {
+
+        Codec<OrbitTarget> CODEC = Codec.either(Point.CODEC, Codec.STRING).xmap(
+                either -> either.left().<OrbitTarget>map(point -> point)
+                        .orElseGet(() -> new Structure(either.right().orElseThrow())),
+                target -> switch (target) {
+                    case Point point -> Either.left(point);
+                    case Structure structure -> Either.right(structure.ref());
+                });
+
+        /** A structure id or {@code #tag}; resolved to the nearest matching instance at runtime. */
+        record Structure(String ref) implements OrbitTarget {
+        }
+
+        /** An explicit world XZ coordinate; no lookup is performed. */
+        record Point(int x, int z) implements OrbitTarget {
+
+            static final Codec<Point> CODEC = Codec.INT.listOf().comapFlatMap(
+                    list -> list.size() == 2
+                            ? DataResult.success(new Point(list.get(0), list.get(1)))
+                            : DataResult.error(() -> "orbit target point must be an [x, z] pair"),
+                    point -> List.of(point.x(), point.z()));
+        }
+    }
+
     private static final double DEFAULT_MAX_BANK = Math.toRadians(20);
     private static final double ROLL_GAIN = 0.6;
     private static final double RADIUS_GAIN = 0.02;
@@ -79,13 +108,13 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
 
     public static final AutopilotGoalType<OrbitGoal> TYPE = AutopilotGoalTypes.<OrbitGoal>register("orbit",
             RecordCodecBuilder.mapCodec(instance -> instance.group(
-                    Codec.STRING.fieldOf("target").forGetter(OrbitGoal::target),
+                    OrbitTarget.CODEC.fieldOf("target").forGetter(OrbitGoal::target),
                     Codec.DOUBLE.fieldOf("radius").forGetter(OrbitGoal::radius),
                     OrbitDirection.CODEC.optionalFieldOf("direction", OrbitDirection.CCW).forGetter(OrbitGoal::direction),
                     Codec.DOUBLE.optionalFieldOf("max_bank", DEFAULT_MAX_BANK).forGetter(OrbitGoal::maxBank)
             ).apply(instance, OrbitGoal::new)));
 
-    private final String target;
+    private final OrbitTarget target;
     private final double radius;
     private final OrbitDirection direction;
     private final double maxBank;
@@ -95,14 +124,14 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
     @Nullable
     private Vector3d lastAttempt;
 
-    public OrbitGoal(String target, double radius, OrbitDirection direction, double maxBank) {
+    public OrbitGoal(OrbitTarget target, double radius, OrbitDirection direction, double maxBank) {
         this.target = target;
         this.radius = radius;
         this.direction = direction;
         this.maxBank = maxBank;
     }
 
-    public String target() {
+    public OrbitTarget target() {
         return target;
     }
 
@@ -170,21 +199,26 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
     @Nullable
     private BlockPos resolveCenter(AutopilotContext context) {
         if (resolvedCenter != null) return resolvedCenter;
+        if (target instanceof OrbitTarget.Point point) {
+            resolvedCenter = new BlockPos(point.x(), 0, point.z());
+            return resolvedCenter;
+        }
+        OrbitTarget.Structure structure = (OrbitTarget.Structure) target;
         Vector3d position = context.worldPosition();
         if (lastAttempt != null && position.distanceSquared(lastAttempt) < RETRY_DISTANCE_SQUARED) return null;
         lastAttempt = position;
-        resolvedCenter = findNearest(context.level(), position);
+        resolvedCenter = findNearest(context.level(), position, structure.ref());
         return resolvedCenter;
     }
 
     @Nullable
-    private BlockPos findNearest(ServerLevel level, Vector3d origin) {
+    private BlockPos findNearest(ServerLevel level, Vector3d origin, String ref) {
         Registry<Structure> registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
         ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
         long seed = state.getLevelSeed();
         BlockPos from = BlockPos.containing(origin.x(), origin.y(), origin.z());
         BlockPos best = null;
-        for (Holder<Structure> holder : targetHolders(registry)) {
+        for (Holder<Structure> holder : targetHolders(registry, ref)) {
             for (StructurePlacement placement : state.getPlacementsForStructure(holder)) {
                 if (!(placement instanceof RandomSpreadStructurePlacement randomSpread)) continue;
                 BlockPos found = StructureSearchWorker.searchNearest(
@@ -200,13 +234,13 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
         return best;
     }
 
-    private List<Holder<Structure>> targetHolders(Registry<Structure> registry) {
+    private List<Holder<Structure>> targetHolders(Registry<Structure> registry, String ref) {
         List<Holder<Structure>> holders = new ArrayList<>();
-        if (target.startsWith("#")) {
-            TagKey<Structure> tag = TagKey.create(Registries.STRUCTURE, ResourceLocation.parse(target.substring(1)));
+        if (ref.startsWith("#")) {
+            TagKey<Structure> tag = TagKey.create(Registries.STRUCTURE, ResourceLocation.parse(ref.substring(1)));
             registry.getTag(tag).ifPresent(set -> set.forEach(holders::add));
         } else {
-            registry.getHolder(ResourceKey.create(Registries.STRUCTURE, ResourceLocation.parse(target)))
+            registry.getHolder(ResourceKey.create(Registries.STRUCTURE, ResourceLocation.parse(ref)))
                     .ifPresent(holders::add);
         }
         return holders;
