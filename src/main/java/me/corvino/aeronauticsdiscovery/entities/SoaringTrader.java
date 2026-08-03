@@ -1,18 +1,16 @@
 package me.corvino.aeronauticsdiscovery.entities;
 
-import com.simibubi.create.Create;
-import com.simibubi.create.content.redstone.link.IRedstoneLinkable;
-import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
-import dev.ryanhcode.sable.Sable;
-import dev.ryanhcode.sable.companion.math.JOMLConversion;
-import dev.ryanhcode.sable.companion.math.Pose3dc;
-import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.Config;
+import me.corvino.aeronauticsdiscovery.autopilot.Autopilot;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotBias;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotContext;
+import me.corvino.aeronauticsdiscovery.autopilot.RedstoneStabilizer;
+import me.corvino.aeronauticsdiscovery.autopilot.goals.AltitudeGoal;
+import me.corvino.aeronauticsdiscovery.autopilot.goals.StraightFlightGoal;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import me.corvino.aeronauticsdiscovery.util.StructureSearchWorker;
 
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.TRADE;
-import net.createmod.catnip.data.Couple;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -25,7 +23,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.UseItemGoal;
 import net.minecraft.world.entity.npc.WanderingTrader;
@@ -48,15 +45,11 @@ import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement
 import net.minecraft.world.level.saveddata.maps.MapDecorationType;
 import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
-import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3d;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static java.lang.Math.atan2;
 
 public class SoaringTrader extends WanderingTrader {
     private int angryTicks;
@@ -118,108 +111,35 @@ public class SoaringTrader extends WanderingTrader {
             "brown", "green", "red", "black"
     };
 
+    private static final double DEFAULT_MIN_ALTITUDE = 160.0;
+
+    private final Autopilot autopilot = new Autopilot();
+    private final AltitudeGoal altitudeGoal = new AltitudeGoal(DEFAULT_MIN_ALTITUDE);
+    private final RedstoneStabilizer stabilizer = new RedstoneStabilizer(
+            this, Items.GREEN_WOOL, Items.YELLOW_WOOL, Items.RED_WOOL, Items.LIGHT_BLUE_WOOL);
+
     public SoaringTrader(EntityType<? extends WanderingTrader> type, Level level) {
         super(type, level);
-    }
-
-    private static final double PITCH_THRESHOLD_ON = Math.toRadians(9);
-    private static final double PITCH_THRESHOLD_OFF = Math.toRadians(7);
-    private static final double ROLL_THRESHOLD_ON = Math.toRadians(1);
-    private static final double ROLL_THRESHOLD_OFF = Math.toRadians(0);
-    private final StabilizerTransmitter pitchUpSignal = new StabilizerTransmitter(this, Items.GREEN_WOOL);
-    private final StabilizerTransmitter pitchDownSignal = new StabilizerTransmitter(this, Items.YELLOW_WOOL);
-    private final StabilizerTransmitter rollRightSignal = new StabilizerTransmitter(this, Items.RED_WOOL);
-    private final StabilizerTransmitter rollLeftSignal = new StabilizerTransmitter(this, Items.LIGHT_BLUE_WOOL);
-
-    private double minAltitude = 160.0;
-    private static final double ALTITUDE_BIAS_PER_BLOCK = Math.toRadians(0.4);
-    private static final double MAX_ALTITUDE_BIAS = Math.toRadians(12);
-    private boolean linksRegistered = false;
-
-    private StabilizerTransmitter[] allTransmitters() {
-        return new StabilizerTransmitter[]{pitchUpSignal, pitchDownSignal, rollRightSignal, rollLeftSignal};
-    }
-
-    private void registerLinksIfNeeded(ServerLevel serverLevel) {
-        if (linksRegistered) return;
-        for (StabilizerTransmitter t : allTransmitters())
-            Create.REDSTONE_LINK_NETWORK_HANDLER.addToNetwork(serverLevel, t);
-        linksRegistered = true;
-    }
-
-    private void unregisterLinks(ServerLevel serverLevel) {
-        if (!linksRegistered) return;
-        for (StabilizerTransmitter t : allTransmitters())
-            Create.REDSTONE_LINK_NETWORK_HANDLER.removeFromNetwork(serverLevel, t);
-        linksRegistered = false;
-    }
-
-    private void setActive(ServerLevel serverLevel, StabilizerTransmitter t, boolean shouldBeActive) {
-        if (t.isActive() == shouldBeActive) return;
-        t.setActive(shouldBeActive);
-        Create.REDSTONE_LINK_NETWORK_HANDLER.updateNetworkOf(serverLevel, t);
-    }
-
-    private void setAllInactive(ServerLevel serverLevel) {
-        for (StabilizerTransmitter t : allTransmitters())
-            setActive(serverLevel, t, false);
-    }
-
-    private static boolean hysteresis(boolean currentlyActive, double value, double onThreshold, double offThreshold) {
-        return currentlyActive ? value > offThreshold : value > onThreshold;
+        autopilot.addGoal(new StraightFlightGoal());
+        autopilot.addGoal(altitudeGoal);
     }
 
     public double getMinAltitude() {
-        return minAltitude;
+        return altitudeGoal.getMinAltitude();
     }
 
     public void setMinAltitude(double minAltitude) {
-        this.minAltitude = minAltitude;
+        altitudeGoal.setMinAltitude(minAltitude);
     }
 
-    private double getWorldAltitude() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) return Double.MAX_VALUE;
-        Vector3d worldPos = Sable.HELPER.projectOutOfSubLevel(
-                serverLevel, JOMLConversion.atCenterOf(this.blockPosition()));
-        return worldPos.y();
-    }
-
-    private void tickStabilizer(ServerLevel serverLevel) {
-        registerLinksIfNeeded(serverLevel);
-
-        var seatEntityMaybe = this.getRootVehicle();
-
-        SubLevel subLevel = Sable.HELPER.getContaining(seatEntityMaybe);
-        if (subLevel == null) {
-            setAllInactive(serverLevel);
+    private void tickAutopilot(ServerLevel serverLevel) {
+        AutopilotContext context = AutopilotContext.of(this);
+        if (context == null) {
+            stabilizer.setAllInactive(serverLevel);
             return;
         }
-
-        Pose3dc pose = subLevel.logicalPose();
-        Vector3d localDown = JOMLConversion.toJOML(new Vec3(0, -1, 0));
-        pose.orientation().transformInverse(localDown);
-
-        double pitch = (localDown.y() < 0 || localDown.z() * localDown.z() > 0.001)
-                ? atan2(localDown.z(), -localDown.y()) : 0;
-        double roll = (localDown.y() < 0 || localDown.x() * localDown.x() > 0.001)
-                ? atan2(localDown.x(), -localDown.y()) : 0;
-
-
-        double altitudeDeficit = minAltitude - getWorldAltitude();
-        double altitudeBias = altitudeDeficit > 0
-                ? Mth.clamp(altitudeDeficit * ALTITUDE_BIAS_PER_BLOCK, 0, MAX_ALTITUDE_BIAS)
-                : 0;
-        double adjustedPitch = pitch - altitudeBias;
-
-        boolean pitchTooLow = hysteresis(pitchUpSignal.isActive(), -adjustedPitch, PITCH_THRESHOLD_ON, PITCH_THRESHOLD_OFF);
-        boolean pitchTooHigh = hysteresis(pitchDownSignal.isActive(), adjustedPitch, PITCH_THRESHOLD_ON, PITCH_THRESHOLD_OFF);
-        boolean rollTooLeft = hysteresis(rollRightSignal.isActive(), -roll, ROLL_THRESHOLD_ON, ROLL_THRESHOLD_OFF);
-        boolean rollTooRight = hysteresis(rollLeftSignal.isActive(), roll, ROLL_THRESHOLD_ON, ROLL_THRESHOLD_OFF);
-
-        setActive(serverLevel, pitchUpSignal, pitchTooLow);
-        setActive(serverLevel, pitchDownSignal, pitchTooHigh);
-        setActive(serverLevel, rollRightSignal, rollTooLeft);
-        setActive(serverLevel, rollLeftSignal, rollTooRight);
+        AutopilotBias bias = autopilot.bias(context);
+        stabilizer.tick(serverLevel, context, bias);
     }
 
     @Override
@@ -290,7 +210,7 @@ public class SoaringTrader extends WanderingTrader {
     public void tick() {
         super.tick();
         if (this.level() instanceof ServerLevel serverLevel) {
-            tickStabilizer(serverLevel);
+            tickAutopilot(serverLevel);
             tickAnger(serverLevel);
         }
     }
@@ -393,57 +313,6 @@ public class SoaringTrader extends WanderingTrader {
         } else {
             String color = DYE_COLORS[this.random.nextInt(DYE_COLORS.length)];
             return BuiltInRegistries.ITEM.get(ResourceLocation.parse("create:" + color + "_toolbox"));
-        }
-    }
-
-
-    private static final class StabilizerTransmitter implements IRedstoneLinkable {
-        private final SoaringTrader owner;
-        private final Couple<RedstoneLinkNetworkHandler.Frequency> key;
-        private boolean active = false;
-
-        StabilizerTransmitter(SoaringTrader owner, Item woolItem) {
-            this.owner = owner;
-            RedstoneLinkNetworkHandler.Frequency freq = RedstoneLinkNetworkHandler.Frequency.of(new ItemStack(woolItem));
-            this.key = Couple.create(freq, freq);
-        }
-
-        boolean isActive() {
-            return active;
-        }
-
-        void setActive(boolean active) {
-            this.active = active;
-        }
-
-        @Override
-        public boolean isListening() {
-            return false;
-        }
-
-        @Override
-        public int getTransmittedStrength() {
-            return active ? 15 : 0;
-        }
-
-        @Override
-        public void setReceivedStrength(int networkPower) {
-
-        }
-
-        @Override
-        public Couple<RedstoneLinkNetworkHandler.Frequency> getNetworkKey() {
-            return key;
-        }
-
-        @Override
-        public boolean isAlive() {
-            return owner.isAlive() && !owner.isRemoved() && owner.level() != null;
-        }
-
-        @Override
-        public BlockPos getLocation() {
-            return owner.blockPosition();
         }
     }
 }
