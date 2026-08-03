@@ -3,6 +3,7 @@ package me.corvino.aeronauticsdiscovery.autopilot;
 import com.mojang.serialization.MapCodec;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.autopilot.goals.AltitudeGoal;
+import me.corvino.aeronauticsdiscovery.autopilot.goals.OrbitGoal;
 import me.corvino.aeronauticsdiscovery.autopilot.goals.StraightFlightGoal;
 import net.minecraft.resources.ResourceLocation;
 
@@ -41,6 +42,7 @@ public final class AutopilotGoalTypes {
     public static void bootstrap() {
         touch(StraightFlightGoal.TYPE);
         touch(AltitudeGoal.TYPE);
+        touch(OrbitGoal.TYPE);
     }
 
     private static void touch(AutopilotGoalType<?> type) {
