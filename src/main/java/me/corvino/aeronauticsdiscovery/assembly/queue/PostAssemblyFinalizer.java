@@ -123,6 +123,10 @@ final class PostAssemblyFinalizer {
                     .encodeStart(NbtOps.INSTANCE, plan)
                     .resultOrPartial(error -> ModLog.warn(AUTOPILOT, "Failed to serialize craft plan: {}", error))
                     .ifPresent(value -> tag.put(SubLevelTags.PLAN_TAG, value));
+            ModLog.info(AUTOPILOT, "Baked plan onto '{}' ({}): {}",
+                    ctx.templateId, ctx.planOverride != null ? "event override" : "template default", plan.goals());
+        } else {
+            ModLog.debug(AUTOPILOT, "No plan for '{}' (src={}); pilots will fly straight", ctx.templateId, ctx.source);
         }
         subLevel.setUserDataTag(tag);
     }

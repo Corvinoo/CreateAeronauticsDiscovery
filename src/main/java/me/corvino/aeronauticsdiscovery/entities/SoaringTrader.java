@@ -12,6 +12,7 @@ import me.corvino.aeronauticsdiscovery.util.ModLog;
 import me.corvino.aeronauticsdiscovery.util.StructureSearchWorker;
 
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.TRADE;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.AUTOPILOT;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -142,6 +143,8 @@ public class SoaringTrader extends WanderingTrader {
         if (Objects.equals(plan, lastPlan)) return;
         lastPlan = plan;
         autopilot.configure(plan != null ? plan.goals() : DEFAULT_GOALS);
+        ModLog.info(AUTOPILOT, "Pilot '{}' now flying {}",
+                this.getName().getString(), plan != null ? plan.goals() : "DEFAULT (straight)");
     }
 
     @Override

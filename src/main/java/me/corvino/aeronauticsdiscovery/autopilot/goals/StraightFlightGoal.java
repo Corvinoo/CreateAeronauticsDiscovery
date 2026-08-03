@@ -36,4 +36,9 @@ public final class StraightFlightGoal implements AutopilotGoal<StraightFlightGoa
     public AutopilotBias bias(AutopilotContext context) {
         return AutopilotBias.NONE;
     }
+
+    @Override
+    public String toString() {
+        return "StraightFlightGoal";
+    }
 }
