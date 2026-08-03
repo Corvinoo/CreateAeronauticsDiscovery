@@ -17,6 +17,7 @@ public enum LogCategory {
     SEAT(() -> logSeat),
     PIN(() -> logPin),
     PIPELINE(() -> logPipeline),
+    AUTOPILOT(() -> logAutopilot),
     GENERAL(() -> logGeneral);
 
     private final BooleanSupplier enabled;

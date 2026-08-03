@@ -16,6 +16,7 @@ import me.corvino.aeronauticsdiscovery.pin.trigger.SubLevelImpactTrigger;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotGoalTypes;
 import me.corvino.aeronauticsdiscovery.event.FlyoverCommands;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventRegistry;
 import me.corvino.aeronauticsdiscovery.event.FlyoverEventScheduler;
@@ -143,6 +144,7 @@ public class CreateAeronauticsDiscovery {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         PinBehaviorTypes.bootstrap();
+        AutopilotGoalTypes.bootstrap();
     }
 
 

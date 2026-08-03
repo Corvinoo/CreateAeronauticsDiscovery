@@ -8,5 +8,11 @@
     "angular": [0.0, 0.0, 0.0],
     "impulse": false
   },
-  "dimensions": ["minecraft:overworld"]
+  "dimensions": ["minecraft:overworld"],
+  "plan": {
+    "goals": [
+      { "type": "aeronauticsdiscovery:straight" },
+      { "type": "aeronauticsdiscovery:altitude", "min_altitude": 170, "max_altitude": 250 }
+    ]
+  }
 }

@@ -2,6 +2,7 @@ package me.corvino.aeronauticsdiscovery.assembly;
 
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotPlan;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
@@ -29,6 +30,7 @@ public class AssemblyContext {
     public double yawRadians;
     @Nullable public final Rotation rotationTemplate;
     @Nullable public InitialVelocity velocityOverride;
+    @Nullable public AutopilotPlan planOverride;
     @Nullable public String subLevelName;
 
     //runtime
@@ -112,6 +114,7 @@ public class AssemblyContext {
         BuilderOptions assemblerPos(BlockPos assemblerPos);
         BuilderOptions setYaw(double yawRadians);
         BuilderOptions overrideVelocity(InitialVelocity velocity);
+        BuilderOptions overridePlan(AutopilotPlan plan);
         BuilderOptions setName(String name);
         BuilderOptions registerFlyover();
         AssemblyContext build();
@@ -126,6 +129,7 @@ public class AssemblyContext {
         private BlockPos assemblerPos;
         private double yawRadians;
         private InitialVelocity velocityOverride;
+        private AutopilotPlan planOverride;
         private String subLevelName;
         private boolean registerAsFlyover;
 
@@ -171,6 +175,9 @@ public class AssemblyContext {
         public BuilderOptions overrideVelocity(InitialVelocity velocity) { this.velocityOverride = velocity; return this; }
 
         @Override
+        public BuilderOptions overridePlan(AutopilotPlan plan) { this.planOverride = plan; return this; }
+
+        @Override
         public BuilderOptions setName(String name) { this.subLevelName = name; return this; }
 
         @Override
@@ -183,6 +190,7 @@ public class AssemblyContext {
             ctx.assemblerPos = this.assemblerPos;
             ctx.yawRadians = this.yawRadians;
             ctx.velocityOverride = this.velocityOverride;
+            ctx.planOverride = this.planOverride;
             ctx.subLevelName = this.subLevelName;
             ctx.registerAsFlyover = this.registerAsFlyover;
             return ctx;

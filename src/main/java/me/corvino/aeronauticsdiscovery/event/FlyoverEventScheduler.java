@@ -84,6 +84,7 @@ public final class FlyoverEventScheduler {
                 .rotationTemplate(Rotation.NONE)
                 .setYaw(spawnPos.yawRadians())
                 .overrideVelocity(config.velocity())
+                .overridePlan(config.plan().orElse(null))
                 .maxRetries(3)
                 .setName("flyover")
                 .registerFlyover()

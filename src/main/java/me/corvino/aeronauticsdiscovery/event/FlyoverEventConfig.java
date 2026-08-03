@@ -2,10 +2,12 @@ package me.corvino.aeronauticsdiscovery.event;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotPlan;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.Optional;
 
 public record FlyoverEventConfig(
         ResourceLocation template,
@@ -14,7 +16,8 @@ public record FlyoverEventConfig(
         int weight,
         InitialVelocity velocity,
         boolean randomizeYaw,
-        List<ResourceLocation> dimensions
+        List<ResourceLocation> dimensions,
+        Optional<AutopilotPlan> plan
 ) {
     public static final Codec<FlyoverEventConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("template").forGetter(FlyoverEventConfig::template),
@@ -23,6 +26,7 @@ public record FlyoverEventConfig(
             Codec.INT.optionalFieldOf("weight", 1).forGetter(FlyoverEventConfig::weight),
             InitialVelocity.CODEC.codec().optionalFieldOf("initial_velocity", InitialVelocity.NONE).forGetter(FlyoverEventConfig::velocity),
             Codec.BOOL.optionalFieldOf("randomize_yaw", true).forGetter(FlyoverEventConfig::randomizeYaw),
-            ResourceLocation.CODEC.listOf().fieldOf("dimensions").forGetter(FlyoverEventConfig::dimensions)
+            ResourceLocation.CODEC.listOf().fieldOf("dimensions").forGetter(FlyoverEventConfig::dimensions),
+            AutopilotPlan.CODEC.codec().optionalFieldOf("plan").forGetter(FlyoverEventConfig::plan)
     ).apply(instance, FlyoverEventConfig::new));
 }

@@ -2,10 +2,11 @@ package me.corvino.aeronauticsdiscovery.entities;
 
 import me.corvino.aeronauticsdiscovery.Config;
 import me.corvino.aeronauticsdiscovery.autopilot.Autopilot;
-import me.corvino.aeronauticsdiscovery.autopilot.AutopilotBias;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotContext;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotGoal;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotGoalResolver;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotPlan;
 import me.corvino.aeronauticsdiscovery.autopilot.RedstoneStabilizer;
-import me.corvino.aeronauticsdiscovery.autopilot.goals.AltitudeGoal;
 import me.corvino.aeronauticsdiscovery.autopilot.goals.StraightFlightGoal;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import me.corvino.aeronauticsdiscovery.util.StructureSearchWorker;
@@ -50,6 +51,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class SoaringTrader extends WanderingTrader {
     private int angryTicks;
@@ -111,35 +113,35 @@ public class SoaringTrader extends WanderingTrader {
             "brown", "green", "red", "black"
     };
 
-    private static final double DEFAULT_MIN_ALTITUDE = 160.0;
+    private static final List<AutopilotGoal<?>> DEFAULT_GOALS = List.of(StraightFlightGoal.INSTANCE);
 
     private final Autopilot autopilot = new Autopilot();
-    private final AltitudeGoal altitudeGoal = new AltitudeGoal(DEFAULT_MIN_ALTITUDE);
     private final RedstoneStabilizer stabilizer = new RedstoneStabilizer(
             this, Items.GREEN_WOOL, Items.YELLOW_WOOL, Items.RED_WOOL, Items.LIGHT_BLUE_WOOL);
+    @Nullable
+    private AutopilotPlan lastPlan;
 
     public SoaringTrader(EntityType<? extends WanderingTrader> type, Level level) {
         super(type, level);
-        autopilot.addGoal(new StraightFlightGoal());
-        autopilot.addGoal(altitudeGoal);
-    }
-
-    public double getMinAltitude() {
-        return altitudeGoal.getMinAltitude();
-    }
-
-    public void setMinAltitude(double minAltitude) {
-        altitudeGoal.setMinAltitude(minAltitude);
+        autopilot.configure(DEFAULT_GOALS);
     }
 
     private void tickAutopilot(ServerLevel serverLevel) {
         AutopilotContext context = AutopilotContext.of(this);
         if (context == null) {
             stabilizer.setAllInactive(serverLevel);
+            lastPlan = null;
             return;
         }
-        AutopilotBias bias = autopilot.bias(context);
-        stabilizer.tick(serverLevel, context, bias);
+        applyGoalsFor(context);
+        stabilizer.tick(serverLevel, context, autopilot.bias(context));
+    }
+
+    private void applyGoalsFor(AutopilotContext context) {
+        AutopilotPlan plan = AutopilotGoalResolver.plan(context);
+        if (Objects.equals(plan, lastPlan)) return;
+        lastPlan = plan;
+        autopilot.configure(plan != null ? plan.goals() : DEFAULT_GOALS);
     }
 
     @Override

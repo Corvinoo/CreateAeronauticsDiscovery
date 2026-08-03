@@ -4,13 +4,17 @@ import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
+import me.corvino.aeronauticsdiscovery.autopilot.AutopilotPlan;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.PHYSICS;
+import static me.corvino.aeronauticsdiscovery.util.LogCategory.AUTOPILOT;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsConfig;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
+import me.corvino.aeronauticsdiscovery.util.SubLevelTags;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
@@ -113,7 +117,21 @@ final class PostAssemblyFinalizer {
         CompoundTag tag = new CompoundTag();
         tag.putString("mod_id", CreateAeronauticsDiscovery.MODID);
         tag.putString("template_id", ctx.templateId.toString());
+        AutopilotPlan plan = resolvePlan(ctx);
+        if (plan != null) {
+            AutopilotPlan.CODEC.codec()
+                    .encodeStart(NbtOps.INSTANCE, plan)
+                    .resultOrPartial(error -> ModLog.warn(AUTOPILOT, "Failed to serialize craft plan: {}", error))
+                    .ifPresent(value -> tag.put(SubLevelTags.PLAN_TAG, value));
+        }
         subLevel.setUserDataTag(tag);
+    }
+
+    private static AutopilotPlan resolvePlan(AssemblyContext ctx) {
+        if (ctx.planOverride != null) return ctx.planOverride;
+        return PrefabPhysicsRegistry.getInstance().get(ctx.templateId)
+                .map(PrefabPhysicsConfig::plan)
+                .orElse(null);
     }
 
     private static void registerAsFlyoverIfRequested(ServerLevel level, AssemblyContext ctx, ServerSubLevel subLevel) {
