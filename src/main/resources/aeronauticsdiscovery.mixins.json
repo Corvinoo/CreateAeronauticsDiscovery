@@ -12,6 +12,9 @@
     "hook.ProjectileCanHitPinMixin",
     "hook.BlockWithSubLevelCallbackMixin",
     "hook.RopeStrandHolderBehaviorMixin",
+    "hook.PortableEngineTemplateNbtMixin",
+    "hook.PortableEngineFirstTickMixin",
+    "hook.PortableEngineOppositeSpeedMixin",
     "patch.AquiferMixin"
   ],
   "client": [
