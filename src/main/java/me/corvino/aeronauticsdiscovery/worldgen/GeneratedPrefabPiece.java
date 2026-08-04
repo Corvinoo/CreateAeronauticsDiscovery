@@ -26,7 +26,16 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.BlockIgnorePr
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class GeneratedPrefabPiece extends TemplateStructurePiece {
+
+    /**
+     * postProcess runs once per chunk the piece overlaps; guard so the assembler(s)
+     * are only queued once instead of once per overlapping chunk.
+     */
+    private final Set<BlockPos> enqueuedAssemblers = new HashSet<>();
 
     public GeneratedPrefabPiece(
             StructureTemplateManager templateManager,
@@ -53,6 +62,8 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
         return new StructurePlaceSettings()
                 .setMirror(Mirror.NONE)
                 .setRotation(rotation)
+                .setIgnoreEntities(true)
+                .setKnownShape(true)
                 .addProcessor(BlockIgnoreProcessor.STRUCTURE_BLOCK);
     }
 
@@ -77,14 +88,22 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
         ModLog.info(GEN, "Placed Prefab Template '{}' at {} in chunk {}. Rotation: {}",
             this.templateName, this.templatePosition, chunkPos, this.placeSettings.getRotation());
 
-        this.enqueueAssemblies(level);
+        this.enqueueAssemblies(level, bounds);
     }
 
     @Override
     protected void handleDataMarker(String metadata, BlockPos pos, ServerLevelAccessor level, RandomSource random, BoundingBox bounds) {
     }
 
-    private void enqueueAssemblies(WorldGenLevel level) {
+    /**
+     * {@code postProcess} is called once per chunk the piece overlaps. The world is only
+     * partially generated for that chunk, so {@code level.getBlockState} cannot see blocks
+     * in ungenerated neighbor chunks. We therefore only fall back to a non-assembler anchor
+     * when the whole template is contained in the bounds currently being placed (single-chunk
+     * templates, e.g. balloons); for multi-chunk templates the real PhysicsAssemblerBlock is
+     * enqueued as soon as its own chunk is placed.
+     */
+    private void enqueueAssemblies(WorldGenLevel level, BoundingBox bounds) {
         ResourceLocation templateId = ResourceLocation.parse(this.templateName);
         BoundingBox templateBounds = this.template.getBoundingBox(this.placeSettings, this.templatePosition);
         var serverLevel = level.getLevel();
@@ -107,11 +126,12 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
             }
 
             if (state.getBlock() instanceof PhysicsAssemblerBlock) {
+                if (!enqueuedAssemblers.add(worldPos)) continue;
                 assemblerCount++;
                 queue.enqueue(Pipelines.WORLDGEN,
                         AssemblyContext.builder()
                                 .level(serverLevel)
-                                .anchor(firstNonAir)
+                                .anchor(this.templatePosition)
                                 .templateId(templateId)
                                 .source(AssemblySource.WORLDGEN)
                                 .rotationTemplate(this.placeSettings.getRotation())
@@ -123,20 +143,30 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
             }
         }
 
-        if (assemblerCount == 0 && firstNonAir != null) { 
-            ModLog.debug(QUEUE, "No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
-                    templateId, firstNonAir);
-            queue.enqueue(Pipelines.WORLDGEN,
-                    AssemblyContext.builder()
-                            .level(serverLevel)
-                            .anchor(firstNonAir)
-                            .templateId(templateId)
-                            .source(AssemblySource.WORLDGEN)
-                            .rotationTemplate(this.placeSettings.getRotation())
-                            .assemblerPos(firstNonAir)
-                            .build());
-        } else if (assemblerCount == 0) {
-            ModLog.warn(GEN, "Template '{}' placed with NO blocks at all!", templateId);
+        boolean templateFullyPlaced = fullyContains(bounds, templateBounds);
+
+        if (assemblerCount == 0 && templateFullyPlaced) {
+            if (firstNonAir != null && enqueuedAssemblers.add(firstNonAir)) {
+                ModLog.debug(QUEUE, "No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
+                        templateId, firstNonAir);
+                queue.enqueue(Pipelines.WORLDGEN,
+                        AssemblyContext.builder()
+                                .level(serverLevel)
+                                .anchor(firstNonAir)
+                                .templateId(templateId)
+                                .source(AssemblySource.WORLDGEN)
+                                .rotationTemplate(this.placeSettings.getRotation())
+                                .assemblerPos(firstNonAir)
+                                .build());
+            } else {
+                ModLog.warn(GEN, "Template '{}' placed with NO blocks at all!", templateId);
+            }
         }
+    }
+
+    private static boolean fullyContains(BoundingBox outer, BoundingBox inner) {
+        return inner.minX() >= outer.minX() && inner.maxX() <= outer.maxX()
+                && inner.minY() >= outer.minY() && inner.maxY() <= outer.maxY()
+                && inner.minZ() >= outer.minZ() && inner.maxZ() <= outer.maxZ();
     }
 }
