@@ -92,6 +92,8 @@ final class AssemblyEntrySerializer {
             ctx.steps = pipeline.createSteps();
 
             int retryCount = tag.getInt("RetryCount");
+            ModLog.info(QUEUE, "Restored assembly entry: '{}' (pipeline={}, src={}, anchor={}, assembler={}, retries={}/{}, stepIndex={})",
+                    templateId, pipeline.name(), source, ctx.anchor, ctx.assemblerPos, retryCount, ctx.maxRetries, ctx.currentStepIndex);
             return Optional.of(new AssemblyQueue.Entry(templateId, pipeline, ctx, retryCount));
         } catch (Exception e) {
             ModLog.error(QUEUE, "Failed to deserialize entry: {}", e.getMessage());

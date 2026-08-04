@@ -6,6 +6,7 @@ import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
@@ -35,8 +36,27 @@ public class ReadinessCheckStep extends AssemblyStep {
     @Override
     protected void onAbort(AssemblyContext ctx) {
         if (failing != null) {
-            ModLog.debug(PIPELINE,
-                    "{}: '{}' is not ready, missing: {}", ctx.templateId, failing);
+            ModLog.warn(PIPELINE,
+                    "{}: '{}' is not ready, missing: {} (anchor {}, bounds {})",
+                    ctx.templateId, failing, ctx.templateBounds(), ctx.anchor, ctx.templateBounds());
+            if (failing.equals("honey_glue_present")) {
+                EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(HONEY_GLUE_ID);
+                BoundingBox b = ctx.templateBounds();
+                AABB tight = new AABB(
+                        b.minX() - 1, b.minY() - 1, b.minZ() - 1,
+                        b.maxX() + 1, b.maxY() + 1, b.maxZ() + 1);
+                AABB wide = new AABB(
+                        b.minX() - 8, b.minY() - 8, b.minZ() - 8,
+                        b.maxX() + 8, b.maxY() + 8, b.maxZ() + 8);
+                List<Entity> tightHits = ctx.level.getEntitiesOfClass(Entity.class, tight,
+                        e -> type != null && e.getType().equals(type));
+                List<Entity> wideHits = ctx.level.getEntitiesOfClass(Entity.class, wide,
+                        e -> type != null && e.getType().equals(type));
+                ModLog.warn(PIPELINE, "  glue entity type={}; glue in bounds+/-1: {}; glue in bounds+/-8: {}; sample positions: {}",
+                        type != null ? type.toShortString() : "NOT REGISTERED",
+                        tightHits.size(), wideHits.size(),
+                        wideHits.stream().limit(5).map(e -> e.blockPosition().toString()).toList());
+            }
         }
     }
 
