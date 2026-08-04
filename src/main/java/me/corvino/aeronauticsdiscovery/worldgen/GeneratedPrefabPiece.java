@@ -98,10 +98,10 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
     /**
      * {@code postProcess} is called once per chunk the piece overlaps. The world is only
      * partially generated for that chunk, so {@code level.getBlockState} cannot see blocks
-     * in ungenerated neighbor chunks. We therefore only fall back to a non-assembler anchor
-     * when the whole template is contained in the bounds currently being placed (single-chunk
-     * templates, e.g. balloons); for multi-chunk templates the real PhysicsAssemblerBlock is
-     * enqueued as soon as its own chunk is placed.
+     * in ungenerated neighbour chunks. We therefore only fall back to a non-assembler
+     * assembly start when the whole template is contained in the bounds currently being
+     * placed (single-chunk templates, e.g. balloons); for multi-chunk templates the real
+     * PhysicsAssemblerBlock is enqueued as soon as its own chunk is placed.
      */
     private void enqueueAssemblies(WorldGenLevel level, BoundingBox bounds) {
         ResourceLocation templateId = ResourceLocation.parse(this.templateName);
@@ -147,12 +147,16 @@ public class GeneratedPrefabPiece extends TemplateStructurePiece {
 
         if (assemblerCount == 0 && templateFullyPlaced) {
             if (firstNonAir != null && enqueuedAssemblers.add(firstNonAir)) {
-                ModLog.debug(QUEUE, "No PhysicsAssemblerBlock in template '{}'; using fallback anchor at {}",
-                        templateId, firstNonAir);
+                // ctx.anchor is the TEMPLATE ORIGIN (used for templateBounds() and entity
+                // placement), NOT the assembly start. The blocks were placed relative to
+                // templatePosition, so the anchor must stay templatePosition; only the
+                // assembly start (assemblerPos) may fall back to the first non-air block.
+                ModLog.info(QUEUE, "No PhysicsAssemblerBlock in template '{}'; assembling from fallback block {} (template origin {})",
+                        templateId, firstNonAir, this.templatePosition);
                 queue.enqueue(Pipelines.WORLDGEN,
                         AssemblyContext.builder()
                                 .level(serverLevel)
-                                .anchor(firstNonAir)
+                                .anchor(this.templatePosition)
                                 .templateId(templateId)
                                 .source(AssemblySource.WORLDGEN)
                                 .rotationTemplate(this.placeSettings.getRotation())
