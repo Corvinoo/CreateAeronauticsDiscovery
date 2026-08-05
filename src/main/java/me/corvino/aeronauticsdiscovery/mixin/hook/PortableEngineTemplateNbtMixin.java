@@ -1,7 +1,5 @@
 package me.corvino.aeronauticsdiscovery.mixin.hook;
 
-import me.corvino.aeronauticsdiscovery.util.ModLog;
-import static me.corvino.aeronauticsdiscovery.util.LogCategory.GEN;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,7 +33,6 @@ public abstract class PortableEngineTemplateNbtMixin {
         sanitized.remove("Sequence");
         sanitized.remove("GeneratedSpeed");
 
-        ModLog.info(GEN, "Cleared stale kinetic state from portable-engine template BE (preserved inventory/direction)");
         return sanitized;
     }
 

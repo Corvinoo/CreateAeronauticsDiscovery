@@ -3,6 +3,7 @@ package me.corvino.aeronauticsdiscovery.assembly.steps;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIPELINE;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
@@ -67,7 +68,22 @@ public class PlaceTemplateEntitiesStep extends AssemblyStep {
             nbt.put("Pos", newDoubleList(info.pos.x, info.pos.y, info.pos.z));
             nbt.remove("UUID");
 
-            EntityType.create(nbt, ctx.level).ifPresent(entity -> {
+            if (nbt.contains("TileX") || nbt.contains("TileY") || nbt.contains("TileZ")) {
+                ModLog.warn(PIPELINE, "Entity '{}' carries sub-level-relative tile anchor Tile=({}, {}, {})"
+                                + " but is being placed at world pos {}; the anchor may be invalid and the entity may despawn",
+                        nbt.getString("id"),
+                        nbt.contains("TileX") ? nbt.getInt("TileX") : "?",
+                        nbt.contains("TileY") ? nbt.getInt("TileY") : "?",
+                        nbt.contains("TileZ") ? nbt.getInt("TileZ") : "?",
+                        new BlockPos.MutableBlockPos().set((int) info.pos.x, (int) info.pos.y, (int) info.pos.z));
+            }
+
+            var created = EntityType.create(nbt, ctx.level);
+            if (created.isEmpty()) {
+                ModLog.warn(PIPELINE, "Template entity '{}' at {} FAILED to spawn (EntityType.create empty)",
+                        nbt.getString("id"), info.blockPos);
+            }
+            created.ifPresent(entity -> {
                 entity.moveTo(info.pos.x, info.pos.y, info.pos.z, entity.getYRot(), entity.getXRot());
                 ctx.level.addFreshEntity(entity);
             });
