@@ -61,6 +61,10 @@ public class LogConfig {
             .comment("Enable [AUTOPILOT] log output")
             .define("log.autopilot", false);
 
+    private static final ModConfigSpec.BooleanValue LOG_PATROL = BUILDER
+            .comment("Enable [PATROL] log output")
+            .define("log.patrol", false);
+
     private static final ModConfigSpec.BooleanValue LOG_GENERAL = BUILDER
             .comment("Enable [GENERAL] log output")
             .define("log.general", false);
@@ -80,6 +84,7 @@ public class LogConfig {
     public static boolean logPin;
     public static boolean logPipeline;
     public static boolean logAutopilot;
+    public static boolean logPatrol;
     public static boolean logGeneral;
 
     @SubscribeEvent
@@ -98,6 +103,7 @@ public class LogConfig {
         logPin = LOG_PIN.get();
         logPipeline = LOG_PIPELINE.get();
         logAutopilot = LOG_AUTOPILOT.get();
+        logPatrol = LOG_PATROL.get();
         logGeneral = LOG_GENERAL.get();
     }
 }

@@ -25,6 +25,16 @@ public interface AutopilotGoal<T extends AutopilotGoal<T>> {
     @Nullable
     AutopilotBias bias(AutopilotContext context);
 
+    /**
+     * Optional spawn placement hint for crafts whose flight plan includes this goal. Goals that
+     * need to start in a specific spot relative to their anchor (e.g. an {@code orbit} goal wants
+     * to begin on its ring facing the tangent) return a {@link SpawnPlacement}; goals that don't
+     * care return {@link SpawnPlacement#NONE} and the craft spawns at the anchor itself.
+     */
+    default SpawnPlacement spawnPlacement() {
+        return SpawnPlacement.NONE;
+    }
+
     default String name() {
         return getClass().getSimpleName();
     }

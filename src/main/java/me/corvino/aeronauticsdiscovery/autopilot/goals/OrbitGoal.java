@@ -13,6 +13,7 @@ import me.corvino.aeronauticsdiscovery.autopilot.AutopilotGoal;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotGoalType;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotGoalTypes;
 import me.corvino.aeronauticsdiscovery.autopilot.GoalCategory;
+import me.corvino.aeronauticsdiscovery.autopilot.SpawnPlacement;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import me.corvino.aeronauticsdiscovery.util.StructureSearchWorker;
 import net.minecraft.core.BlockPos;
@@ -145,6 +146,14 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
 
     public double maxBank() {
         return maxBank;
+    }
+
+    @Override
+    public SpawnPlacement spawnPlacement() {
+        // Start on the orbit ring at a fixed reference angle (east of the anchor), nose pointing
+        // along the orbit tangent so no corrective manoeuvres are needed to settle onto the ring.
+        double yaw = direction == OrbitDirection.CW ? Math.PI : 0.0;
+        return new SpawnPlacement((int) Math.round(radius), 0, yaw);
     }
 
     @Override

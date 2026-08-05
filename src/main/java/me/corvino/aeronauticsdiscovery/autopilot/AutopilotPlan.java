@@ -26,4 +26,16 @@ public record AutopilotPlan(List<AutopilotGoal<?>> goals) {
     public static final MapCodec<AutopilotPlan> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             GOAL_CODEC.listOf().fieldOf("goals").forGetter(AutopilotPlan::goals)
     ).apply(instance, AutopilotPlan::new));
+
+    /**
+     * Spawn placement hint for a craft flying this plan: returns the first goal's preferred
+     * placement or {@link SpawnPlacement#NONE} if no goal cares where the craft starts.
+     */
+    public SpawnPlacement spawnPlacement() {
+        for (AutopilotGoal<?> goal : goals) {
+            SpawnPlacement placement = goal.spawnPlacement();
+            if (!placement.isNone()) return placement;
+        }
+        return SpawnPlacement.NONE;
+    }
 }

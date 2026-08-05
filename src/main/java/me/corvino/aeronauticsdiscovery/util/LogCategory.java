@@ -18,6 +18,7 @@ public enum LogCategory {
     PIN(() -> logPin),
     PIPELINE(() -> logPipeline),
     AUTOPILOT(() -> logAutopilot),
+    PATROL(() -> logPatrol),
     GENERAL(() -> logGeneral);
 
     private final BooleanSupplier enabled;

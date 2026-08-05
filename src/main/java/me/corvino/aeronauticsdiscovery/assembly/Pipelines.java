@@ -49,6 +49,18 @@ public final class Pipelines {
             new UnloadChunkStep()
     )));
 
+    public static final AssemblyPipeline PATROL = register(new AssemblyPipeline("patrol", () -> List.of(
+            new LoadChunkStep(),
+            new PlaceBlocksStep(),
+            new FindAssemblyStartStep(),
+            new ReadinessCheckStep(),
+            new AssembleStep(),
+            new RotateSubLevelStep(),
+            new ConvertPhysicsBarrelStep(),
+            new CleanUpItemEntities(),
+            new UnloadChunkStep()
+    )));
+
     private Pipelines() {}
 
     private static AssemblyPipeline register(AssemblyPipeline pipeline) {

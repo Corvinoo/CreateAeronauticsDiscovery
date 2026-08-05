@@ -24,6 +24,8 @@ import me.corvino.aeronauticsdiscovery.event.StructureProximityTracker;
 import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import me.corvino.aeronauticsdiscovery.physics.PrefabPhysicsRegistry;
 import me.corvino.aeronauticsdiscovery.physics.SubLevelImpactManager;
+import me.corvino.aeronauticsdiscovery.patrol.PatrolRegistry;
+import me.corvino.aeronauticsdiscovery.patrol.PatrolSpawner;
 import me.corvino.aeronauticsdiscovery.scheduler.TaskScheduler;
 import me.corvino.aeronauticsdiscovery.loot.ModLootFunctions;
 import me.corvino.aeronauticsdiscovery.worldgen.ModWorldgen;
@@ -111,6 +113,8 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
+        NeoForge.EVENT_BUS.addListener(PatrolRegistry::onAddReloadListeners);
+        NeoForge.EVENT_BUS.addListener(PatrolSpawner::onChunkLoad);
         NeoForge.EVENT_BUS.addListener(BridgeInteractionHandler::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(BridgePlankManager::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(BridgeSubLevelObserver::onLevelTick);
