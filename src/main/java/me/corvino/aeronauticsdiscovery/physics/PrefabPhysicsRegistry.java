@@ -18,7 +18,7 @@ import java.util.Optional;
 
 public class PrefabPhysicsRegistry extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final String DIRECTORY = "structure_physics";
+    private static final String DIRECTORY = "template_defaults";
 
     private static PrefabPhysicsRegistry instance;
 

@@ -19,10 +19,10 @@ import java.util.Optional;
  * @param minAltitude     lower bound of the spawn altitude band
  * @param maxAltitude     upper bound of the spawn altitude band
  * @param initialVelocity optional velocity override applied on spawn (template-local frame, rotated
- *                        by the spawn yaw); if absent the template's {@code structure_physics}
+ *                        by the spawn yaw); if absent the template's {@code template_defaults}
  *                        velocity is used
  * @param plan            optional flight plan baked onto the craft at assembly; if absent the
- *                        template's {@code structure_physics} plan is used.
+ *                        template's {@code template_defaults} plan is used.
  * @param dimensions      dimensions the patrol is allowed to spawn in (empty = all)
  */
 public record PatrolConfig(
