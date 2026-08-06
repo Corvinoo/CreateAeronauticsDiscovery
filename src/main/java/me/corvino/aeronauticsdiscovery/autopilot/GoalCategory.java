@@ -5,6 +5,8 @@ public enum GoalCategory {
     FLIGHT_PATH,
     /** Vertical constraints (altitude floor / ceiling) */
     ALTITUDE,
-    /** Environmental avoidance (obstacles, terrain); may combine with any other category. */
-    OBSTACLE
+    /** Environmental avoidance (obstacles, terrain) */
+    OBSTACLE,
+    /** Dynamic terrain clearance (pitch to avoid rising ground / ceilings)*/
+    TERRAIN
 }

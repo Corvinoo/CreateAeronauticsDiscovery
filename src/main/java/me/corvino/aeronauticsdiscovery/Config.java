@@ -33,6 +33,13 @@ public class Config {
                     + "the spawn point and the player. May introduce a minor performance overhead")
             .define("flyover.obstacleCheck", false);
 
+    private static final ModConfigSpec.EnumValue<RaycastPrecision> RAYCAST_PRECISION = BUILDER
+            .comment("Precision of the obstacle-avoidance raycasting used by the autopilot 'avoid' (horizontal) and "
+                    + "'terrain' (vertical clearance) goals.",
+                    "Controls the number of rays cast per tick and how finely the forward cone is sampled.",
+                    "LOW = fewest rays, MEDIUM = balanced, HIGH = finest detection (most rays per tick)")
+            .defineEnum("autopilot.raycastPrecision", RaycastPrecision.MEDIUM);
+
     private static final ModConfigSpec.DoubleValue IMPACT_STRENGTH_THRESHOLD = BUILDER
             .comment("Minimum impact velocity (m/s) along the contact normal to fire a SubLevelImpactEvent. "
                     + "Set to 0 to fire on every collision.")
@@ -112,6 +119,7 @@ public class Config {
     public static boolean explosionBlocks;
     public static boolean explosionFire;
     public static ExplosionMode explosionStrategy;
+    public static RaycastPrecision raycastPrecision;
     public static int traderAngerDuration;
     public static boolean traderGuaranteedMap;
     public static List<? extends String> traderStructureMaps = DEFAULT_STRUCTURE_MAPS;
@@ -128,6 +136,7 @@ public class Config {
         macroChunkSize = MACRO_CHUNK_SIZE.get();
         flyoverMaxUnloadDistance = FLYOVER_MAX_UNLOAD_DISTANCE.get();
         flyoverObstacleCheck = FLYOVER_OBSTACLE_AVOIDANCE.get();
+        raycastPrecision = RAYCAST_PRECISION.get();
         impactStrengthThreshold = IMPACT_STRENGTH_THRESHOLD.get();
         explosionBlocks = EXPLOSION_BLOCKS.get();
         explosionFire = EXPLOSION_FIRE.get();
@@ -145,5 +154,11 @@ public class Config {
     public enum ExplosionMode {
         OPTIMIZED,
         VANILLA
+    }
+
+    public enum RaycastPrecision {
+        LOW,
+        MEDIUM,
+        HIGH
     }
 }

@@ -3,8 +3,10 @@ package me.corvino.aeronauticsdiscovery.autopilot;
 import com.mojang.serialization.MapCodec;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.autopilot.goals.AltitudeGoal;
+import me.corvino.aeronauticsdiscovery.autopilot.goals.AvoidGoal;
 import me.corvino.aeronauticsdiscovery.autopilot.goals.OrbitGoal;
 import me.corvino.aeronauticsdiscovery.autopilot.goals.StraightFlightGoal;
+import me.corvino.aeronauticsdiscovery.autopilot.goals.TerrainGoal;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
@@ -43,6 +45,8 @@ public final class AutopilotGoalTypes {
         touch(StraightFlightGoal.TYPE);
         touch(AltitudeGoal.TYPE);
         touch(OrbitGoal.TYPE);
+        touch(AvoidGoal.TYPE);
+        touch(TerrainGoal.TYPE);
     }
 
     private static void touch(AutopilotGoalType<?> type) {
