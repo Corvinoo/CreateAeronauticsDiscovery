@@ -15,6 +15,7 @@
     "hook.PortableEngineTemplateNbtMixin",
     "hook.PortableEngineFirstTickMixin",
     "hook.PortableEngineOppositeSpeedMixin",
+    "hook.SubLevelRiderLoadKickGuardMixin",
     "patch.AquiferMixin"
   ],
   "client": [
