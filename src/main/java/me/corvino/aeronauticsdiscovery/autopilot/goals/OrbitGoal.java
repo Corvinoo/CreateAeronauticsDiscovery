@@ -6,6 +6,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
+import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotBias;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotContext;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.AUTOPILOT;
 
@@ -55,11 +57,18 @@ import static me.corvino.aeronauticsdiscovery.util.LogCategory.AUTOPILOT;
  * When the direction is {@link OrbitDirection#AUTO} (the default), the craft picks the handedness
  * that requires the least heading change to join the ring on its first tick with airspeed, based on
  * its current position and velocity, then locks it in for the rest of the goal.
+ * <p>
+ * The bank is capped by {@code max_bank}. When it is omitted the cap is derived at runtime from the
+ * craft's actual flight state instead of a hand-tuned constant: holding a circle of radius
+ * {@code radius} at horizontal speed {@code v} needs a sustained bank of {@code atan(v^2/(R*g))}
+ * (the coordinated-turn relationship, {@code g} = local gravity), so the cap is set to that value
+ * plus a transient margin, smoothed tick-to-tick and bounded by {@link #AUTO_BANK_DEFAULT_CAP}.
+ * An explicit {@code max_bank} acts purely as an upper cap on this auto value.
  *
  * @param target    structure id, {@code #tag}, or {@code [x, z]} spawn offset to orbit around
  * @param radius    orbit radius in blocks
  * @param direction orbit handedness, {@link OrbitDirection#AUTO}, {@link OrbitDirection#CW} or {@link OrbitDirection#CCW}
- * @param maxBank   maximum roll/bank bias in radians
+ * @param maxBank   optional upper cap on the roll/bank bias in radians; auto-derived when omitted
  */
 public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
 
@@ -103,7 +112,11 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
         }
     }
 
-    private static final double DEFAULT_MAX_BANK = Math.toRadians(20);
+    private static final double AUTO_BANK_DEFAULT_CAP = Math.toRadians(30);
+    private static final double AUTO_BANK_MIN_AUTHORITY = Math.toRadians(10);
+    private static final double AUTO_BANK_MARGIN = 1.35;
+    private static final double AUTO_BANK_FIXED_MARGIN = Math.toRadians(5);
+    private static final double AUTO_BANK_SMOOTHING = 0.05;
     private static final double ROLL_GAIN = 0.6;
     private static final double RADIUS_GAIN = 0.02;
     private static final double MAX_RADIAL_PULL = 1.0;
@@ -117,13 +130,14 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
                     OrbitTarget.CODEC.fieldOf("target").forGetter(OrbitGoal::target),
                     Codec.DOUBLE.fieldOf("radius").forGetter(OrbitGoal::radius),
                     OrbitDirection.CODEC.optionalFieldOf("direction", OrbitDirection.AUTO).forGetter(OrbitGoal::direction),
-                    Codec.DOUBLE.optionalFieldOf("max_bank", DEFAULT_MAX_BANK).forGetter(OrbitGoal::maxBank)
+                    Codec.DOUBLE.optionalFieldOf("max_bank").forGetter(goal -> Optional.ofNullable(goal.maxBank))
             ).apply(instance, OrbitGoal::new)));
 
     private final OrbitTarget target;
     private final double radius;
     private final OrbitDirection direction;
-    private final double maxBank;
+    @Nullable
+    private final Double maxBank;
 
     @Nullable
     private BlockPos resolvedCenter;
@@ -133,12 +147,14 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
     private OrbitDirection resolvedDirection;
     @Nullable
     private Vector3d spawnReference;
+    @Nullable
+    private Double smoothedAutoBank;
 
-    public OrbitGoal(OrbitTarget target, double radius, OrbitDirection direction, double maxBank) {
+    public OrbitGoal(OrbitTarget target, double radius, OrbitDirection direction, Optional<Double> maxBank) {
         this.target = target;
         this.radius = radius;
         this.direction = direction;
-        this.maxBank = maxBank;
+        this.maxBank = maxBank.orElse(null);
     }
 
     public OrbitTarget target() {
@@ -153,7 +169,8 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
         return direction;
     }
 
-    public double maxBank() {
+    @Nullable
+    public Double maxBank() {
         return maxBank;
     }
 
@@ -203,7 +220,37 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
         double uz = velocity.z / speed;
         double error = Math.atan2((ux * hz - uz * hx) / hLen, (ux * hx + uz * hz) / hLen);
 
-        return new AutopilotBias(0, Mth.clamp(error * ROLL_GAIN, -maxBank, maxBank));
+        double cap = bankCap(context, speed);
+        return new AutopilotBias(0, Mth.clamp(error * ROLL_GAIN, -cap, cap));
+    }
+
+    /**
+     * The maximum bank the craft may be commanded this tick. An explicit {@link #maxBank()} is an
+     * upper cap; the underlying auto value is derived from the coordinated-turn bank the orbit
+     * physically requires at the craft's current speed under local gravity, plus a transient margin.
+     * The auto value is smoothed (exponential moving average) so a speed spike cannot cause a snap
+     * roll, and never exceeds {@link #AUTO_BANK_DEFAULT_CAP} (30 degrees) when no explicit cap is set.
+     */
+    private double bankCap(AutopilotContext context, double speed) {
+        double cap = maxBank != null ? maxBank : AUTO_BANK_DEFAULT_CAP;
+
+        Vector3d gravity = DimensionPhysicsData.getGravity(context.level(), context.worldPosition());
+        double g = gravity.length();
+        double desired;
+        if (g < 1e-6) {
+            desired = AUTO_BANK_MIN_AUTHORITY;
+        } else {
+            double required = Math.atan(speed * speed / (radius * g));
+            double auto = required * AUTO_BANK_MARGIN + AUTO_BANK_FIXED_MARGIN;
+            desired = Mth.clamp(auto, AUTO_BANK_MIN_AUTHORITY, cap);
+        }
+
+        if (smoothedAutoBank == null) {
+            smoothedAutoBank = desired;
+        } else {
+            smoothedAutoBank = smoothedAutoBank + AUTO_BANK_SMOOTHING * (desired - smoothedAutoBank);
+        }
+        return smoothedAutoBank;
     }
 
     private OrbitDirection effectiveDirection(AutopilotContext context, double rx, double rz, double dist,
@@ -297,7 +344,7 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
         if (this == other) return true;
         if (!(other instanceof OrbitGoal that)) return false;
         return Double.compare(that.radius, radius) == 0
-                && Double.compare(that.maxBank, maxBank) == 0
+                && Objects.equals(that.maxBank, maxBank)
                 && target.equals(that.target)
                 && direction == that.direction;
     }
@@ -309,6 +356,7 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
 
     @Override
     public String toString() {
-        return "OrbitGoal{target=" + target + ", radius=" + radius + ", direction=" + direction + "}";
+        return "OrbitGoal{target=" + target + ", radius=" + radius + ", direction=" + direction
+                + ", maxBank=" + maxBank + "}";
     }
 }
