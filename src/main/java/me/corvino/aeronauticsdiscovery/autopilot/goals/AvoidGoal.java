@@ -36,6 +36,9 @@ import static me.corvino.aeronauticsdiscovery.util.LogCategory.AUTOPILOT;
  * velocity heading. When the forward cone is blocked it banks toward the nearest clear azimuth so
  * the craft curves around the obstacle.
  * <p>
+ * All angle parameters in the datapack codec are in <b>degrees</b>. The ray fan defaults to the
+ * configured {@link Config.RaycastPrecision} (see {@code autopilot.raycastPrecision}) but can be
+ * overridden per goal with {@code azimuths}.
  *
  * @param lookahead       ray length in blocks; obstacles closer than this are dodged
  * @param azimuths        optional explicit fan of azimuth offsets in degrees (relative to the heading); when
@@ -80,10 +83,6 @@ public final class AvoidGoal implements AutopilotGoal<AvoidGoal> {
 
     private final double maxBank;
     private final double forwardCone;
-
-    /** Sign of the currently preferred turn direction (radians), latched while the path ahead stays blocked. */
-    @Nullable
-    private Double latchedSide;
 
     public AvoidGoal(double lookahead, Optional<List<Double>> azimuths, double rollGain,
                      Optional<Double> maxBankDegrees, double forwardConeDegrees) {
@@ -147,31 +146,30 @@ public final class AvoidGoal implements AutopilotGoal<AvoidGoal> {
         Vec3 origin = new Vec3(wp.x(), wp.y() + RAY_ORIGIN_OFFSET, wp.z());
 
         List<Double> fan = activeAzimuths();
-        Map<Double, Double> distances = new HashMap<>(fan.size());
-        for (double azRad : fan) {
-            distances.put(azRad, rayDistance(context, origin, ux, uz, azRad));
-        }
 
+        // Phase 1: sample only the forward cone
+        Map<Double, Double> distances = new HashMap<>(fan.size());
         boolean forwardBlocked = false;
         double nearestBlocked = Double.MAX_VALUE;
         for (double azRad : fan) {
             if (Math.abs(azRad) > forwardCone) continue;
-            double d = distances.get(azRad);
+            double d = rayDistance(context, origin, ux, uz, azRad);
+            distances.put(azRad, d);
             if (d >= 0) {
                 forwardBlocked = true;
                 nearestBlocked = Math.min(nearestBlocked, d);
             }
         }
+        if (!forwardBlocked) return AutopilotBias.NONE;
 
-        if (!forwardBlocked) {
-            if (latchedSide != null) {
-                ModLog.debug(AUTOPILOT, "Avoid: path clear, dropping latched turn direction");
-                latchedSide = null;
-            }
-            return AutopilotBias.NONE;
+        // Phase 2: the path ahead is blocked, so cast the rest of the fan to find an escape azimuth
+        for (double azRad : fan) {
+            if (Math.abs(azRad) <= forwardCone) continue;
+            distances.put(azRad, rayDistance(context, origin, ux, uz, azRad));
         }
 
-        double prefer = latchedSide != null ? latchedSide : Math.signum(context.roll());
+        // Prefer to keep turning the way the craft is already banking (stateless anti-oscillation)
+        double prefer = Math.signum(context.roll());
         double bestAz = Double.NaN;
         double bestScore = Double.MAX_VALUE;
         for (double azRad : fan) {
@@ -189,7 +187,6 @@ public final class AvoidGoal implements AutopilotGoal<AvoidGoal> {
             return AutopilotBias.NONE;
         }
 
-        latchedSide = Math.signum(bestAz);
         double urgency = Mth.clamp(1.0 - nearestBlocked / lookahead, 0.0, 1.0);
         double strength = MIN_URGENCY + (1.0 - MIN_URGENCY) * urgency;
         double bank = Mth.clamp(bestAz * rollGain * strength, -maxBank, maxBank);
