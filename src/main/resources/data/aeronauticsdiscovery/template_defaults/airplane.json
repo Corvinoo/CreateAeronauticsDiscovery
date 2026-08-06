@@ -11,7 +11,6 @@
         "type": "aeronauticsdiscovery:orbit",
         "target": "minecraft:pillager_outpost",
         "radius": 90,
-        "direction": "ccw",
         "max_bank": 20
       },
       {

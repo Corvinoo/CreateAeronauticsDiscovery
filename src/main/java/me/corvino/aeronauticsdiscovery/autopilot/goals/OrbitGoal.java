@@ -42,29 +42,34 @@ import static me.corvino.aeronauticsdiscovery.util.LogCategory.AUTOPILOT;
 /**
  * Orbits a {@code target} at a fixed {@code radius}. The target is either a structure reference
  * (an id like {@code minecraft:village_plains} or a {@code #tag} like {@code #minecraft:village}),
- * resolved as the nearest matching structure, or an explicit {@code [x, z]} coordinate pair. The
- * center is resolved lazily the first tick the goal runs, then cached for the lifetime of the
- * configured goal instance; if a structure target is not found within search range the goal reports
- * no opinion and the craft flies straight.
+ * resolved as the nearest matching structure, or an {@code [x, z]} offset from the craft's spawn
+ * point. The center is resolved lazily the first tick the goal runs, then cached for the lifetime of
+ * the configured goal instance; if a structure target is not found within search range the goal
+ * reports no opinion and the craft flies straight.
  * <p>
  * Steering is a pursuit controller on the craft's horizontal velocity: the desired heading is the
  * orbit tangent at the craft's angle around the center, pulled radially by {@code (radius - distance)}
  * so the craft returns to the ring. The signed heading error is mapped to a roll (bank) bias, so this
  * is a {@link GoalCategory#FLIGHT_PATH} goal and composes with an {@code altitude} goal.
+ * <p>
+ * When the direction is {@link OrbitDirection#AUTO} (the default), the craft picks the handedness
+ * that requires the least heading change to join the ring on its first tick with airspeed, based on
+ * its current position and velocity, then locks it in for the rest of the goal.
  *
- * @param target    structure id, {@code #tag}, or {@code [x, z]} pair to orbit around
+ * @param target    structure id, {@code #tag}, or {@code [x, z]} spawn offset to orbit around
  * @param radius    orbit radius in blocks
- * @param direction orbit handedness, {@link OrbitDirection#CW} or {@link OrbitDirection#CCW}
+ * @param direction orbit handedness, {@link OrbitDirection#AUTO}, {@link OrbitDirection#CW} or {@link OrbitDirection#CCW}
  * @param maxBank   maximum roll/bank bias in radians
  */
 public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
 
     /** Which way around the center the craft travels, viewed from above. */
     public enum OrbitDirection {
-        CW, CCW;
+        AUTO, CW, CCW;
 
         public static final Codec<OrbitDirection> CODEC = Codec.STRING.xmap(
                 value -> switch (value.toLowerCase(Locale.ROOT)) {
+                    case "auto" -> AUTO;
                     case "cw" -> CW;
                     case "ccw" -> CCW;
                     default -> throw new IllegalArgumentException("Unknown orbit direction: " + value);
@@ -72,7 +77,7 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
                 direction -> direction.name().toLowerCase(Locale.ROOT));
     }
 
-    /** Where to orbit around: a structure reference or a fixed {@code [x, z]} point. */
+    /** Where to orbit around: a structure reference or an {@code [x, z]} offset from the spawn point. */
     public sealed interface OrbitTarget {
 
         Codec<OrbitTarget> CODEC = Codec.either(Point.CODEC, Codec.STRING).xmap(
@@ -111,7 +116,7 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
             RecordCodecBuilder.mapCodec(instance -> instance.group(
                     OrbitTarget.CODEC.fieldOf("target").forGetter(OrbitGoal::target),
                     Codec.DOUBLE.fieldOf("radius").forGetter(OrbitGoal::radius),
-                    OrbitDirection.CODEC.optionalFieldOf("direction", OrbitDirection.CCW).forGetter(OrbitGoal::direction),
+                    OrbitDirection.CODEC.optionalFieldOf("direction", OrbitDirection.AUTO).forGetter(OrbitGoal::direction),
                     Codec.DOUBLE.optionalFieldOf("max_bank", DEFAULT_MAX_BANK).forGetter(OrbitGoal::maxBank)
             ).apply(instance, OrbitGoal::new)));
 
@@ -124,6 +129,10 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
     private BlockPos resolvedCenter;
     @Nullable
     private Vector3d lastAttempt;
+    @Nullable
+    private OrbitDirection resolvedDirection;
+    @Nullable
+    private Vector3d spawnReference;
 
     public OrbitGoal(OrbitTarget target, double radius, OrbitDirection direction, double maxBank) {
         this.target = target;
@@ -150,8 +159,7 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
 
     @Override
     public SpawnPlacement spawnPlacement() {
-        // Start on the orbit ring at a fixed reference angle (east of the anchor), nose pointing
-        // along the orbit tangent so no corrective manoeuvres are needed to settle onto the ring.
+        if (direction == OrbitDirection.AUTO) return SpawnPlacement.NONE;
         double yaw = direction == OrbitDirection.CW ? Math.PI : 0.0;
         return new SpawnPlacement((int) Math.round(radius), 0, yaw);
     }
@@ -182,8 +190,9 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
         double dist = Math.hypot(rx, rz);
         if (dist < 1e-6) return null;
 
-        double tx = direction == OrbitDirection.CCW ? rz / dist : -rz / dist;
-        double tz = direction == OrbitDirection.CCW ? -rx / dist : rx / dist;
+        OrbitDirection effective = effectiveDirection(context, rx, rz, dist, velocity, speed);
+        double tx = effective == OrbitDirection.CCW ? rz / dist : -rz / dist;
+        double tz = effective == OrbitDirection.CCW ? -rx / dist : rx / dist;
 
         double pull = Mth.clamp(RADIUS_GAIN * (radius - dist), -MAX_RADIAL_PULL, MAX_RADIAL_PULL);
         double hx = tx + rx / dist * pull;
@@ -195,6 +204,28 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
         double error = Math.atan2((ux * hz - uz * hx) / hLen, (ux * hx + uz * hz) / hLen);
 
         return new AutopilotBias(0, Mth.clamp(error * ROLL_GAIN, -maxBank, maxBank));
+    }
+
+    private OrbitDirection effectiveDirection(AutopilotContext context, double rx, double rz, double dist,
+                                              Vector3d velocity, double speed) {
+        if (direction != OrbitDirection.AUTO) return direction;
+        if (resolvedDirection != null) return resolvedDirection;
+
+        double ux = velocity.x / speed;
+        double uz = velocity.z / speed;
+        double cwError = headingError(ux, uz, -rz / dist, rx / dist);
+        double ccwError = headingError(ux, uz, rz / dist, -rx / dist);
+
+        resolvedDirection = Math.abs(cwError) <= Math.abs(ccwError)
+                ? OrbitDirection.CW : OrbitDirection.CCW;
+        ModLog.info(AUTOPILOT, "Orbit goal picked {} (heading error CW={}deg, CCW={}deg) at {}",
+                resolvedDirection, Math.toDegrees(cwError), Math.toDegrees(ccwError), context.worldPosition());
+        return resolvedDirection;
+    }
+
+    /** Signed angle from a unit heading to a unit tangent, in radians. */
+    private static double headingError(double ux, double uz, double tx, double tz) {
+        return Math.atan2(ux * tz - uz * tx, ux * tx + uz * tz);
     }
 
     @Nullable
@@ -209,7 +240,13 @@ public final class OrbitGoal implements AutopilotGoal<OrbitGoal> {
     private BlockPos resolveCenter(AutopilotContext context) {
         if (resolvedCenter != null) return resolvedCenter;
         if (target instanceof OrbitTarget.Point point) {
-            resolvedCenter = new BlockPos(point.x(), 0, point.z());
+            if (spawnReference == null) {
+                spawnReference = new Vector3d(context.worldPosition().x(), context.worldPosition().y(), context.worldPosition().z());
+                ModLog.info(AUTOPILOT, "Orbit point target {} anchored to spawn reference {}", point, spawnReference);
+            }
+            resolvedCenter = new BlockPos(
+                    (int) Math.floor(spawnReference.x + point.x()), 0,
+                    (int) Math.floor(spawnReference.z + point.z()));
             return resolvedCenter;
         }
         OrbitTarget.Structure structure = (OrbitTarget.Structure) target;
