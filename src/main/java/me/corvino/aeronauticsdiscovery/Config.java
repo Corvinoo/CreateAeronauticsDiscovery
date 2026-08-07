@@ -108,6 +108,10 @@ public class Config {
             .comment("When enabled, players can add planks to ropes by right-clicking on rope anchors with slabs")
             .define("bridge.allowPlankPlacement", true);
 
+    private static final ModConfigSpec.DoubleValue PLAYER_PROXIMITY_RADIUS = BUILDER
+            .comment("Distance in blocks a player must be within to trigger pins armed with the Player Proximity trigger.")
+            .defineInRange("pin.playerProximityRadius", 5.0, 1.0, 256.0);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
@@ -128,6 +132,7 @@ public class Config {
     public static double promotionRange;
     public static boolean planksLevelled;
     public static boolean allowPlankPlacement;
+    public static double playerProximityRadius;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -149,6 +154,7 @@ public class Config {
         promotionRange = PROMOTION_RANGE.get();
         planksLevelled = PLANKS_LEVELLED.get();
         allowPlankPlacement = ALLOW_PLANK_PLACEMENT.get();
+        playerProximityRadius = PLAYER_PROXIMITY_RADIUS.get();
     }
 
     public enum ExplosionMode {

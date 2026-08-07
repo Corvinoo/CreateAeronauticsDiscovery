@@ -11,6 +11,7 @@ import me.corvino.aeronauticsdiscovery.commands.*;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
 import me.corvino.aeronauticsdiscovery.pin.PinSubLevelObserver;
+import me.corvino.aeronauticsdiscovery.pin.trigger.PlayerProximityTrigger;
 import me.corvino.aeronauticsdiscovery.pin.trigger.ProjectileImpactTrigger;
 import me.corvino.aeronauticsdiscovery.pin.trigger.SubLevelImpactTrigger;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
@@ -109,6 +110,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(PinSubLevelObserver::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ProjectileImpactTrigger::onProjectileImpact);
         NeoForge.EVENT_BUS.addListener(SubLevelImpactTrigger::onSubLevelImpact);
+        NeoForge.EVENT_BUS.addListener(PlayerProximityTrigger::onLevelTick);
 //        NeoForge.EVENT_BUS.addListener(StructureProximityTracker::onLevelTick); //disabled for now
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
