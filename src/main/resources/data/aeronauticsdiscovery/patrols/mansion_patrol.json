@@ -1,6 +1,6 @@
 {
   "template": "aeronauticsdiscovery:airplane_pillager",
-  "target_structure": "minecraft:pillager_outpost",
+  "target_structure": "minecraft:mansion",
   "chance": 1,
   "min_altitude": 170,
   "max_altitude": 170,

@@ -1,10 +1,14 @@
 {
-  "template": "aeronauticsdiscovery:airplane",
+  "template": "aeronauticsdiscovery:airplane_pillager",
+  "min_altitude": 220,
+  "max_altitude": 260,
+  "weight": 1,
   "initial_velocity": {
-    "linear": [0, 0, 0],
+    "linear": [0.0, 0.0, 0.0],
     "angular": [0.0, 0.0, 0.0],
     "impulse": false
   },
+  "dimensions": ["minecraft:overworld"],
   "plan": {
     "goals": [
       { "type": "aeronauticsdiscovery:straight" },
