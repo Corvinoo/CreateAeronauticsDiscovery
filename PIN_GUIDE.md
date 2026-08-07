@@ -21,10 +21,9 @@ Everything is done through the **Pin Wand** item and its clickable chat UI. The 
   - [3. Placing Pins](#3-placing-pins)
   - [4. Behavior Types](#4-behavior-types)
     - [Explosive](#explosive)
-    - [Mob Spawn Point](#mob-spawn-point)
-    - [Seat Mob](#seat-mob)
+    - [Spawn Mob](#spawn-mob)
     - [Rope Connector](#rope-connector)
-    - [Fill Up Ballon](#fill-up-ballon)
+    - [Fill Up Balloon](#fill-up-balloon)
   - [5. Triggers](#5-triggers)
   - [6. Chain Reactions (Emitter)](#6-chain-reactions-emitter)
   - [7. Inspecting and Removing Pins](#7-inspecting-and-removing-pins)
@@ -115,14 +114,17 @@ The pin inherits whatever behavior, parameters, triggers, and emitter settings t
 
 If you place a pin inside a structure (sub-level), it is automatically bound to that structure.
 
+> [!TIP]
+> **Right-click a block while sneaking** to place another pin inside the same block. A block can hold several pins at once. A normal right-click shows the configuration panels for **all** the pins in that block.
+
 The color of the cube indicates the behavior type:
 
 | Color  | Behavior        |
 |--------|-----------------|
 | Red    | Explosive       |
-| Blue   | Mob Spawn Point |
-| Green  | Seat Mob        |
+| Green  | Spawn Mob       |
 | Orange | Rope Connector  |
+| Cyan   | Fill Up Balloon |
 
 ---
 
@@ -141,26 +143,17 @@ Detonates when triggered .
 
 ---
 
-### Mob Spawn Point
+### Spawn Mob
 
-Spawns a mob at the pin's location when triggered.
+Spawns a mob at the pin's location when triggered. If the pin sits on a Create Seat block, the mob is spawned and seated on it; otherwise it spawns standing at the pin.
 
-| Parameter | Default              | Description                                 |
-|-----------|----------------------|---------------------------------------------|
-| mob_id    | `minecraft:pillager` | Entity type to spawn (use any valid mob ID) |
-
----
-
-### Seat Mob
-
-Spawns a mob and seats it on a Create Seat block.
-
-| Parameter | Default              | Description                   |
-|-----------|----------------------|-------------------------------|
-| mob_id    | `minecraft:pillager` | Entity type to spawn and seat |
+| Parameter | Default              | Description                                                    |
+|-----------|----------------------|----------------------------------------------------------------|
+| mob_id    | `minecraft:pillager` | Entity type to spawn (use any valid mob ID)                    |
+| nbt       | *(empty)*            | Optional raw NBT (incl. item components) applied to the mob    |
 
 > [!NOTE]
-> **This behavior requires a Create Seat block at the pin's position.**
+> This replaces the former **Mob Spawn Point** (`mob_spawn_point`) and **Seat Mob** (`seat_mob`) behaviors, which are deprecated and scheduled for removal but still work on pins placed before the merge.
 
 ### Rope Connector
 
@@ -179,10 +172,16 @@ Connects two pins (start and end) with a rope bridge. Both pins must be on the s
 
 Use different channel numbers to create separate bridge pairs that don't interfere with each other. For example, channel `0` for one bridge, channel `1` for another.
 
-### Fill Up Ballon
+### Fill Up Balloon
+
+Instantly fills an attached hot-air balloon with lifting gas when triggered. The pin scans upward for the balloon's airtight interior, then fills each lifting-gas holder up to `fill_amount` fraction of the balloon's total capacity.
+
+| Parameter   | Default | Description                                                          |
+|-------------|---------|----------------------------------------------------------------------|
+| fill_amount | `1.0`   | Fraction of the balloon's capacity to fill (e.g. `0.5` = half full)  |
 
 > [!NOTE]
-> **This behavior is a WIP, it will allow ballons to be instantly filled by a certain percentage on trigger.**
+> If the balloon is still assembling or has no heaters, the pin waits and retries for up to ~60 seconds before giving up.
 
 
 ---
@@ -191,13 +190,16 @@ Use different channel numbers to create separate bridge pairs that don't interfe
 
 Triggers control *when* a pin activates. Click `[✎ Triggers]` in the wand UI to configure them.
 
-| Trigger            | What activates it                                                 |
-|--------------------|-------------------------------------------------------------------|
-| **Assembled**      | Structure finishes assembling (e.g. by using a Physics Assembler) |
-| **External Force** | Structure crashes into something                                  |
-| **Projectile**     | When an arrow hits the pin                                        |
-| Explosion          | Triggered by explosive pins (useful for chain explosions)         |
-| Player Proximity   | WIP, currently not implemented                                    |
+| Trigger              | What activates it                                                                 |
+|----------------------|-----------------------------------------------------------------------------------|
+| **Assembled**        | Structure finishes assembling (e.g. by using a Physics Assembler)                 |
+| **External Force**   | Structure crashes into something                                                  |
+| **Projectile**       | When an arrow hits the pin                                                        |
+| **Explosion**        | Triggered by explosive pins (useful for chain explosions)                         |
+| **Player Proximity** | A non-creative, non-spectator player comes within the proximity radius of the pin |
+
+> [!NOTE]
+> The proximity radius is a mod config option (`pin.playerProximityRadius`, default `5.0`, range `1.0`–`256.0` blocks), set in the Mod Config file.
 
 > [!NOTE]
 > Pins will disappear after they have been triggered.
@@ -239,14 +241,17 @@ The delay between pins is based on distance: **delay (in ticks) = distance / spe
   [✕ Remove]
 ```
 
+> [!NOTE]
+> If a block holds several pins, a normal right-click shows the config panel for **every** pin in that block, each with its own `[✕ Remove]` button. Use **Shift + right-click** to add another pin to the same block instead.
+
 Click `[✕ Remove]` to delete the pin instantly.
 
 ### Remove via command
 
-If you know the coordinates:
+If you know the coordinates, you also need the pin's entity ID (shown when inspecting it):
 
 ```
-/pinwand remove 102 64 -380
+/pinwand remove 102 64 -380 1234
 ```
 
 > [!NOTE]
