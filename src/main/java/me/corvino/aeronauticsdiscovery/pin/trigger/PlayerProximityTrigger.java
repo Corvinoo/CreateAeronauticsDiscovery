@@ -13,7 +13,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,38 +28,48 @@ public final class PlayerProximityTrigger {
         double radius = Config.playerProximityRadius;
         double radiusSq = radius * radius;
 
+        List<ServerPlayer> players = new ArrayList<>();
         for (ServerPlayer player : level.players()) {
             if (player.isSpectator() || player.isCreative()) continue;
+            players.add(player);
+        }
+        if (players.isEmpty()) return;
 
-            Vec3 center = player.position();
+        for (ServerPlayer player : players) {
+            Vec3 centre = player.position();
+            AABB box = new AABB(
+                    centre.x - radius, centre.y - radius, centre.z - radius,
+                    centre.x + radius, centre.y + radius, centre.z + radius);
+
+            // Dedupe candidates per player so each pin's distance is computed at most once.
             Map<UUID, PinEntity> candidates = new LinkedHashMap<>();
 
             // world bound pins
-            AABB box = new AABB(
-                    center.x - radius, center.y - radius, center.z - radius,
-                    center.x + radius, center.y + radius, center.z + radius);
             for (PinEntity pin : level.getEntitiesOfClass(PinEntity.class, box)) {
-                candidates.putIfAbsent(pin.getUUID(), pin);
+                addCandidate(candidates, pin);
             }
 
             // sublevel bound pins
             for (SubLevel subLevel : Sable.HELPER.getAllIntersecting(level, new BoundingBox3d(box))) {
                 for (PinEntity pin : level.getEntitiesOfClass(PinEntity.class,
                         subLevel.boundingBox().toMojang())) {
-                    candidates.putIfAbsent(pin.getUUID(), pin);
+                    addCandidate(candidates, pin);
                 }
             }
 
             for (PinEntity pin : candidates.values()) {
-                if (!pin.isAlive() || !pin.isBound()) continue;
-                if (!pin.getTriggerMask().accepts(PinTrigger.Kind.PLAYER_PROXIMITY)) continue;
-
                 double distSq = Sable.HELPER.distanceSquaredWithSubLevels(
-                        level, pin.position(), center.x, center.y, center.z);
+                        level, pin.position(), centre.x, centre.y, centre.z);
                 if (distSq <= radiusSq) {
-                    PinNetwork.triggerDirect(pin, new PinTrigger(PinTrigger.Kind.PLAYER_PROXIMITY, center));
+                    PinNetwork.triggerDirect(pin, new PinTrigger(PinTrigger.Kind.PLAYER_PROXIMITY, centre));
                 }
             }
         }
+    }
+
+    private static void addCandidate(Map<UUID, PinEntity> candidates, PinEntity pin) {
+        if (!pin.isAlive() || !pin.isBound()) return;
+        if (!pin.getTriggerMask().accepts(PinTrigger.Kind.PLAYER_PROXIMITY)) return;
+        candidates.putIfAbsent(pin.getUUID(), pin);
     }
 }
