@@ -1,33 +1,49 @@
 package me.corvino.aeronauticsdiscovery.pin.behaviour;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.List;
 
 /**
  * Spawns one instance of {@code mobId} at this pin's position when triggered.
+ * <p>
+ * Optional {@code nbt} supplies raw NBT (including data-component syntax, e.g.
+ * {@code {HandItems:[{id:"minecraft:crossbow",count:1}]}}) applied to the mob before it spawns.
  *
- * @param mobId registry id of the entity type to spawn, e.g. "minecraft:pillager"
+ * @deprecated Scheduled for removal; use {@link SpawnMobBehavior} ({@code spawn_mob}).
  */
-public record MobSpawnPointBehavior(ResourceLocation mobId) implements PinBehavior<MobSpawnPointBehavior> {
+@Deprecated(forRemoval = true)
+public record MobSpawnPointBehavior(ResourceLocation mobId, String nbt) implements PinBehavior<MobSpawnPointBehavior> {
 
+    /**
+     * @deprecated Scheduled for removal; use {@link SpawnMobBehavior}.
+     */
+    @Deprecated(forRemoval = true)
     public static final PinBehaviorType<MobSpawnPointBehavior> TYPE = PinBehaviorTypes.<MobSpawnPointBehavior>register(
             "mob_spawn_point",
             RecordCodecBuilder.create(instance -> instance.group(
-                    ResourceLocation.CODEC.fieldOf("mob_id").forGetter(MobSpawnPointBehavior::mobId)
+                    ResourceLocation.CODEC.fieldOf("mob_id").forGetter(MobSpawnPointBehavior::mobId),
+                    Codec.STRING.optionalFieldOf("nbt", "").forGetter(MobSpawnPointBehavior::nbt)
             ).apply(instance, MobSpawnPointBehavior::new)),
             List.of(
-                    new ConfigField("mob_id", "Mob ID", ConfigField.FieldType.RESOURCE_LOCATION, ResourceLocation.parse("minecraft:pillager"))
+                    new ConfigField("mob_id", "Mob ID", ConfigField.FieldType.RESOURCE_LOCATION, ResourceLocation.parse("minecraft:pillager")),
+                    new ConfigField("nbt", "NBT", ConfigField.FieldType.STRING, "")
             ),
-            0x804040FF
+            0x804040FF,
+            true
     );
 
     @Override
@@ -49,7 +65,23 @@ public record MobSpawnPointBehavior(ResourceLocation mobId) implements PinBehavi
         var mob = type.create(serverLevel);
         if (mob == null) return;
 
+        applyNbt(self, mob);
+
         mob.moveTo(self.getX(), self.getY(), self.getZ(), self.getYRot(), 0.0F);
         serverLevel.addFreshEntity(mob);
+    }
+
+    private void applyNbt(PinEntity self, Entity mob) {
+        if (this.nbt.isEmpty()) return;
+        try {
+            CompoundTag userTag = TagParser.parseTag(this.nbt);
+            CompoundTag full = new CompoundTag();
+            mob.saveWithoutId(full);
+            full.merge(userTag);
+            mob.load(full);
+        } catch (CommandSyntaxException e) {
+            ModLog.warn(PIN,
+                    "Invalid spawn NBT for '{}' at {}: {}", this.mobId, self.blockPosition(), e.getMessage());
+        }
     }
 }

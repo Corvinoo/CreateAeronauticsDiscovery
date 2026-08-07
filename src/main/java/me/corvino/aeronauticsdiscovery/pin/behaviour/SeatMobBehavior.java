@@ -1,5 +1,7 @@
 package me.corvino.aeronauticsdiscovery.pin.behaviour;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.content.contraptions.actors.seat.SeatBlock;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
@@ -8,8 +10,11 @@ import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 
@@ -20,18 +25,31 @@ import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 /**
  * Spawns one instance of {@code mobId} at this pin's position and mounts it onto a Create seat.
  * Requires a {@link SeatBlock} at the pin's position.
+ * <p>
+ * Optional {@code nbt} supplies raw NBT (including data-component syntax, e.g.
+ * {@code {HandItems:[{id:"minecraft:crossbow",count:1}]}}) applied to the mob before it spawns.
+ *
+ * @deprecated Scheduled for removal; use {@link SpawnMobBehavior} ({@code spawn_mob}).
  */
-public record SeatMobBehavior(ResourceLocation mobId) implements PinBehavior<SeatMobBehavior> {
+@Deprecated(forRemoval = true)
+public record SeatMobBehavior(ResourceLocation mobId, String nbt) implements PinBehavior<SeatMobBehavior> {
 
+    /**
+     * @deprecated Scheduled for removal; use {@link SpawnMobBehavior}.
+     */
+    @Deprecated(forRemoval = true)
     public static final PinBehaviorType<SeatMobBehavior> TYPE = PinBehaviorTypes.<SeatMobBehavior>register(
             "seat_mob",
             RecordCodecBuilder.create(instance -> instance.group(
-                    ResourceLocation.CODEC.fieldOf("mob_id").forGetter(SeatMobBehavior::mobId)
+                    ResourceLocation.CODEC.fieldOf("mob_id").forGetter(SeatMobBehavior::mobId),
+                    Codec.STRING.optionalFieldOf("nbt", "").forGetter(SeatMobBehavior::nbt)
             ).apply(instance, SeatMobBehavior::new)),
             List.of(
-                    new ConfigField("mob_id", "Mob ID", ConfigField.FieldType.RESOURCE_LOCATION, ResourceLocation.parse("minecraft:pillager"))
+                    new ConfigField("mob_id", "Mob ID", ConfigField.FieldType.RESOURCE_LOCATION, ResourceLocation.parse("minecraft:pillager")),
+                    new ConfigField("nbt", "NBT", ConfigField.FieldType.STRING, "")
             ),
-            0x8040FF80
+            0x8040FF80,
+            true
     );
 
     @Override
@@ -57,6 +75,8 @@ public record SeatMobBehavior(ResourceLocation mobId) implements PinBehavior<Sea
         var mob = type.create(serverLevel);
         if (mob == null) return;
 
+        applyNbt(self, mob);
+
         mob.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         if (self.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)) {
             mob.getPersistentData().putUUID(SUBLEVEL_ID_TAG,
@@ -69,5 +89,19 @@ public record SeatMobBehavior(ResourceLocation mobId) implements PinBehavior<Sea
         }
 
         SeatBlock.sitDown(serverLevel, pos, mob);
+    }
+
+    private void applyNbt(PinEntity self, Entity mob) {
+        if (this.nbt.isEmpty()) return;
+        try {
+            CompoundTag userTag = TagParser.parseTag(this.nbt);
+            CompoundTag full = new CompoundTag();
+            mob.saveWithoutId(full);
+            full.merge(userTag);
+            mob.load(full);
+        } catch (CommandSyntaxException e) {
+            ModLog.warn(PIN,
+                    "Invalid spawn NBT for '{}' at {}: {}", this.mobId, self.blockPosition(), e.getMessage());
+        }
     }
 }
