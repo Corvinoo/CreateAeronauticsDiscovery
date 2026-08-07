@@ -14,7 +14,7 @@ import java.util.Optional;
  * @param template        prefab template to assemble
  * @param targetStructure structure id (e.g. {@code minecraft:pillager_outpost}) or {@code #tag} to
  *                        patrol
- * @param weight          probability (0..1) that a given structure instance gets a patrol craft;
+ * @param chance          probability (0..1) that a given structure instance gets a patrol craft;
  *                        rolled once per instance and persisted so it never re-rolls
  * @param minAltitude     lower bound of the spawn altitude band
  * @param maxAltitude     upper bound of the spawn altitude band
@@ -28,7 +28,7 @@ import java.util.Optional;
 public record PatrolConfig(
         ResourceLocation template,
         String targetStructure,
-        double weight,
+        double chance,
         int minAltitude,
         int maxAltitude,
         Optional<InitialVelocity> initialVelocity,
@@ -38,7 +38,7 @@ public record PatrolConfig(
     public static final MapCodec<PatrolConfig> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("template").forGetter(PatrolConfig::template),
             Codec.STRING.fieldOf("target_structure").forGetter(PatrolConfig::targetStructure),
-            Codec.doubleRange(0.0, 1.0).optionalFieldOf("weight", 1.0).forGetter(PatrolConfig::weight),
+            Codec.doubleRange(0.0, 1.0).optionalFieldOf("chance", 1.0).forGetter(PatrolConfig::chance),
             Codec.INT.optionalFieldOf("min_altitude", 150).forGetter(PatrolConfig::minAltitude),
             Codec.INT.optionalFieldOf("max_altitude", 200).forGetter(PatrolConfig::maxAltitude),
             InitialVelocity.CODEC.codec().optionalFieldOf("initial_velocity").forGetter(PatrolConfig::initialVelocity),

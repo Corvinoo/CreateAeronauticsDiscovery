@@ -61,9 +61,9 @@ public final class PatrolSpawner {
         }
         manager.markHandled(config.targetStructure(), packedChunk);
 
-        if (level.random.nextDouble() >= config.weight()) {
+        if (level.random.nextDouble() >= config.chance()) {
             ModLog.info(PATROL, "Chance ({}) rejected patrol '{}' for {} @ chunk {}",
-                    config.weight(), config.template(), config.targetStructure(), packedChunk);
+                    config.chance(), config.template(), config.targetStructure(), packedChunk);
             return;
         }
 

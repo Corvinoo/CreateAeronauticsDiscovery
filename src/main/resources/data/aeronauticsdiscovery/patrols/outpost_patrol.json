@@ -1,7 +1,7 @@
 {
-  "template": "aeronauticsdiscovery:airplane",
+  "template": "aeronauticsdiscovery:airplane_pillager",
   "target_structure": "minecraft:pillager_outpost",
-  "weight": 0.8,
+  "chance": 0.8,
   "min_altitude": 170,
   "max_altitude": 170,
   "plan": {

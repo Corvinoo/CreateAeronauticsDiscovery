@@ -18,8 +18,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Keyed by {@code structure id -> packed start chunk position}. The "rejected by weight" case is
- * recorded as {@code targetStructure -> chunk} too, so a failed weight roll is final for that instance.
+ * Keyed by {@code structure id -> packed start chunk position}. The "rejected by chance" case is
+ * recorded as {@code targetStructure -> chunk} too, so a failed chance roll is final for that instance.
  */
 public class PatrolManager extends SavedData {
 

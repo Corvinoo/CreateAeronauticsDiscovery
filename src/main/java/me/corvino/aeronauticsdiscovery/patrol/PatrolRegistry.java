@@ -48,8 +48,8 @@ public class PatrolRegistry extends SimpleJsonResourceReloadListener {
                         .getOrThrow(error -> new RuntimeException("Failed to decode " + entry.getKey() + ": " + error))
                         .getFirst();
                 list.add(config);
-                ModLog.debug(PATROL, "Loaded patrol for template '{}' targeting '{}' (weight={}) from '{}'",
-                        config.template(), config.targetStructure(), config.weight(), entry.getKey());
+                ModLog.debug(PATROL, "Loaded patrol for template '{}' targeting '{}' (chance={}) from '{}'",
+                        config.template(), config.targetStructure(), config.chance(), entry.getKey());
             } catch (Exception e) {
                 ModLog.error(PATROL, "Failed to load patrol config from '{}': {}", entry.getKey(), e.getMessage());
             }
