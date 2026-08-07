@@ -78,6 +78,7 @@ After clicking `[✎ Triggers]`, you see a list of trigger kinds, each with a to
 [✕] Player Proximity
 [✕] Projectile
 [✕] Explosion
+[✕] Released
 [← Back]
 ```
 
@@ -197,6 +198,7 @@ Triggers control *when* a pin activates. Click `[✎ Triggers]` in the wand UI t
 | **Projectile**       | When an arrow hits the pin                                                        |
 | **Explosion**        | Triggered by explosive pins (useful for chain explosions)                         |
 | **Player Proximity** | A non-creative, non-spectator player comes within the proximity radius of the pin |
+| **Released**         | The flyover is released (when the player gets close to the it)                    |
 
 > [!NOTE]
 > The proximity radius is a mod config option (`pin.playerProximityRadius`, default `5.0`, range `1.0`–`256.0` blocks), set in the Mod Config file.
