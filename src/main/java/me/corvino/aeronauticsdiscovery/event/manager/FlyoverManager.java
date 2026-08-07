@@ -13,9 +13,11 @@ import me.corvino.aeronauticsdiscovery.event.FlyoverSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.event.FlyoverUtils;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinNetwork;
+import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import me.corvino.aeronauticsdiscovery.util.ChunkLoadingHelper;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -197,10 +199,14 @@ public class FlyoverManager extends SavedData {
                 entry.subLevelId(), entry.templateId());
         PinNetwork.clear(entry.subLevelId());
 
+        // Fire RELEASED on each pin before the cleanup below removes them from the world
+        fireReleasedOnPins(subLevel);
+
         // Clean entities and tags from child sub-levels | TODO: make path to handle child-sublevel more clear and streamlined
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container != null) {
             for (ServerSubLevel child : ChildSubLevelManager.getChildSubLevels(container, entry.subLevelId())) {
+                fireReleasedOnPins(child);
                 ChildSubLevelManager.clearChildTags(child);
                 FlyoverUtils.removeAllEntitiesInSublevel(child, false,
                         e -> e instanceof PinEntity, true);
@@ -209,6 +215,16 @@ public class FlyoverManager extends SavedData {
 
         FlyoverUtils.removeAllEntitiesInSublevel(subLevel, false, e -> e instanceof PinEntity, true);
         removeForceTicket(subLevel);
+    }
+
+    private void fireReleasedOnPins(ServerSubLevel subLevel) {
+        ServerLevel level = subLevel.getLevel();
+        UUID subLevelId = subLevel.getUniqueId();
+        for (PinEntity pin : level.getEntitiesOfClass(PinEntity.class, subLevel.boundingBox().toMojang())) {
+            CompoundTag data = pin.getPersistentData();
+            if (!data.hasUUID(SUBLEVEL_ID_TAG) || !data.getUUID(SUBLEVEL_ID_TAG).equals(subLevelId)) continue;
+            PinNetwork.triggerDirect(pin, new PinTrigger(PinTrigger.Kind.RELEASED, pin.position()));
+        }
     }
 
     private void beginDespawn(FlyoverEntry entry, ServerSubLevel subLevel, FlyoverRemovalReason reason) {

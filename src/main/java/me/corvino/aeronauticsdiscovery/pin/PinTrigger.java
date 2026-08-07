@@ -14,6 +14,7 @@ public record PinTrigger(Kind kind, Vec3 originWorldPos) {
         PLAYER_PROXIMITY,
         PROJECTILE,
         EXPLOSION,
+        RELEASED,
         ;
 
         public int bit() {
@@ -27,6 +28,7 @@ public record PinTrigger(Kind kind, Vec3 originWorldPos) {
                 case PLAYER_PROXIMITY -> "Player Proximity";
                 case PROJECTILE -> "Projectile";
                 case EXPLOSION -> "Explosion";
+                case RELEASED -> "Released";
             };
         }
     }
