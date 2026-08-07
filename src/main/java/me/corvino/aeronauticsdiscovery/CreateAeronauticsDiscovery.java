@@ -6,6 +6,7 @@ import me.corvino.aeronauticsdiscovery.bridge.BridgeInteractionHandler;
 import me.corvino.aeronauticsdiscovery.bridge.BridgePlankManager;
 import me.corvino.aeronauticsdiscovery.bridge.BridgeSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
+import me.corvino.aeronauticsdiscovery.client.renderer.PillagerAviatorRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.commands.*;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
@@ -186,6 +187,7 @@ public class CreateAeronauticsDiscovery {
         @SubscribeEvent
         public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(EntityRegistry.SOARING_TRADER.get(), SoaringTraderRenderer::new);
+            event.registerEntityRenderer(EntityRegistry.PILLAGER_AVIATOR.get(), PillagerAviatorRenderer::new);
             event.registerEntityRenderer(EntityRegistry.PIN.get(), PinEntityRenderer::new);
         }
     }

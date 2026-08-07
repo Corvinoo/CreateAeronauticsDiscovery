@@ -16,6 +16,10 @@ public class ItemRegistry {
             ITEMS.register("soaring_trader_spawn_egg",
                     () -> new SpawnEggItem(EntityRegistry.SOARING_TRADER.get(), 0x300200, 0xffd800, new Item.Properties()));
 
+    public static final DeferredHolder<Item, SpawnEggItem> PILLAGER_AVIATOR_SPAWN_EGG =
+            ITEMS.register("pillager_aviator_spawn_egg",
+                    () -> new SpawnEggItem(EntityRegistry.PILLAGER_AVIATOR.get(), 0x33415F, 0xA5A6B5, new Item.Properties()));
+
     public static final DeferredHolder<Item, PinWandItem> PIN_WAND =
             ITEMS.register("pin_wand", () -> new PinWandItem(new Item.Properties().stacksTo(1)));
 

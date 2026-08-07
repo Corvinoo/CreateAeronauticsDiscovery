@@ -1,6 +1,8 @@
 {
   "entity.aeronauticsdiscovery.soaring_trader": "Soaring Trader",
+  "entity.aeronauticsdiscovery.pillager_aviator": "Pillager Aviator",
   "item.aeronauticsdiscovery.soaring_trader_spawn_egg": "Soaring Trader Spawn Egg",
+  "item.aeronauticsdiscovery.pillager_aviator_spawn_egg": "Pillager Aviator Spawn Egg",
   "item.aeronauticsdiscovery.pin_wand": "Pin Wand",
   "itemGroup.aeronauticsdiscovery.main": "Create Aeronautics: Discovery",
   "filled_map.village_plains": "Plains Village Map",

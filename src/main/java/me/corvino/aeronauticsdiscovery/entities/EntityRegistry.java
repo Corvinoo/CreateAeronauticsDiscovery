@@ -6,6 +6,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Pillager;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -22,10 +23,18 @@ public class EntityRegistry {
                     .clientTrackingRange(10)
                     .build("soaring_trader"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<PillagerAviator>> PILLAGER_AVIATOR = ENTITIES.register("pillager_aviator",
+            () -> EntityType.Builder.of(PillagerAviator::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F)
+                    .clientTrackingRange(10)
+                    .build("pillager_aviator"));
+
     public static void RegisterEntityAttributes(EntityAttributeCreationEvent event) {
         event.put(SOARING_TRADER.get(), Mob.createMobAttributes()
                 .add(Attributes.FOLLOW_RANGE, 16.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.5D)
+                .build());
+        event.put(PILLAGER_AVIATOR.get(), Pillager.createAttributes()
                 .build());
     }
 
