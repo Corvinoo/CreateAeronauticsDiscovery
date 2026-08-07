@@ -29,10 +29,6 @@ public final class Pipelines {
             new PlaceTemplateEntitiesStep(),
             new ReadinessCheckStep(),
             new AssembleStep(),
-//            new RotateSubLevelStep(),
-//            new AddForceLoadTicketStep(),
-//            new ConvertPhysicsBarrelStep(),
-//            new CleanUpItemEntities(),
             new UnloadChunkStep()
     )));
 
