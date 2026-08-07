@@ -41,6 +41,7 @@ public final class PinBehaviorTypes {
         touch(MobSpawnPointBehavior.TYPE);
         touch(SeatMobBehavior.TYPE);
         touch(RopeConnectorBehavior.TYPE);
+        touch(BurnTimeBehavior.TYPE);
     }
 
     private static void touch(PinBehaviorType<?> type) {
