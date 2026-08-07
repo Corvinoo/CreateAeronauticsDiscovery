@@ -1,0 +1,23 @@
+{
+  "template": "aeronauticsdiscovery:airplane_pillager",
+  "target_structure": "minecraft:pillager_outpost",
+  "chance": 1,
+  "min_altitude": 170,
+  "max_altitude": 170,
+  "plan": {
+    "goals": [
+      {
+        "type": "aeronauticsdiscovery:orbit",
+        "target": "minecraft:mansion",
+        "radius": 90,
+        "direction": "ccw"
+      },
+      {
+        "type": "aeronauticsdiscovery:altitude",
+        "min_altitude": 160,
+        "max_altitude": 190
+      }
+    ]
+  },
+  "dimensions": ["minecraft:overworld"]
+}
