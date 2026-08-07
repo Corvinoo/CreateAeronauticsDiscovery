@@ -52,7 +52,7 @@ public final class Pipelines {
             new ReadinessCheckStep(),
             new AssembleStep(),
             new RotateSubLevelStep(),
-            new ConvertPhysicsBarrelStep(),
+//            new ConvertPhysicsBarrelStep(),
             new CleanUpItemEntities(),
             new UnloadChunkStep()
     )));
