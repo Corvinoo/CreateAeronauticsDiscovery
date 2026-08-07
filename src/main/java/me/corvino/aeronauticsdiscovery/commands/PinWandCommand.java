@@ -78,7 +78,7 @@ public final class PinWandCommand {
         CompoundTag tag = PinWandItem.getDataTag(stack);
         String currentStr = tag.getString(TAG_BEHAVIOR_ID);
 
-        List<PinBehaviorType<?>> types = new ArrayList<>(PinBehaviorTypes.getAll().values());
+        List<PinBehaviorType<?>> types = new ArrayList<>(PinBehaviorTypes.getActive().values());
         if (types.isEmpty()) {
             source.sendFailure(Component.literal("No pin behavior types registered"));
             return 0;

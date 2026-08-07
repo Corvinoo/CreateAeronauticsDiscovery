@@ -253,7 +253,7 @@ public class    PinWandItem extends Item {
             setDataTag(stack, tag);
             return;
         }
-        var all = PinBehaviorTypes.getAll();
+        var all = PinBehaviorTypes.getActive();
         if (all.isEmpty()) return;
         var first = all.values().iterator().next();
         tag.putString(TAG_BEHAVIOR_ID, first.id().toString());

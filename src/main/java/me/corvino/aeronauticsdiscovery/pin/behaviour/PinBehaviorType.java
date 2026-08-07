@@ -13,10 +13,14 @@ import java.util.List;
  *
  * @param configFields metadata used by the Pin Wand's chat UI to generate parameter editing buttons
  */
-public record PinBehaviorType<T extends PinBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color) {
+public record PinBehaviorType<T extends PinBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color, boolean deprecated) {
 
     public PinBehaviorType(ResourceLocation id, Codec<T> codec, int color) {
-        this(id, codec, List.of(), color);
+        this(id, codec, List.of(), color, false);
+    }
+
+    public PinBehaviorType(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color) {
+        this(id, codec, configFields, color, false);
     }
 
     public CompoundTag defaultConfig() {
