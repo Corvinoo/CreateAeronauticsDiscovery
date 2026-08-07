@@ -83,7 +83,7 @@ public record SpawnMobBehavior(ResourceLocation mobId, String nbt) implements Pi
             return;
         }
 
-        mob.moveTo(self.getX(), self.getY(), self.getZ(), self.getYRot(), 0.0F);
+        mob.moveTo(self.getX(), self.getY() + 1.0D, self.getZ(), self.getYRot(), 0.0F);
         serverLevel.addFreshEntity(mob);
     }
 
