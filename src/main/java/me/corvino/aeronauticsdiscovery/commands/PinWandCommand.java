@@ -2,6 +2,7 @@ package me.corvino.aeronauticsdiscovery.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.items.PinWandItem;
@@ -44,7 +45,10 @@ public final class PinWandCommand {
                                                 StringArgumentType.getString(ctx, "value"))))))
                 .then(Commands.literal("remove")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                .executes(ctx -> remove(ctx.getSource(), BlockPosArgument.getBlockPos(ctx, "pos")))))
+                                .then(Commands.argument("id", IntegerArgumentType.integer())
+                                        .executes(ctx -> remove(ctx.getSource(),
+                                                BlockPosArgument.getBlockPos(ctx, "pos"),
+                                                IntegerArgumentType.getInteger(ctx, "id"))))))
                 .then(Commands.literal("trigger")
                         .executes(ctx -> showTriggerUI(ctx.getSource()))
                         .then(Commands.argument("kind", StringArgumentType.word())
@@ -151,12 +155,18 @@ public final class PinWandCommand {
         return 1;
     }
 
-    private static int remove(CommandSourceStack source, BlockPos pos) {
+    private static int remove(CommandSourceStack source, BlockPos pos, int entityId) {
         Player player = requirePlayer(source);
         if (player == null) return 0;
 
         Level level = player.level();
-        PinEntity pin = PinWandItem.findPinAt(level, pos);
+        PinEntity pin = null;
+        for (PinEntity candidate : PinWandItem.findPinsAt(level, pos)) {
+            if (candidate.getId() == entityId) {
+                pin = candidate;
+                break;
+            }
+        }
         if (pin == null) {
             source.sendFailure(Component.literal("No pin found at " + pos.getX() + " " + pos.getY() + " " + pos.getZ()));
             return 0;

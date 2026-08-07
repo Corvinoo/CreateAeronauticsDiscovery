@@ -69,10 +69,19 @@ public class    PinWandItem extends Item {
 
         BlockPos pos = context.getClickedPos();
 
-        PinEntity existing = findPinAt(level, pos);
-        if (existing != null) {
-            player.sendSystemMessage(buildPinInfoUI(existing));
-            return InteractionResult.CONSUME;
+        // Normal (non-sneak) right-click shows the config panels for every pin in this block.
+        // Sneak right-click always places a new pin, even if the block already holds pins.
+        if (!player.isShiftKeyDown()) {
+            List<PinEntity> existing = findPinsAt(level, pos);
+            if (!existing.isEmpty()) {
+                MutableComponent msg = Component.literal("");
+                for (int i = 0; i < existing.size(); i++) {
+                    if (i > 0) msg.append(Component.literal("\n"));
+                    msg.append(buildPinInfoUI(existing.get(i)));
+                }
+                player.sendSystemMessage(msg);
+                return InteractionResult.CONSUME;
+            }
         }
 
         initConfig(stack);
@@ -119,6 +128,11 @@ public class    PinWandItem extends Item {
         return null;
     }
 
+    public static List<PinEntity> findPinsAt(Level level, BlockPos pos) {
+        return level.getEntitiesOfClass(PinEntity.class, new AABB(pos).inflate(0.01),
+                pin -> pin.blockPosition().equals(pos));
+    }
+
     public static Component buildPinInfoUI(PinEntity pin) {
         ResourceLocation id = pin.getBehaviorId();
         if (id == null) {
@@ -151,7 +165,7 @@ public class    PinWandItem extends Item {
         MutableComponent removeBtn = Component.literal("§8[§c✕ Remove§8]")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(RUN_COMMAND,
-                                "/pinwand remove " + pos.getX() + " " + pos.getY() + " " + pos.getZ()))
+                                "/pinwand remove " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + " " + pin.getId()))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§cRemove this pin"))));
         msg.append(Component.literal("  "));
