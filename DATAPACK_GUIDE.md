@@ -40,10 +40,10 @@ Each JSON file registers one flyover event. Create one per airship template you 
 ```json
 {
   "template": "<namespace>:<template_name>",
-      "min_altitude": 220,              // Minimum Y-level where this flyover can spawn       
-      "max_altitude": 260,              // Maximum Y-level where this flyover can spawn  
-      "weight": 1,                      // This is the probabily for this specific flyover to spawn
-      "initial_velocity": {             // This object is optional and is used to give the flyover a specific force when it spawns, obtmitting it will be the same as writing it like this.
+      "min_altitude": 220,              
+      "max_altitude": 260,              
+      "weight": 1,                      
+      "initial_velocity": {             
     "linear": [
       0.0,
       0.0,
@@ -56,9 +56,20 @@ Each JSON file registers one flyover event. Create one per airship template you 
     ],
     "impulse": false
   },
-  "dimensions": ["minecraft:overworld"]   // The dimensions in which the flyover is allowed to spawn, leaving an empty list '[]' allows every dimension.
+  "dimensions": ["minecraft:overworld"]   
 }
 ```
+
+| Field              | Type   | Required                 | Description                                                                                                  |
+|--------------------|--------|--------------------------|--------------------------------------------------------------------------------------------------------------|
+| `template`         | id     | Yes                      | The structure template to assemble (found in `data/<namespace>/structure/<template_name>.nbt`)               |
+| `min_altitude`     | int    | No (default `150`)       | Lower bound of the altitude band where the craft spawns.                                                     |
+| `max_altitude`     | int    | No (default `200`)       | Upper bound of the altitude band where the craft spawns. One altitude is picked at random inside the band.   |
+| `weight`           | int    | No (default `1`)         | Weight of the event in the pool, i.e. how likely it is to spawn.                                             |
+| `initial_velocity` | object | No                       | Optional velocity applied on spawn (same format as flyovers).                                                |
+| `plan`             | object | No                       | Optional flight plan flown by the craft once assembled. See the [Flight plans](#flight-plans) section above. |
+| `dimensions`       | list   | No (default all allowed) | Optional list of allowed dimensions for the flyover to spawn in.                                             |
+
 
 Flyover events also accept a `plan` field, which gives the airship a flight plan to follow (e.g. orbit a location). Plans are shared by flyover events and patrols, and are described in their own section below.
 
@@ -121,9 +132,9 @@ Each JSON file registers one patrol. This is the full format:
 
 ```json
 {
-  "template": "<namespace>:<template_name>",        //change this to the template you want to use
-  "target_structure": "minecraft:pillager_outpost", //change this to the structure that spawns the the patrol (also supports tag e.g. #minecraft:village)
-  "chance": 0.8,                                    //change this to the chance of the patrol to appear
+  "template": "<namespace>:<template_name>",        
+  "target_structure": "minecraft:pillager_outpost", 
+  "chance": 0.8,                                    
   "min_altitude": 170,                              
   "max_altitude": 190,
   "initial_velocity": {
@@ -135,7 +146,7 @@ Each JSON file registers one patrol. This is the full format:
     "goals": [
       {
         "type": "aeronauticsdiscovery:orbit",     
-        "target": "minecraft:pillager_outpost",     //change this to the target of the patrol (also supports tag e.g. #minecraft:village)
+        "target": "minecraft:pillager_outpost",     
         "radius": 90,
         "direction": "auto"
       },
@@ -155,11 +166,11 @@ Field reference:
 |--------------------|----------|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | `template`         | id       | Yes                | The structure template to assemble (found in `data/<namespace>/structure/<template_name>.nbt`)                                                    |
 | `target_structure` | id / tag | Yes                | Structure the patrol attaches to, e.g. `minecraft:pillager_outpost`. Use a `#tag` (e.g. `#minecraft:village`) to match any structure in that tag. |
-| `chance`           | 0..1     | No (default `1.0`) | Probability a given instance of that structure gets the patrol craft. Rolled **once** per structure instance and saved, it never re-rolls.        |
+| `chance`           | 0..1     | No (default `1.0`) | Probability a given instance of that structure gets the patrol craft. Rolled **once** per structure instance and saved.                           |
 | `min_altitude`     | int      | No (default `150`) | Lower bound of the altitude band where the craft spawns.                                                                                          |
 | `max_altitude`     | int      | No (default `200`) | Upper bound of the altitude band where the craft spawns. One altitude is picked at random inside the band.                                        |
 | `initial_velocity` | object   | No                 | Optional velocity applied on spawn (same format as flyovers).                                                                                     |
-| `plan`             | object   | No                 | Optional flight plan flown by the craft once assembled. See the [Flight plans](#flight-plans) section above.                                      |
+| `plan`             | object   | No                 | Optional flight plan flown by the craft once assembled. See the [Flight plans](#flight-plans) section above.                                      |  
 
 
 ## Flight plans
