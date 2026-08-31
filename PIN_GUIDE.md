@@ -175,7 +175,7 @@ Use different channel numbers to create separate bridge pairs that don't interfe
 
 ### Fill Up Balloon
 
-Instantly fills an attached hot-air balloon with lifting gas when triggered. The pin scans upward for the balloon's airtight interior, then fills each lifting-gas holder up to `fill_amount` fraction of the balloon's total capacity.
+It must be placed on a Hot air balloon burner or Steam vent in order to work. It will scan and fill up the attached balloon by the defined `fill_amount` value once triggered.
 
 | Parameter   | Default | Description                                                          |
 |-------------|---------|----------------------------------------------------------------------|
