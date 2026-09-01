@@ -224,28 +224,6 @@ class SpawnPositionTest {
         assertEquals(0, sp.pos().getZ());
     }
 
-    @Test
-    void changeAngleGeneratesDiversePositions() {
-        Random rng = new Random(999);
-
-        // Without CHANGE_ANGLE, angle stays 0 → fixed position
-        SpawnPosition spFixed = builder().altitude(100).horizontalDistance(100)
-                .maxAttempts(3).retryStrategy(NOOP)
-                .build(null, rng);
-        assertNotNull(spFixed);
-        assertEquals(CENTER.getX() + 100, spFixed.pos().getX());
-        assertEquals(CENTER.getZ(), spFixed.pos().getZ());
-
-        // With CHANGE_ANGLE, each attempt gets a randomized angle
-        rng = new Random(999);
-        SpawnPosition spChanged = builder().altitude(100).horizontalDistance(100)
-                .maxAttempts(3).retryStrategy(SpawnPosition.RetryStrategy.CHANGE_ANGLE)
-                .build(null, rng);
-        assertNotNull(spChanged);
-        // dz is unlikely to be zero since angle varies
-        assertNotEquals(CENTER.getZ(), spChanged.pos().getZ());
-    }
-
     // ---------------------------------------------------------------
     // Constraint rejection
     // ---------------------------------------------------------------

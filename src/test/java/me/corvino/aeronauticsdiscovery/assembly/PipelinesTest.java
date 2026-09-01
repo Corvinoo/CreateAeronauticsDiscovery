@@ -1,6 +1,5 @@
 package me.corvino.aeronauticsdiscovery.assembly;
 
-import me.corvino.aeronauticsdiscovery.assembly.steps.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,64 +38,4 @@ class PipelinesTest {
     void byNameThrowsForNull() {
         assertThrows(IllegalArgumentException.class, () -> Pipelines.byName(null));
     }
-
-//    @Test
-//    void flyoverPipelineContainsAllExpectedStepTypes() {
-//        AssemblyPipeline pipeline = Pipelines.byName("flyover");
-//        Class<?>[] expectedTypes = {
-//                LoadTemplateStep.class,
-//                LoadChunkStep.class,
-//                PlaceBlocksStep.class,
-//                FindAssemblyStartStep.class,
-//                ReadinessCheckStep.class,
-//                AssembleStep.class,
-//                CleanUpItemEntities.class,
-//                PopulateSeatsStep.class,
-//                UnloadChunkStep.class,
-//        };
-//        var steps = pipeline.createSteps();
-//        for (int i = 0; i < expectedTypes.length; i++) {
-//            assertTrue(expectedTypes[i].isInstance(steps.get(i)),
-//                    "Step " + i + " should be " + expectedTypes[i].getSimpleName()
-//                            + " but was " + steps.get(i).getClass().getSimpleName());
-//        }
-//    }
-//
-//    @Test
-//    void worldgenPipelineContainsExpectedStepTypes() {
-//        AssemblyPipeline pipeline = Pipelines.byName("worldgen");
-//        Class<?>[] expectedTypes = {
-//                LoadTemplateStep.class,
-//                ReadinessCheckStep.class,
-//                AssembleStep.class,
-//        };
-//        var steps = pipeline.createSteps();
-//        for (int i = 0; i < expectedTypes.length; i++) {
-//            assertTrue(expectedTypes[i].isInstance(steps.get(i)),
-//                    "Step " + i + " should be " + expectedTypes[i].getSimpleName()
-//                            + " but was " + steps.get(i).getClass().getSimpleName());
-//        }
-//    }
-//
-//    @Test
-//    void commandPipelineContainsExpectedStepTypes() {
-//        AssemblyPipeline pipeline = Pipelines.byName("command");
-//        Class<?>[] expectedTypes = {
-//                LoadTemplateStep.class,
-//                LoadChunkStep.class,
-//                PlaceBlocksStep.class,
-//                FindAssemblyStartStep.class,
-//                ReadinessCheckStep.class,
-//                AssembleStep.class,
-//                CleanUpItemEntities.class,
-//                PopulateSeatsStep.class,
-//                UnloadChunkStep.class,
-//        };
-//        var steps = pipeline.createSteps();
-//        for (int i = 0; i < expectedTypes.length; i++) {
-//            assertTrue(expectedTypes[i].isInstance(steps.get(i)),
-//                    "Step " + i + " should be " + expectedTypes[i].getSimpleName()
-//                            + " but was " + steps.get(i).getClass().getSimpleName());
-//        }
-//    }
 }
