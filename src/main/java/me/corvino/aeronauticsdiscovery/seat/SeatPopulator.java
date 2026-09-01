@@ -37,7 +37,7 @@ public final class SeatPopulator {
 
             trader.setPos(projected.x() + 0.5, projected.y(), projected.z() + 0.5);
             trader.getPersistentData().putUUID(SUBLEVEL_ID_TAG, subLevel.getUniqueId()); 
-//            trader.setPersistenceRequired(); //fixes random despawn
+trader.setPersistenceRequired(); //fixes random despawn
 
             if (!level.addFreshEntity(trader)) {
                 ModLog.warn(SEAT, "addFreshEntity failed at {}", seatPos);

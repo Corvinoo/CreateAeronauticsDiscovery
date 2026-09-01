@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.block.Block;
 
 import java.util.List;
@@ -26,9 +27,6 @@ import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
  * Spawns one instance of {@code mobId} at this pin's position and mounts it onto a Create seat.
  * Requires a {@link SeatBlock} at the pin's position.
  * <p>
- * Optional {@code nbt} supplies raw NBT (including data-component syntax, e.g.
- * {@code {HandItems:[{id:"minecraft:crossbow",count:1}]}}) applied to the mob before it spawns.
- *
  * @deprecated Scheduled for removal; use {@link SpawnMobBehavior} ({@code spawn_mob}).
  */
 @Deprecated(forRemoval = true)
@@ -76,6 +74,10 @@ public record SeatMobBehavior(ResourceLocation mobId, String nbt) implements Pin
         if (mob == null) return;
 
         applyNbt(self, mob);
+
+        if (mob instanceof Mob mobEntity) {
+            mobEntity.setPersistenceRequired();
+        }
 
         mob.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         if (self.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)) {

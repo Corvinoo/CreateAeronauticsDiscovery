@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.block.Block;
 
 import java.util.List;
@@ -26,9 +27,6 @@ import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
  * Spawns one instance of {@code mobId} at this pin's position when triggered.
  * If the pin sits on a {@link SeatBlock}, the mob is spawned onto and mounted to that seat,
  * otherwise it spawns standing at the pin.
- * <p>
- * Optional {@code nbt} supplies raw NBT (including data-component syntax, e.g.
- * {@code {HandItems:[{id:"minecraft:crossbow",count:1}]}}) applied to the mob before it spawns.
  */
 public record SpawnMobBehavior(ResourceLocation mobId, String nbt) implements PinBehavior<SpawnMobBehavior> {
 
@@ -66,6 +64,10 @@ public record SpawnMobBehavior(ResourceLocation mobId, String nbt) implements Pi
         if (mob == null) return;
 
         applyNbt(self, mob);
+
+        if (mob instanceof Mob mobEntity) {
+            mobEntity.setPersistenceRequired();
+        }
 
         Block block = serverLevel.getBlockState(pos).getBlock();
         if (block instanceof SeatBlock) {

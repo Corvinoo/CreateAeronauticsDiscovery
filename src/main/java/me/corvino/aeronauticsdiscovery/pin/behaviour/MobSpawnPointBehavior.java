@@ -14,15 +14,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 
 import java.util.List;
 
 /**
  * Spawns one instance of {@code mobId} at this pin's position when triggered.
  * <p>
- * Optional {@code nbt} supplies raw NBT (including data-component syntax, e.g.
- * {@code {HandItems:[{id:"minecraft:crossbow",count:1}]}}) applied to the mob before it spawns.
- *
  * @deprecated Scheduled for removal; use {@link SpawnMobBehavior} ({@code spawn_mob}).
  */
 @Deprecated(forRemoval = true)
@@ -66,6 +64,10 @@ public record MobSpawnPointBehavior(ResourceLocation mobId, String nbt) implemen
         if (mob == null) return;
 
         applyNbt(self, mob);
+
+        if (mob instanceof Mob mobEntity) {
+            mobEntity.setPersistenceRequired();
+        }
 
         mob.moveTo(self.getX(), self.getY() + 1.0D, self.getZ(), self.getYRot(), 0.0F);
         serverLevel.addFreshEntity(mob);
