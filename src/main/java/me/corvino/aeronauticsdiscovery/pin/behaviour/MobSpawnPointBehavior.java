@@ -6,7 +6,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
+import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
@@ -15,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 
 import java.util.List;
 
@@ -53,21 +56,32 @@ public record MobSpawnPointBehavior(ResourceLocation mobId, String nbt) implemen
     public void onTrigger(PinEntity self, PinTrigger trigger) {
         if (!(self.level() instanceof ServerLevel serverLevel)) return;
 
+        BlockPos pos = self.blockPosition();
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(this.mobId);
         if (type == null) {
             ModLog.warn(PIN,
-                    "Unknown entity type '{}' at {}", this.mobId, self.blockPosition());
+                    "Unknown entity type '{}' at {}", this.mobId, pos);
             return;
         }
 
         var mob = type.create(serverLevel);
         if (mob == null) return;
 
+        if (mob instanceof Mob mobEntity) {
+            mobEntity.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(pos),
+                    MobSpawnType.COMMAND, null);
+        }
+
         applyNbt(self, mob);
 
 //        if (mob instanceof Mob mobEntity) {
 //            mobEntity.setPersistenceRequired();
 //        }
+
+        if (self.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)) {
+            mob.getPersistentData().putUUID(SUBLEVEL_ID_TAG,
+                    self.getPersistentData().getUUID(SUBLEVEL_ID_TAG));
+        }
 
         mob.moveTo(self.getX(), self.getY() + 1.0D, self.getZ(), self.getYRot(), 0.0F);
         serverLevel.addFreshEntity(mob);

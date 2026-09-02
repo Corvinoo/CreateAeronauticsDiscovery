@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.block.Block;
 
 import java.util.List;
@@ -63,19 +64,25 @@ public record SpawnMobBehavior(ResourceLocation mobId, String nbt) implements Pi
         var mob = type.create(serverLevel);
         if (mob == null) return;
 
+        if (mob instanceof Mob mobEntity) {
+            mobEntity.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(pos),
+                    MobSpawnType.COMMAND, null);
+        }
+
         applyNbt(self, mob);
 
 //        if (mob instanceof Mob mobEntity) {
 //            mobEntity.setPersistenceRequired();
 //        }
 
+        if (self.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)) {
+            mob.getPersistentData().putUUID(SUBLEVEL_ID_TAG,
+                    self.getPersistentData().getUUID(SUBLEVEL_ID_TAG));
+        }
+
         Block block = serverLevel.getBlockState(pos).getBlock();
         if (block instanceof SeatBlock) {
             mob.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
-            if (self.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)) {
-                mob.getPersistentData().putUUID(SUBLEVEL_ID_TAG,
-                        self.getPersistentData().getUUID(SUBLEVEL_ID_TAG));
-            }
             if (!serverLevel.addFreshEntity(mob)) {
                 ModLog.warn(PIN,
                         "Failed to spawn mob at {}", pos);
