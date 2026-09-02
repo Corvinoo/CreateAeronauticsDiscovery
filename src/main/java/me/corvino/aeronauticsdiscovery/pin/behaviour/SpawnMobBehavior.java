@@ -65,9 +65,9 @@ public record SpawnMobBehavior(ResourceLocation mobId, String nbt) implements Pi
 
         applyNbt(self, mob);
 
-        if (mob instanceof Mob mobEntity) {
-            mobEntity.setPersistenceRequired();
-        }
+//        if (mob instanceof Mob mobEntity) {
+//            mobEntity.setPersistenceRequired();
+//        }
 
         Block block = serverLevel.getBlockState(pos).getBlock();
         if (block instanceof SeatBlock) {

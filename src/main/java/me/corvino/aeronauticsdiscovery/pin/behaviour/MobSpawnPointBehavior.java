@@ -65,9 +65,9 @@ public record MobSpawnPointBehavior(ResourceLocation mobId, String nbt) implemen
 
         applyNbt(self, mob);
 
-        if (mob instanceof Mob mobEntity) {
-            mobEntity.setPersistenceRequired();
-        }
+//        if (mob instanceof Mob mobEntity) {
+//            mobEntity.setPersistenceRequired();
+//        }
 
         mob.moveTo(self.getX(), self.getY() + 1.0D, self.getZ(), self.getYRot(), 0.0F);
         serverLevel.addFreshEntity(mob);

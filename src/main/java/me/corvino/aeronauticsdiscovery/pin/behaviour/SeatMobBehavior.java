@@ -75,9 +75,9 @@ public record SeatMobBehavior(ResourceLocation mobId, String nbt) implements Pin
 
         applyNbt(self, mob);
 
-        if (mob instanceof Mob mobEntity) {
-            mobEntity.setPersistenceRequired();
-        }
+//        if (mob instanceof Mob mobEntity) {
+//            mobEntity.setPersistenceRequired();
+//        }
 
         mob.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         if (self.getPersistentData().hasUUID(SUBLEVEL_ID_TAG)) {
