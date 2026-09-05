@@ -56,7 +56,11 @@ Each JSON file registers one flyover event. Create one per airship template you 
     ],
     "impulse": false
   },
-  "dimensions": ["minecraft:overworld"]   
+  "dimensions": ["minecraft:overworld"],  
+  "biome_filter": {                       // Optional. Restricts which biomes the flyover can spawn over, checked at the player's position.
+    "only": ["minecraft:desert"]          //   using "only" -> spawn ONLY over these biomes. Using "exclude" instead:
+  }                                       //   "exclude": ["minecraft:ocean"] -> spawn over every biome except these.
+                                          //   Omitting propriety will allow every biome in the allowed dimension(s).
 }
 ```
 
@@ -69,7 +73,6 @@ Each JSON file registers one flyover event. Create one per airship template you 
 | `initial_velocity` | object | No                       | Optional velocity applied on spawn (same format as flyovers).                                                |
 | `plan`             | object | No                       | Optional flight plan flown by the craft once assembled. See the [Flight plans](#flight-plans) section above. |
 | `dimensions`       | list   | No (default all allowed) | Optional list of allowed dimensions for the flyover to spawn in.                                             |
-
 
 Flyover events also accept a `plan` field, which gives the airship a flight plan to follow (e.g. orbit a location). Plans are shared by flyover events and patrols, and are described in their own section below.
 

@@ -4,7 +4,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotPlan;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +19,8 @@ public record FlyoverEventConfig(
         InitialVelocity velocity,
         boolean randomizeYaw,
         List<ResourceLocation> dimensions,
-        Optional<AutopilotPlan> plan
+        Optional<AutopilotPlan> plan,
+        BiomeFilter biomeFilter
 ) {
     public static final Codec<FlyoverEventConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("template").forGetter(FlyoverEventConfig::template),
@@ -27,6 +30,15 @@ public record FlyoverEventConfig(
             InitialVelocity.CODEC.codec().optionalFieldOf("initial_velocity", InitialVelocity.NONE).forGetter(FlyoverEventConfig::velocity),
             Codec.BOOL.optionalFieldOf("randomize_yaw", true).forGetter(FlyoverEventConfig::randomizeYaw),
             ResourceLocation.CODEC.listOf().fieldOf("dimensions").forGetter(FlyoverEventConfig::dimensions),
-            AutopilotPlan.CODEC.codec().optionalFieldOf("plan").forGetter(FlyoverEventConfig::plan)
+            AutopilotPlan.CODEC.codec().optionalFieldOf("plan").forGetter(FlyoverEventConfig::plan),
+            BiomeFilter.CODEC.optionalFieldOf("biome_filter", BiomeFilter.ALL).forGetter(FlyoverEventConfig::biomeFilter)
     ).apply(instance, FlyoverEventConfig::new));
+
+    public boolean isEligible(ServerLevel level, BlockPos pos) {
+        if (!dimensions().isEmpty()
+                && !dimensions().contains(level.dimension().location())) {
+            return false;
+        }
+        return biomeFilter().matches(level, pos);
+    }
 }

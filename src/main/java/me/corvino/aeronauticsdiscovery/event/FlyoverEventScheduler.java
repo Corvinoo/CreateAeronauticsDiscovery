@@ -45,11 +45,6 @@ public final class FlyoverEventScheduler {
     public static void spawnForPlayer(
             ServerLevel level, FlyoverEventConfig config, ServerPlayer player, Random random
     ) {
-        if (!config.dimensions().isEmpty()
-                && !config.dimensions().contains(level.dimension().location())) {
-            return;
-        }
-
         final int MaxAttempt = 5;
         SpawnPosition.Builder builder = SpawnPosition.builder()
                 .center(player.blockPosition())

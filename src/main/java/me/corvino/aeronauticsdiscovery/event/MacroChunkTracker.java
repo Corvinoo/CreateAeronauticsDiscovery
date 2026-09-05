@@ -91,7 +91,7 @@ public final class MacroChunkTracker {
             return;
         }
 
-        FlyoverEventConfig config = registry.pickRandom(RANDOM);
+        FlyoverEventConfig config = registry.pickRandomEligible(RANDOM, level, player.blockPosition());
         if (config == null) return;
 
         boolean spawned = false;
