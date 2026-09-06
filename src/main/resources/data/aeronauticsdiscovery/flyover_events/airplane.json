@@ -16,6 +16,6 @@
     ]
   },
   "biome_filter": {                       
-    "exclude": ["minecraft:jagged_peaks", "minecraft:frozen_peaks", "minecraft:stony_peaks", "windswept_savanna"]          
+    "exclude": ["minecraft:jagged_peaks", "minecraft:frozen_peaks", "minecraft:stony_peaks", "minecraft:windswept_savanna"]          
   }
 }
