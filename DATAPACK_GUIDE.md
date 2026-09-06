@@ -56,23 +56,24 @@ Each JSON file registers one flyover event. Create one per airship template you 
     ],
     "impulse": false
   },
-  "dimensions": ["minecraft:overworld"],  
-  "biome_filter": {                       // Optional. Restricts which biomes the flyover can spawn over, checked at the player's position.
-    "only": ["minecraft:desert"]          //   using "only" -> spawn ONLY over these biomes. Using "exclude" instead:
-  }                                       //   "exclude": ["minecraft:ocean"] -> spawn over every biome except these.
-                                          //   Omitting propriety will allow every biome in the allowed dimension(s).
+  "dimensions": ["minecraft:overworld"],
+  "biome_filter": {
+    "only": ["minecraft:desert"]
+  }
 }
 ```
 
 | Field              | Type   | Required                 | Description                                                                                                  |
 |--------------------|--------|--------------------------|--------------------------------------------------------------------------------------------------------------|
 | `template`         | id     | Yes                      | The structure template to assemble (found in `data/<namespace>/structure/<template_name>.nbt`)               |
-| `min_altitude`     | int    | No (default `150`)       | Lower bound of the altitude band where the craft spawns.                                                     |
-| `max_altitude`     | int    | No (default `200`)       | Upper bound of the altitude band where the craft spawns. One altitude is picked at random inside the band.   |
+| `min_altitude`     | int    | No (default `200`)       | Lower bound of the altitude band where the craft spawns.                                                     |
+| `max_altitude`     | int    | No (default `280`)       | Upper bound of the altitude band where the craft spawns. One altitude is picked at random inside the band.   |
 | `weight`           | int    | No (default `1`)         | Weight of the event in the pool, i.e. how likely it is to spawn.                                             |
 | `initial_velocity` | object | No                       | Optional velocity applied on spawn (same format as flyovers).                                                |
+| `randomize_yaw`    | bool   | No (default `true`)      | Whether the craft's yaw is randomized on spawn.                                                              |
 | `plan`             | object | No                       | Optional flight plan flown by the craft once assembled. See the [Flight plans](#flight-plans) section above. |
 | `dimensions`       | list   | No (default all allowed) | Optional list of allowed dimensions for the flyover to spawn in.                                             |
+| `biome_filter`     | object | No (default all allowed) | Optional biome restriction, `{"only": [...]}` or `{"exclude": [...]}`. Entries support `*` wildcards.        |
 
 Flyover events also accept a `plan` field, which gives the airship a flight plan to follow (e.g. orbit a location). Plans are shared by flyover events and patrols, and are described in their own section below.
 
@@ -145,6 +146,10 @@ Each JSON file registers one patrol. This is the full format:
     "angular": [0.0, 0.0, 0.0],
     "impulse": false
   },
+  "dimensions": ["minecraft:overworld"],
+  "biome_filter": {
+    "exclude": ["*:*ocean*"]
+  },
   "plan": {
     "goals": [
       {
@@ -165,15 +170,17 @@ Each JSON file registers one patrol. This is the full format:
 
 Field reference:
 
-| Field              | Type     | Required           | Description                                                                                                                                       |
-|--------------------|----------|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `template`         | id       | Yes                | The structure template to assemble (found in `data/<namespace>/structure/<template_name>.nbt`)                                                    |
-| `target_structure` | id / tag | Yes                | Structure the patrol attaches to, e.g. `minecraft:pillager_outpost`. Use a `#tag` (e.g. `#minecraft:village`) to match any structure in that tag. |
-| `chance`           | 0..1     | No (default `1.0`) | Probability a given instance of that structure gets the patrol craft. Rolled **once** per structure instance and saved.                           |
-| `min_altitude`     | int      | No (default `150`) | Lower bound of the altitude band where the craft spawns.                                                                                          |
-| `max_altitude`     | int      | No (default `200`) | Upper bound of the altitude band where the craft spawns. One altitude is picked at random inside the band.                                        |
-| `initial_velocity` | object   | No                 | Optional velocity applied on spawn (same format as flyovers).                                                                                     |
-| `plan`             | object   | No                 | Optional flight plan flown by the craft once assembled. See the [Flight plans](#flight-plans) section above.                                      |  
+| Field              | Type     | Required                 | Description                                                                                                                                       |
+|--------------------|----------|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `template`         | id       | Yes                      | The structure template to assemble (found in `data/<namespace>/structure/<template_name>.nbt`)                                                    |
+| `target_structure` | id / tag | Yes                      | Structure the patrol attaches to, e.g. `minecraft:pillager_outpost`. Use a `#tag` (e.g. `#minecraft:village`) to match any structure in that tag. |
+| `chance`           | 0..1     | No (default `1.0`)       | Probability a given instance of that structure gets the patrol craft. Rolled **once** per structure instance and saved.                           |
+| `min_altitude`     | int      | No (default `150`)       | Lower bound of the altitude band where the craft spawns.                                                                                          |
+| `max_altitude`     | int      | No (default `200`)       | Upper bound of the altitude band where the craft spawns. One altitude is picked at random inside the band.                                        |
+| `initial_velocity` | object   | No                       | Optional velocity applied on spawn (same format as flyovers).                                                                                     |
+| `dimensions`       | list     | No (default all allowed) | Optional list of allowed dimensions for the patrol to spawn in.                                                                                   |
+| `biome_filter`     | object   | No (default all allowed) | Optional biome restriction checked at the structure's position, `{"only": [...]}` or `{"exclude": [...]}`. Entries support `*` wildcards.         |
+| `plan`             | object   | No                       | Optional flight plan flown by the craft once assembled. See the [Flight plans](#flight-plans) section above.                                      |  
 
 
 ## Flight plans
