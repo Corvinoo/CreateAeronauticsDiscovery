@@ -159,6 +159,7 @@ public class FlyoverManager extends SavedData {
 
         if (entry.isPastGracePeriod() && isTooFarFromAllPlayers(subLevel)) {
             beginDespawn(entry, subLevel, FlyoverRemovalReason.DRIFTED_TOO_FAR);
+            pendingRemoval.add(entry.subLevelId());
             return;
         }
 
@@ -166,6 +167,7 @@ public class FlyoverManager extends SavedData {
 
         if (entry.isExpired(maxLifetime)) {
             beginDespawn(entry, subLevel, FlyoverRemovalReason.LIFETIME_EXPIRED);
+            pendingRemoval.add(entry.subLevelId());
         }
     }
 

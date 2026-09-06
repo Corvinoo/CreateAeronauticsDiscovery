@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Holds newly assembled SubLevels stationary (suppressing all forces and
@@ -35,10 +35,10 @@ import java.util.WeakHashMap;
  */
 public final class BuoyancyStabilizationManager {
 
-    private static final Map<ServerLevel, BuoyancyStabilizationManager> INSTANCES = new WeakHashMap<>();
+    private static final Map<ServerLevel, BuoyancyStabilizationManager> INSTANCES = new ConcurrentHashMap<>();
 
     private final ServerLevel level;
-    private final Map<UUID, Stabilizer> active = new LinkedHashMap<>();
+    private final Map<UUID, Stabilizer> active = new ConcurrentHashMap<>();
 
     private BuoyancyStabilizationManager(ServerLevel level) {
         this.level = level;
