@@ -19,5 +19,8 @@
       }
     ]
   },
-  "dimensions": ["minecraft:overworld"]
+  "dimensions": ["minecraft:overworld"],
+  "biome_filter": {
+    "exclude": ["minecraft:jagged_peaks", "minecraft:frozen_peaks", "minecraft:stony_peaks", "minecraft:windswept_savanna", "*:*mountain*"]
+  }
 }
