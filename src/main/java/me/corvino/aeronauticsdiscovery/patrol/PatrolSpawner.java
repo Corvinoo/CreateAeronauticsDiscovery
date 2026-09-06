@@ -61,6 +61,20 @@ public final class PatrolSpawner {
         }
         manager.markHandled(config.targetStructure(), packedChunk);
 
+        BlockPos center = resolveCenter(level, start);
+        if (center == null) {
+            ModLog.warn(PATROL, "Could not resolve center for {} @ {}; skipping patrol",
+                    config.targetStructure(), start.getChunkPos());
+            return;
+        }
+        // Sea-level Y so the lookup reflects the surface biome
+        BlockPos biomePos = new BlockPos(center.getX(), level.getSeaLevel(), center.getZ());
+        if (!config.isEligible(level, biomePos)) {
+            ModLog.info(PATROL, "Biome filter rejected patrol '{}' for {} @ chunk {} (biome at {})",
+                    config.template(), config.targetStructure(), packedChunk, biomePos);
+            return;
+        }
+
         if (level.random.nextDouble() >= config.chance()) {
             ModLog.info(PATROL, "Chance ({}) rejected patrol '{}' for {} @ chunk {}",
                     config.chance(), config.template(), config.targetStructure(), packedChunk);
@@ -68,21 +82,14 @@ public final class PatrolSpawner {
         }
 
         try {
-            spawnPatrol(level, config, start);
+            spawnPatrol(level, config, start, center);
         } catch (Exception e) {
             ModLog.error(PATROL, "Failed to spawn patrol '{}' for {} @ chunk {}: {}",
                     config.template(), config.targetStructure(), packedChunk, e.getMessage());
         }
     }
 
-    private static void spawnPatrol(ServerLevel level, PatrolConfig config, StructureStart start) {
-        BlockPos center = resolveCenter(level, start);
-        if (center == null) {
-            ModLog.warn(PATROL, "Could not resolve center for {} @ {}; skipping patrol",
-                    config.targetStructure(), start.getChunkPos());
-            return;
-        }
-
+    private static void spawnPatrol(ServerLevel level, PatrolConfig config, StructureStart start, BlockPos center) {
         int altitude = config.minAltitude() + (config.maxAltitude() > config.minAltitude()
                 ? level.random.nextInt(config.maxAltitude() - config.minAltitude() + 1)
                 : 0);

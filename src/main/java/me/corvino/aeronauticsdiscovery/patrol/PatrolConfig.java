@@ -4,8 +4,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotPlan;
+import me.corvino.aeronauticsdiscovery.event.BiomeFilter;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +27,7 @@ import java.util.Optional;
  * @param plan            optional flight plan baked onto the craft at assembly; if absent the
  *                        template's {@code template_defaults} plan is used.
  * @param dimensions      dimensions the patrol is allowed to spawn in (empty = all)
+ * @param biomeFilter     optional biome restriction, checked at the structure's position
  */
 public record PatrolConfig(
         ResourceLocation template,
@@ -33,7 +37,8 @@ public record PatrolConfig(
         int maxAltitude,
         Optional<InitialVelocity> initialVelocity,
         Optional<AutopilotPlan> plan,
-        List<ResourceLocation> dimensions
+        List<ResourceLocation> dimensions,
+        BiomeFilter biomeFilter
 ) {
     public static final MapCodec<PatrolConfig> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("template").forGetter(PatrolConfig::template),
@@ -43,10 +48,15 @@ public record PatrolConfig(
             Codec.INT.optionalFieldOf("max_altitude", 200).forGetter(PatrolConfig::maxAltitude),
             InitialVelocity.CODEC.codec().optionalFieldOf("initial_velocity").forGetter(PatrolConfig::initialVelocity),
             AutopilotPlan.CODEC.codec().optionalFieldOf("plan").forGetter(PatrolConfig::plan),
-            ResourceLocation.CODEC.listOf().optionalFieldOf("dimensions", List.of()).forGetter(PatrolConfig::dimensions)
+            ResourceLocation.CODEC.listOf().optionalFieldOf("dimensions", List.of()).forGetter(PatrolConfig::dimensions),
+            BiomeFilter.CODEC.optionalFieldOf("biome_filter", BiomeFilter.ALL).forGetter(PatrolConfig::biomeFilter)
     ).apply(instance, PatrolConfig::new));
 
     public boolean allowedIn(ResourceLocation dimension) {
         return dimensions.isEmpty() || dimensions.contains(dimension);
+    }
+
+    public boolean isEligible(ServerLevel level, BlockPos pos) {
+        return allowedIn(level.dimension().location()) && biomeFilter().matches(level, pos);
     }
 }
