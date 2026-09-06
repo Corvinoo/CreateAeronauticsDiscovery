@@ -29,7 +29,7 @@ public record FlyoverEventConfig(
             Codec.INT.optionalFieldOf("weight", 1).forGetter(FlyoverEventConfig::weight),
             InitialVelocity.CODEC.codec().optionalFieldOf("initial_velocity", InitialVelocity.NONE).forGetter(FlyoverEventConfig::velocity),
             Codec.BOOL.optionalFieldOf("randomize_yaw", true).forGetter(FlyoverEventConfig::randomizeYaw),
-            ResourceLocation.CODEC.listOf().fieldOf("dimensions").forGetter(FlyoverEventConfig::dimensions),
+            ResourceLocation.CODEC.listOf().optionalFieldOf("dimensions", List.of()).forGetter(FlyoverEventConfig::dimensions),
             AutopilotPlan.CODEC.codec().optionalFieldOf("plan").forGetter(FlyoverEventConfig::plan),
             BiomeFilter.CODEC.optionalFieldOf("biome_filter", BiomeFilter.ALL).forGetter(FlyoverEventConfig::biomeFilter)
     ).apply(instance, FlyoverEventConfig::new));
