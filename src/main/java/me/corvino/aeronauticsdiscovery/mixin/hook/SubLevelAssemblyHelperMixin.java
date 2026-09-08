@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3ic;
 import me.corvino.aeronauticsdiscovery.mixin.accessor.LevelAccessor;
 import me.corvino.aeronauticsdiscovery.mixin.accessor.PersistentEntitySectionManagerAccessor;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.util.AssemblyMoveBypass;
 import me.corvino.aeronauticsdiscovery.util.LogCategory;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import net.minecraft.core.BlockPos;
@@ -43,6 +44,9 @@ public abstract class SubLevelAssemblyHelperMixin {
             BoundingBox3ic bounds,
             CallbackInfo ci
     ) {
+        // Intentional assembly relocation: bypass the load-kick guard for this invocation's setPos calls (pins here + Sable hanging-entity moves below).
+        // Cleared at TAIL
+        AssemblyMoveBypass.setBypass();
         AABB box = bounds.toAABB().inflate(2.0);
         List<PinEntity> pins = findPinsBySectionScan(level, box);
         if (pins.isEmpty()) return;
@@ -66,6 +70,24 @@ public abstract class SubLevelAssemblyHelperMixin {
                     "movePins: moved {}/{} pin(s) into sub-level (bounds {}; found via section-scan: {}, visible to filtered query: {})",
                     moved, pins.size(), bounds, pins.size(), filteredVisible);
         }
+    }
+
+    @Inject(
+            method = "moveOtherStuff",
+            at = @At("TAIL")
+    )
+    private static void aeronauticsdiscovery$clearMovePinsBypass(
+            ServerLevel level,
+            SubLevelAssemblyHelper.AssemblyTransform transform,
+            Iterable<BlockPos> blocks,
+            BoundingBox3ic bounds,
+            CallbackInfo ci
+    ) {
+        // End of intentional assembly relocation window (covers pins above + Sable hanging-entity moves in the wrapped method body).
+        // Stale values are harmless: HEAD always sets before use
+        try {
+            AssemblyMoveBypass.clearBypass();
+        } catch (Exception ignored) {}
     }
 
     /**

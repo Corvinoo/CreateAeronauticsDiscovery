@@ -1,6 +1,7 @@
 package me.corvino.aeronauticsdiscovery.mixin.hook;
 
 import dev.ryanhcode.sable.Sable;
+import me.corvino.aeronauticsdiscovery.util.AssemblyMoveBypass;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -24,6 +25,9 @@ public abstract class SubLevelRiderLoadKickGuardMixin {
 
     @Inject(method = "setPos(Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)
     private void aeronauticsdiscovery$guardWorldSpaceLoadKick(Vec3 pos, CallbackInfo ci) {
+        // Intentional Sable assembly relocations (world -> plot) share this guard's signature; they bypass it explicitly via AssemblyMoveBypass (set for the
+        // duration of SubLevelAssemblyHelper.moveOtherStuff)
+        if (AssemblyMoveBypass.isBypassing()) return;
         Entity self = (Entity) (Object) this;
         Level level = self.level();
         if (level == null || level.isClientSide) return;
