@@ -79,6 +79,10 @@ Flyover events also accept a `plan` field, which gives the airship a flight plan
 
 ### 3. Structure template: `data/<namespace>/structure/<template_name>.nbt`
 
+> [!WARNING]
+> Use the vanilla structure block with entities enabled to save the NBT, the Schematic And Quill from Create will not work for it
+
+
 This is the actual build; the `template` field in your flyover JSON must match `<namespace>:<template_name>`.
 
 Contraptions on the structure must already **receive redstone/rotational power** but **not be assembled** before exporting to nbt; **entities** should also be exported.
@@ -223,6 +227,6 @@ The currently bundled files are:
 - `airplane_pillager`     = pillager flyover 
 ### Patrols:
 - `outpost_patrol.json`   = pillager outpost patrol
-- `mansion_patrol`        = mansion mansion patrol
+- `mansion_patrol.json`   = mansion mansion patrol
 
 (This will be updated in the future to reflect new events added to the mod)
