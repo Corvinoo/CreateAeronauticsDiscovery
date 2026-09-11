@@ -90,6 +90,16 @@ public class LogConfig {
     @SubscribeEvent
     static void onLoad(final ModConfigEvent.Loading event) {
         if (event.getConfig().getSpec() != SPEC) return;
+        refresh();
+    }
+
+    @SubscribeEvent
+    static void onReload(final ModConfigEvent.Reloading event) {
+        if (event.getConfig().getSpec() != SPEC) return;
+        refresh();
+    }
+
+    private static void refresh() {
         logBridge = LOG_BRIDGE.get();
         logMixin = LOG_MIXIN.get();
         logFlyover = LOG_FLYOVER.get();
