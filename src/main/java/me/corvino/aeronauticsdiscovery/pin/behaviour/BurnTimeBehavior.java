@@ -62,6 +62,8 @@ public record BurnTimeBehavior(int burnTime, boolean superheated) implements Pin
         if (be instanceof PortableEngineBlockEntity engine) {
             engine.setCurrentBurnTime(this.burnTime);
             engine.setSuperHeated(this.superheated);
+            engine.setChanged();
+            engine.sendData();
             return true;
         }
         if (be instanceof BlazeBurnerBlockEntity burner) {
