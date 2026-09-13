@@ -27,7 +27,7 @@ public record BurnTimeBehavior(int burnTime, boolean superheated) implements Pin
             "burn_time",
             RecordCodecBuilder.create(instance -> instance.group(
                     Codec.INT.fieldOf("burn_time").forGetter(BurnTimeBehavior::burnTime),
-                    Codec.BOOL.fieldOf("superheated").forGetter(BurnTimeBehavior::superheated)
+                    Codec.BOOL.optionalFieldOf("superheated", false).forGetter(BurnTimeBehavior::superheated)
             ).apply(instance, BurnTimeBehavior::new)),
             List.of(
                     new ConfigField("burn_time", "Burn Time (ticks)", ConfigField.FieldType.INTEGER, 3200),

@@ -30,6 +30,7 @@ public record PinBehaviorType<T extends PinBehavior<T>>(ResourceLocation id, Cod
                 case FLOAT -> tag.putFloat(field.key(), (float) field.defaultValue());
                 case DOUBLE -> tag.putDouble(field.key(), (double) field.defaultValue());
                 case INTEGER -> tag.putInt(field.key(), (int) field.defaultValue());
+                case BOOLEAN -> tag.putBoolean(field.key(), (boolean) field.defaultValue());
                 case STRING -> tag.putString(field.key(), (String) field.defaultValue());
                 case RESOURCE_LOCATION -> tag.putString(field.key(), field.defaultValue().toString());
             }
