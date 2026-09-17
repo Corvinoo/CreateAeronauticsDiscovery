@@ -12,10 +12,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.Objects;
 
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
 
@@ -46,6 +49,16 @@ public record ExecuteBehavior(String command, ResourceLocation function)
 
     @Override
     public void onTrigger(PinEntity self, PinTrigger trigger) {
+        if (!Config.executeEnabled) {
+            Component message = Component.literal("Execute Pin tried to run at " + self.position() + " but execution is disabled from the configs");
+            PlayerList playerList = self.level().getServer().getPlayerList();
+            for (ServerPlayer player : Objects.requireNonNull(playerList.getPlayers())) {
+                if (playerList.isOp(player.getGameProfile())) {
+                    player.sendSystemMessage(message);
+                }
+            }  
+            return;
+        }
         if (!(self.level() instanceof ServerLevel level)) return;
         MinecraftServer server = level.getServer();
 
@@ -57,6 +70,7 @@ public record ExecuteBehavior(String command, ResourceLocation function)
         runInlineCommand(server, source, self, trigger, triggerPos);
         runFunction(server, source, self, trigger, triggerPos);
     }
+    
 
     private void runInlineCommand(MinecraftServer server, CommandSourceStack source,
             PinEntity self, PinTrigger trigger, Vec3 triggerPos) {

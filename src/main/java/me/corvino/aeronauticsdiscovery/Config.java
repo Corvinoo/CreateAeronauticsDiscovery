@@ -112,6 +112,11 @@ public class Config {
             .comment("Distance in blocks a player must be within to trigger pins armed with the Player Proximity trigger.")
             .defineInRange("pin.playerProximityRadius", 5.0, 1.0, 256.0);
 
+    private static final ModConfigSpec.BooleanValue PIN_EXECUTE_ENABLED = BUILDER
+            .comment("When enabled, pins with the execute behavior run their inline command and/or datapack function.",
+                    "Set to true to globally enable execute pins. Runs at permission level 2, like command blocks.")
+            .define("pin.executeEnabled", false);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static int flyoverMaxLifetimeTicks;
@@ -133,6 +138,7 @@ public class Config {
     public static boolean planksLevelled;
     public static boolean allowPlankPlacement;
     public static double playerProximityRadius;
+    public static boolean executeEnabled;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -155,6 +161,7 @@ public class Config {
         planksLevelled = PLANKS_LEVELLED.get();
         allowPlankPlacement = ALLOW_PLANK_PLACEMENT.get();
         playerProximityRadius = PLAYER_PROXIMITY_RADIUS.get();
+        executeEnabled = PIN_EXECUTE_ENABLED.get();
     }
 
     public enum ExplosionMode {
