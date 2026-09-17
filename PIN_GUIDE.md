@@ -24,6 +24,7 @@ Everything is done through the **Pin Wand** item and its clickable chat UI. The 
     - [Spawn Mob](#spawn-mob)
     - [Rope Connector](#rope-connector)
     - [Fill Up Balloon](#fill-up-balloon)
+    - [Execute](#execute)
   - [5. Triggers](#5-triggers)
   - [6. Chain Reactions (Emitter)](#6-chain-reactions-emitter)
   - [7. Inspecting and Removing Pins](#7-inspecting-and-removing-pins)
@@ -128,6 +129,7 @@ The color of the cube indicates the behavior type:
 | Green  | Spawn Mob       |
 | Orange | Rope Connector  |
 | Cyan   | Fill Up Balloon |
+| Lime   | Execute         |
 
 ---
 
@@ -186,6 +188,34 @@ It must be placed on a Hot air balloon burner or Steam vent in order to work. It
 > [!NOTE]
 > If the balloon is still assembling or has no heaters, the pin waits and retries for up to ~60 seconds before giving up.
 
+### Execute
+
+> [!NOTE]
+> Set `pin.executeEnabled` to `true` in the mod config to enable execute pins.
+
+Runs an inline command and/or a datapack function when triggered. If both are set, the command runs first, then the function.
+
+> [!TIP]
+> Minimal datapack layout for mcfunctions:
+> ```
+> <save>/datapacks/<datapackname>/pack.mcmeta
+> <save>/datapacks/<datapackname>/data/<namespace>/function/<path>/<id>.mcfunction
+> ```
+> `pack.mcmeta`:
+> ```json
+> {"pack": {"pack_format": 48, "description": "My pin functions"}}
+> ```
+> Then use `/reload` in game (check with `/datapack list` if the datapack is active and test the function with `/function <namespace>:<path>/<id>`).
+> 
+
+| Parameter | Default           | Description                                                                |
+|-----------|-------------------|----------------------------------------------------------------------------|
+| command   | *(empty)*         | Inline command (leading `/` optional).                                     |
+| function  | `minecraft:empty` | Datapack function id to run (`minecraft:empty` or any non-valid id = none) |
+
+Execution runs anchored at the **pin's own block/space**, at **permission level 2** (like command blocks).
+
+`~ ~ ~` and bare `distance` selectors are evaluated from the pin's own block position.
 
 ---
 
