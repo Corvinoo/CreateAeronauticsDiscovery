@@ -140,7 +140,7 @@ Detonates when triggered .
 | Power     | `4.0`   | Explosion strength (same scale as vanilla TNT) |
 
 > [!NOTE]
-> When a structure crashes, only the **closest** explosive pin to the impact point detonates. If you want multiple pins to detonate, enable the [emitter](#6-chain-reactions-emitter) to propagate the explosion chain to other pins.
+> When a structure crashes, only the **closest** pin with the **External Force** trigger fires, regardless of behavior type. If you want multiple pins to activate, enable the [emitter](#6-chain-reactions-emitter) to propagate the trigger to other pins.
 
 ---
 
