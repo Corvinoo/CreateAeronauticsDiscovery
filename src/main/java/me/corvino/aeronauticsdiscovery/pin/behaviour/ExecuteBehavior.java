@@ -62,47 +62,46 @@ public record ExecuteBehavior(String command, ResourceLocation function)
         if (!(self.level() instanceof ServerLevel level)) return;
         MinecraftServer server = level.getServer();
 
-        Vec3 triggerPos = trigger.originWorldPos();
         CommandSourceStack source = new CommandSourceStack(
                 CommandSource.NULL, self.position(), Vec2.ZERO, level, 2,
                 "CommandPin", Component.literal("CommandPin"), server, null);
 
-        runInlineCommand(server, source, self, trigger, triggerPos);
-        runFunction(server, source, self, trigger, triggerPos);
+        runInlineCommand(server, source, self, trigger);
+        runFunction(server, source, self, trigger);
     }
     
 
     private void runInlineCommand(MinecraftServer server, CommandSourceStack source,
-            PinEntity self, PinTrigger trigger, Vec3 triggerPos) {
-        String expanded = replacePlaceholder(this.command, self.position(), triggerPos).strip();
-        if (expanded.isEmpty()) return;
-        String cmd = expanded.startsWith("/") ? expanded.substring(1).strip() : expanded;
+            PinEntity self, PinTrigger trigger) {
+        String cmd = this.command.strip();
+        if (cmd.startsWith("/")) cmd = cmd.substring(1).strip();
+        if (cmd.isEmpty()) return;
         try {
             server.getCommands().performPrefixedCommand(source, cmd);
         } catch (Exception e) {
             ModLog.warn(PIN,
-                    "Execute pin at {} failed command '{}' (trigger {} @ {})",
-                    self.blockPosition(), cmd, trigger.kind(), triggerPos, e.toString());
+                    "Execute pin at {} failed command '{}' (trigger {})",
+                    self.blockPosition(), cmd, trigger.kind(), e.toString());
         }
     }
 
     //Runs the configured datapack function
     private void runFunction(MinecraftServer server, CommandSourceStack source,
-            PinEntity self, PinTrigger trigger, Vec3 triggerPos) {
+            PinEntity self, PinTrigger trigger) {
         if (!hasFunction()) return;
         var resolved = server.getFunctions().get(this.function);
         if (resolved.isEmpty()) {
             ModLog.warn(PIN,
-                    "Execute pin at {} references missing function '{}' (trigger {} @ {})",
-                    self.blockPosition(), this.function, trigger.kind(), triggerPos);
+                    "Execute pin at {} references missing function '{}' (trigger {})",
+                    self.blockPosition(), this.function, trigger.kind());
             return;
         }
         try {
             server.getFunctions().execute(resolved.get(), source);
         } catch (Exception e) {
             ModLog.warn(PIN,
-                    "Execute pin at {} failed function '{}' (trigger {} @ {})",
-                    self.blockPosition(), this.function, trigger.kind(), triggerPos, e.toString());
+                    "Execute pin at {} failed function '{}' (trigger {})",
+                    self.blockPosition(), this.function, trigger.kind(), e.toString());
         }
     }
 
@@ -116,18 +115,4 @@ public record ExecuteBehavior(String command, ResourceLocation function)
         return parsed != null ? parsed : EMPTY_FUNCTION_ID;
     }
 
-    static String replacePlaceholder(String template, Vec3 pinPos, Vec3 triggerPos) {
-        if (template == null) return "";
-        String out = template
-                .replace("{x}", Double.toString(pinPos.x()))
-                .replace("{y}", Double.toString(pinPos.y()))
-                .replace("{z}", Double.toString(pinPos.z()));
-        if (triggerPos != null) {
-            out = out
-                    .replace("{trigger_x}", Double.toString(triggerPos.x()))
-                    .replace("{trigger_y}", Double.toString(triggerPos.y()))
-                    .replace("{trigger_z}", Double.toString(triggerPos.z()));
-        }
-        return out;
-    }
 }

@@ -284,15 +284,7 @@ public final class PinWandCommand {
         String cmd = value.strip();
         if (cmd.startsWith("/")) cmd = cmd.substring(1).strip();
         if (cmd.isEmpty()) return true;
-        String trial = cmd
-                .replace("{x}", "0")
-                .replace("{y}", "0")
-                .replace("{z}", "0")
-                .replace("{trigger_x}", "0")
-                .replace("{trigger_y}", "0")
-                .replace("{trigger_z}", "0");
-        CommandSyntaxException error = Commands.getParseException(
-                source.getServer().getCommands().getDispatcher().parse(new StringReader(trial), source));
+        CommandSyntaxException error = Commands.getParseException(source.getServer().getCommands().getDispatcher().parse(new StringReader(cmd), source));
         if (error == null) return true;
         source.sendFailure(Component.literal("Invalid command: " + error.getMessage()));
         return false;

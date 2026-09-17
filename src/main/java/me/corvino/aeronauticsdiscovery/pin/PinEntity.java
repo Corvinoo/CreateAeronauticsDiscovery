@@ -1,6 +1,9 @@
 package me.corvino.aeronauticsdiscovery.pin;
 
+import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehavior;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorType;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
@@ -18,6 +21,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 import javax.annotation.Nullable;
 
@@ -174,4 +180,15 @@ public class PinEntity extends Entity {
         return true;
     }
 
+    public Vec3 worldPosition(ServerLevel level) {
+        SubLevel sl = Sable.HELPER.getContaining(level, this.position());
+        if (sl instanceof ServerSubLevel ssl) {
+            Vector3dc worldPos = ssl.logicalPose().transformPosition(
+                    new Vector3d(this.getX(), this.getY(), this.getZ())
+            );
+            return new Vec3(worldPos.x(), worldPos.y(), worldPos.z());
+        }
+        return this.position();
+    }
+ 
 }
