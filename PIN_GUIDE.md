@@ -42,6 +42,8 @@ Right now, the Wand is a developer item, and it does not appear in the Creative 
 /give @s aeronauticsdiscovery:pin_wand
 ```
 
+Using the wand (opening its UI, configuring it, or placing pins) and running `/pinwand` both require **permission level 2** (operator). 
+
 ---
 
 ## 2. The Pin Wand UI
