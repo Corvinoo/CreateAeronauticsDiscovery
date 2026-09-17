@@ -1,9 +1,11 @@
 package me.corvino.aeronauticsdiscovery.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.items.PinWandItem;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
@@ -141,6 +143,8 @@ public final class PinWandCommand {
             return 0;
         }
 
+        if (field.key().equals("command") && !hasValidCommandSyntax(source, value)) return 0;
+
         CompoundTag config = tag.getCompound(TAG_CONFIG);
         try {
             PinWandItem.writeConfigValue(config, field, value);
@@ -274,5 +278,23 @@ public final class PinWandCommand {
             return false;
         }
         return true;
+    }
+
+    private static boolean hasValidCommandSyntax(CommandSourceStack source, String value) {
+        String cmd = value.strip();
+        if (cmd.startsWith("/")) cmd = cmd.substring(1).strip();
+        if (cmd.isEmpty()) return true;
+        String trial = cmd
+                .replace("{x}", "0")
+                .replace("{y}", "0")
+                .replace("{z}", "0")
+                .replace("{trigger_x}", "0")
+                .replace("{trigger_y}", "0")
+                .replace("{trigger_z}", "0");
+        CommandSyntaxException error = Commands.getParseException(
+                source.getServer().getCommands().getDispatcher().parse(new StringReader(trial), source));
+        if (error == null) return true;
+        source.sendFailure(Component.literal("Invalid command: " + error.getMessage()));
+        return false;
     }
 }
