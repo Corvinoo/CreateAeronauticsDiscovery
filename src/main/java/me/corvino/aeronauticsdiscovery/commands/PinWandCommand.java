@@ -33,7 +33,7 @@ public final class PinWandCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("pinwand")
-                .requires(source -> source.hasPermission(0))
+                .requires(source -> source.hasPermission(2))
                 .executes(ctx -> showMainUI(ctx.getSource()))
                 .then(Commands.literal("cycle")
                         .executes(ctx -> cycle(ctx.getSource())))

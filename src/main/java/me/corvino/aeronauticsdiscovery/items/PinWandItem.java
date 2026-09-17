@@ -19,6 +19,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -54,6 +55,10 @@ public class    PinWandItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide) return InteractionResultHolder.success(player.getItemInHand(hand));
         ItemStack stack = player.getItemInHand(hand);
+        if (!hasOperatorPermission(player)) {
+            player.sendSystemMessage(Component.literal("§c[Pin Wand] Requires permission level 2 (operator) to use"));
+            return InteractionResultHolder.fail(stack);
+        }
         initConfig(stack);
         player.sendSystemMessage(buildConfigUI(stack));
         return InteractionResultHolder.success(stack);
@@ -66,6 +71,10 @@ public class    PinWandItem extends Item {
         ItemStack stack = context.getItemInHand();
         Player player = context.getPlayer();
         if (player == null) return InteractionResult.FAIL;
+        if (!hasOperatorPermission(player)) {
+            player.sendSystemMessage(Component.literal("§c[Pin Wand] Requires permission level 2 (operator) to place pins"));
+            return InteractionResult.FAIL;
+        }
 
         BlockPos pos = context.getClickedPos();
 
@@ -117,6 +126,10 @@ public class    PinWandItem extends Item {
                 "§8[§6✧§8] §aPlaced §f" + behaviorId.getPath() + " §aat " +
                         Math.round(epos.x) + " " + Math.round(epos.y) + " " + Math.round(epos.z)));
         return InteractionResult.CONSUME;
+    }
+
+    private static boolean hasOperatorPermission(Player player) {
+        return player instanceof ServerPlayer serverPlayer && serverPlayer.hasPermissions(2);
     }
 
     public static PinEntity findPinAt(Level level, BlockPos pos) {
