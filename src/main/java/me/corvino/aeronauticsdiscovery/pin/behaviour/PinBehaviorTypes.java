@@ -53,6 +53,7 @@ public final class PinBehaviorTypes {
     @SuppressWarnings({"deprecation", "removal"})
     public static void bootstrap() {
         touch(ExplosiveBehavior.TYPE);
+        touch(ExecuteBehavior.TYPE);
         touch(SpawnMobBehavior.TYPE);
         touch(MobSpawnPointBehavior.TYPE);
         touch(SeatMobBehavior.TYPE);
