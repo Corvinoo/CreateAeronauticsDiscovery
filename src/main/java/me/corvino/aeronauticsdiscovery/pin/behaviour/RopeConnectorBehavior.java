@@ -80,7 +80,7 @@ public record RopeConnectorBehavior(
 
     @Nullable
     private RopeStrandHolderBehavior findAvailablePartner(PinEntity self, ServerLevel serverLevel) {
-        Vec3 myWorldPos = worldPosition(self, serverLevel);
+        Vec3 myWorldPos = self.worldPosition(serverLevel);
         AABB searchBounds = new AABB(myWorldPos, myWorldPos).inflate(this.maxRange);
         double rangeSq = this.maxRange * this.maxRange;
 
@@ -89,7 +89,7 @@ public record RopeConnectorBehavior(
             if (!(behavior instanceof RopeConnectorBehavior other)) continue;
             if (other.channel != this.channel) continue;
 
-            if (worldPosition(candidate, serverLevel).distanceToSqr(myWorldPos) > rangeSq) continue;
+            if (candidate.worldPosition(serverLevel).distanceToSqr(myWorldPos) > rangeSq) continue;
 
             RopeStrandHolderBehavior candidateHolder = findRopeHolder(candidate, serverLevel);
             if (candidateHolder == null || candidateHolder.isAttached()) continue;
@@ -99,16 +99,6 @@ public record RopeConnectorBehavior(
         return null;
     }
 
-    private static Vec3 worldPosition(PinEntity pin, ServerLevel serverLevel) {
-        SubLevel sl = Sable.HELPER.getContaining(serverLevel, pin.position());
-        if (sl instanceof ServerSubLevel ssl) {
-            Vector3dc worldPos = ssl.logicalPose().transformPosition(
-                    new Vector3d(pin.getX(), pin.getY(), pin.getZ())
-            );
-            return new Vec3(worldPos.x(), worldPos.y(), worldPos.z());
-        }
-        return pin.position();
-    }
 
     @Nullable
     private RopeStrandHolderBehavior findRopeHolder(PinEntity pin, ServerLevel serverLevel) {
