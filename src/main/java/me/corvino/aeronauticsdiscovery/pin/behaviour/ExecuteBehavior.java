@@ -50,7 +50,7 @@ public record ExecuteBehavior(String command, ResourceLocation function)
     @Override
     public void onTrigger(PinEntity self, PinTrigger trigger) {
         if (!Config.executeEnabled) {
-            Component message = Component.literal("Execute Pin tried to run at " + self.position() + " but execution is disabled from the configs");
+            Component message = Component.literal("§l[§b§lCreate Aeronautics Discovery§r§l]§r: Execute Pin tried to run at " + self.position() + " but execution is disabled from the configs");
             PlayerList playerList = self.level().getServer().getPlayerList();
             for (ServerPlayer player : Objects.requireNonNull(playerList.getPlayers())) {
                 if (playerList.isOp(player.getGameProfile())) {
