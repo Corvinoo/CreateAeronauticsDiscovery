@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.pin.EmitterConfig;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinHeadRaycast;
 import me.corvino.aeronauticsdiscovery.pin.PinRoseLayout;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import me.corvino.aeronauticsdiscovery.pin.TriggerMask;
@@ -61,6 +62,11 @@ public class CreativePinItem extends Item {
             player.sendSystemMessage(Component.literal("§c[Creative Pin] Requires permission level 2 (operator) to use"));
             return InteractionResultHolder.fail(stack);
         }
+        PinHeadRaycast.Hit hit = PinHeadRaycast.pick(player);
+        if (hit != null) {
+            player.sendSystemMessage(buildPinInfoUI(hit.pin()));
+            return InteractionResultHolder.success(stack);
+        }
         initConfig(stack);
         player.sendSystemMessage(buildConfigUI(stack));
         return InteractionResultHolder.success(stack);
@@ -80,19 +86,25 @@ public class CreativePinItem extends Item {
 
         BlockPos pos = context.getClickedPos();
 
-        // Normal (non-sneak) right-click shows the config panels for every pin in this block.
-        // Sneak right-click always places a new pin, even if the block already holds pins.
-        if (!player.isShiftKeyDown()) {
+        PinHeadRaycast.Hit hit = PinHeadRaycast.pick(player);
+        if (hit != null && hit.distance() < PinHeadRaycast.distanceTo(player, context.getClickLocation())) {
+            player.sendSystemMessage(buildPinInfoUI(hit.pin()));
+            return InteractionResult.CONSUME;
+        }
+
+        if (player.isShiftKeyDown()) {
             List<PinEntity> existing = findPinsAt(level, pos);
-            if (!existing.isEmpty()) {
-                MutableComponent msg = Component.literal("");
-                for (int i = 0; i < existing.size(); i++) {
-                    if (i > 0) msg.append(Component.literal("\n"));
-                    msg.append(buildPinInfoUI(existing.get(i)));
-                }
-                player.sendSystemMessage(msg);
+            if (existing.isEmpty()) {
+                player.sendSystemMessage(Component.literal("[Creative Pin] No pins on this block").withStyle(ChatFormatting.GRAY));
                 return InteractionResult.CONSUME;
             }
+            MutableComponent msg = Component.literal("");
+            for (int i = 0; i < existing.size(); i++) {
+                if (i > 0) msg.append(Component.literal("\n"));
+                msg.append(buildPinInfoUI(existing.get(i)));
+            }
+            player.sendSystemMessage(msg);
+            return InteractionResult.CONSUME;
         }
 
         if (PinEntity.faceSiblings(level, pos, context.getClickedFace()).size() >= PinRoseLayout.MAX_PER_FACE) {
