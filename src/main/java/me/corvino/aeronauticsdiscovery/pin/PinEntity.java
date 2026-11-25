@@ -11,6 +11,8 @@ import me.corvino.aeronauticsdiscovery.pin.EmitterConfig;
 import me.corvino.aeronauticsdiscovery.pin.TriggerMask;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.PIN;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -20,12 +22,15 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Explosion;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
 import javax.annotation.Nullable;
+import java.util.Comparator;
+import java.util.List;
 
 import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
 
@@ -33,9 +38,12 @@ public class PinEntity extends Entity {
 
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
+    private static final String TAG_FACE = "Face";
 
     private static final EntityDataAccessor<String> DATA_BEHAVIOR_ID =
             SynchedEntityData.defineId(PinEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Direction> DATA_FACE =
+            SynchedEntityData.defineId(PinEntity.class, EntityDataSerializers.DIRECTION);
 
     @Nullable private ResourceLocation behaviorId;
     private CompoundTag config = new CompoundTag();
@@ -52,6 +60,7 @@ public class PinEntity extends Entity {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(DATA_BEHAVIOR_ID, "");
+        builder.define(DATA_FACE, Direction.UP);
     }
 
 
@@ -70,6 +79,25 @@ public class PinEntity extends Entity {
         this.config = config.copy();
         this.behavior = null;
         this.entityData.set(DATA_BEHAVIOR_ID, behaviorId.toString());
+    }
+
+    public Direction getFace() {
+        return this.entityData.get(DATA_FACE);
+    }
+
+    public void setFace(Direction face) {
+        this.entityData.set(DATA_FACE, face);
+    }
+
+    public List<PinEntity> faceSiblings() {
+        return faceSiblings(level(), blockPosition(), getFace());
+    }
+
+    public static List<PinEntity> faceSiblings(Level level, BlockPos pos, Direction face) {
+        List<PinEntity> pins = level.getEntitiesOfClass(PinEntity.class, new AABB(pos).inflate(0.01),
+                pin -> pin.blockPosition().equals(pos) && pin.getFace() == face);
+        pins.sort(Comparator.comparing(Entity::getUUID));
+        return pins;
     }
 
     public TriggerMask getTriggerMask() {
@@ -142,6 +170,8 @@ public class PinEntity extends Entity {
         this.config = tag.getCompound(TAG_CONFIG);
         this.triggerMask = TriggerMask.fromNbt(tag);
         this.emitterConfig = EmitterConfig.fromNbt(tag);
+        Direction face = Direction.byName(tag.getString(TAG_FACE));
+        setFace(face != null ? face : Direction.UP);
         this.behavior = null;
     }
 
@@ -153,6 +183,7 @@ public class PinEntity extends Entity {
         tag.put(TAG_CONFIG, this.config);
         this.triggerMask.save(tag);
         this.emitterConfig.save(tag);
+        tag.putString(TAG_FACE, getFace().getSerializedName());
     }
 
     @Override

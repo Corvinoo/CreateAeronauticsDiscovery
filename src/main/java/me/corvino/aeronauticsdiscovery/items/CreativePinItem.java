@@ -5,11 +5,13 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.pin.EmitterConfig;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinRoseLayout;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import me.corvino.aeronauticsdiscovery.pin.TriggerMask;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.ConfigField;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorType;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -93,6 +95,12 @@ public class CreativePinItem extends Item {
             }
         }
 
+        if (PinEntity.faceSiblings(level, pos, context.getClickedFace()).size() >= PinRoseLayout.MAX_PER_FACE) {
+            player.sendSystemMessage(Component.literal("[Creative Pin] This face already holds " + PinRoseLayout.MAX_PER_FACE + " pins")
+                    .withStyle(ChatFormatting.RED));
+            return InteractionResult.FAIL;
+        }
+
         initConfig(stack);
         CompoundTag tag = getDataTag(stack);
         String behaviorIdStr = tag.getString(TAG_BEHAVIOR_ID);
@@ -107,6 +115,7 @@ public class CreativePinItem extends Item {
         PinEntity pin = new PinEntity(EntityRegistry.PIN.get(), level);
         pin.setPos(epos.x, epos.y, epos.z);
         pin.setBehavior(behaviorId, config);
+        pin.setFace(context.getClickedFace());
         pin.setTriggerMask(getTriggerMask(tag));
         pin.setEmitterConfig(getEmitterConfig(tag));
 

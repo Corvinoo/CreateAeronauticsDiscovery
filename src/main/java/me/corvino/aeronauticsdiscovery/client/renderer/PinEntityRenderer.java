@@ -2,9 +2,11 @@ package me.corvino.aeronauticsdiscovery.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
+import me.corvino.aeronauticsdiscovery.pin.PinRoseLayout;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorType;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
 import net.minecraft.client.Minecraft;
@@ -18,7 +20,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.AABB;
@@ -63,17 +64,24 @@ public class PinEntityRenderer extends EntityRenderer<PinEntity> {
     public void render(PinEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        renderPin(entity, poseStack, bufferSource, packedLight);
+        List<PinEntity> siblings = entity.faceSiblings();
+        int index = Math.max(0, siblings.indexOf(entity));
+        renderPin(entity, PinRoseLayout.orientation(index, Math.max(1, siblings.size())), poseStack, bufferSource, packedLight);
         if (ownsCube(entity)) {
             renderCube(poseStack, bufferSource, packedLight);
         }
     }
 
-    private void renderPin(PinEntity entity, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+    private void renderPin(PinEntity entity, PinRoseLayout.Orientation orientation, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         BakedModel model = Minecraft.getInstance().getModelManager().getModel(modelLocation(modelName(entity)));
 
         poseStack.pushPose();
-        poseStack.translate(-0.5, 1.0, -0.5);
+        poseStack.translate(0, 0.5, 0);
+        poseStack.mulPose(entity.getFace().getRotation());
+        poseStack.translate(0, 0.5, 0);
+        poseStack.mulPose(Axis.YP.rotationDegrees(orientation.azimuth()));
+        poseStack.mulPose(Axis.XP.rotationDegrees(orientation.tilt()));
+        poseStack.translate(-0.5, 0, -0.5);
         Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(
                 poseStack.last(),
                 bufferSource.getBuffer(Sheets.cutoutBlockSheet()),
@@ -150,12 +158,12 @@ public class PinEntityRenderer extends EntityRenderer<PinEntity> {
 
     @Override
     protected int getBlockLightLevel(PinEntity entity, BlockPos pos) {
-        return entity.level().getBrightness(LightLayer.BLOCK, pos.relative(Direction.UP));
+        return entity.level().getBrightness(LightLayer.BLOCK, pos.relative(entity.getFace()));
     }
 
     @Override
     protected int getSkyLightLevel(PinEntity entity, BlockPos pos) {
-        return entity.level().getBrightness(LightLayer.SKY, pos.relative(Direction.UP));
+        return entity.level().getBrightness(LightLayer.SKY, pos.relative(entity.getFace()));
     }
 
     @Override
