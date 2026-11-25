@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(CommandSuggestions.class)
-public abstract class PinWandCommandSuggestionsMixin {
+public abstract class PinCommandSuggestionsMixin {
     @Shadow
     @Final
     private Minecraft minecraft;
@@ -43,7 +43,7 @@ public abstract class PinWandCommandSuggestionsMixin {
     private static final String AERONAUTICSDISCOVERY$FUNCTION_WRAP = "function ";
 
     @Inject(method = "updateCommandInfo", at = @At("TAIL"), require = 0)
-    private void aeronauticsdiscovery$completePinwandInner(CallbackInfo ci) {
+    private void aeronauticsdiscovery$completePinInner(CallbackInfo ci) {
         if (this.minecraft.player == null) return;
         if (this.minecraft.player.connection == null) return;
         String line = this.input.getValue();
@@ -109,7 +109,7 @@ public abstract class PinWandCommandSuggestionsMixin {
     @Unique
     private static int aeronauticsdiscovery$tailStart(String line, String key) {
         if (!line.startsWith("/")) return -1;
-        int i = aeronauticsdiscovery$skipWord(line, 1, "pinwand");
+        int i = aeronauticsdiscovery$skipWord(line, 1, "pin");
         if (i < 0) return -1;
         i = aeronauticsdiscovery$skipSpaces(line, i);
         if (i < 0) return -1;

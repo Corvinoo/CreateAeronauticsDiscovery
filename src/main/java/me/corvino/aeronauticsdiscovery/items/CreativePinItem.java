@@ -39,7 +39,7 @@ import java.util.List;
 import static net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND;
 import static net.minecraft.network.chat.ClickEvent.Action.SUGGEST_COMMAND;
 
-public class    PinWandItem extends Item {
+public class CreativePinItem extends Item {
 
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
@@ -47,7 +47,7 @@ public class    PinWandItem extends Item {
     private static final String TAG_EMITTER_RADIUS = "EmitterRadius";
     private static final String TAG_EMITTER_SPEED = "EmitterSpeed";
 
-    public PinWandItem(Properties properties) {
+    public CreativePinItem(Properties properties) {
         super(properties);
     }
 
@@ -56,7 +56,7 @@ public class    PinWandItem extends Item {
         if (level.isClientSide) return InteractionResultHolder.success(player.getItemInHand(hand));
         ItemStack stack = player.getItemInHand(hand);
         if (!hasOperatorPermission(player)) {
-            player.sendSystemMessage(Component.literal("§c[Pin Wand] Requires permission level 2 (operator) to use"));
+            player.sendSystemMessage(Component.literal("§c[Creative Pin] Requires permission level 2 (operator) to use"));
             return InteractionResultHolder.fail(stack);
         }
         initConfig(stack);
@@ -72,7 +72,7 @@ public class    PinWandItem extends Item {
         Player player = context.getPlayer();
         if (player == null) return InteractionResult.FAIL;
         if (!hasOperatorPermission(player)) {
-            player.sendSystemMessage(Component.literal("§c[Pin Wand] Requires permission level 2 (operator) to place pins"));
+            player.sendSystemMessage(Component.literal("§c[Creative Pin] Requires permission level 2 (operator) to place pins"));
             return InteractionResult.FAIL;
         }
 
@@ -178,7 +178,7 @@ public class    PinWandItem extends Item {
         MutableComponent removeBtn = Component.literal("§8[§c✕ Remove§8]")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(RUN_COMMAND,
-                                "/pinwand remove " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + " " + pin.getId()))
+                                "/pin remove " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + " " + pin.getId()))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§cRemove this pin"))));
         msg.append(Component.literal("  "));
@@ -194,22 +194,22 @@ public class    PinWandItem extends Item {
 
         ResourceLocation behaviorId = ResourceLocation.tryParse(behaviorIdStr);
         if (behaviorId == null) {
-            return Component.literal("§c[Pin Wand] No behavior configured - use /pinwand cycle");
+            return Component.literal("§c[Creative Pin] No behavior configured - use /pin cycle");
         }
 
         PinBehaviorType<?> type = PinBehaviorTypes.byId(behaviorId);
         if (type == null) {
-            return Component.literal("§c[Pin Wand] Unknown behavior: " + behaviorIdStr);
+            return Component.literal("§c[Creative Pin] Unknown behavior: " + behaviorIdStr);
         }
 
         CompoundTag config = tag.getCompound(TAG_CONFIG);
         MutableComponent msg = Component.literal("");
 
-        msg.append(Component.literal("§8[§6- Pin Wand - §f" + behaviorId.getPath() + "§8]\n"));
+        msg.append(Component.literal("§8[§6- Creative Pin - §f" + behaviorId.getPath() + "§8]\n"));
 
         MutableComponent cycleBtn = Component.literal("§8[§6\u2936 Cycle§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand cycle"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pin cycle"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Switch behavior type"))));
         msg.append(Component.literal("  §7Behavior: §f" + behaviorId.getPath() + "  "));
@@ -224,7 +224,7 @@ public class    PinWandItem extends Item {
                 MutableComponent editBtn = Component.literal("§8[§6\u270e§8]")
                         .withStyle(style -> style
                                 .withClickEvent(new ClickEvent(SUGGEST_COMMAND,
-                                        "/pinwand set " + field.key() + " " + valueStr))
+                                        "/pin set " + field.key() + " " + valueStr))
                                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                         Component.literal("§7Edit " + field.label()))));
                 msg.append(Component.literal("    §7" + field.label() + ": §f" + valueStr + "  "));
@@ -237,7 +237,7 @@ public class    PinWandItem extends Item {
         msg.append(Component.literal("  §7Triggers: " + triggerMaskSummary(mask) + "  "));
         MutableComponent editTriggersBtn = Component.literal("§8[§6✎ Triggers§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand trigger"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pin trigger"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Configure which trigger kinds activate this pin"))));
         msg.append(editTriggersBtn);
@@ -247,7 +247,7 @@ public class    PinWandItem extends Item {
         msg.append(Component.literal("  §7Emitter: " + emitterSummary(emitter) + "  "));
         MutableComponent editEmitterBtn = Component.literal("§8[§6✎ Emitter§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand emitter"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pin emitter"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Configure trigger propagation"))));
         msg.append(editEmitterBtn);
@@ -318,7 +318,7 @@ public class    PinWandItem extends Item {
             MutableComponent toggleBtn = Component.literal("§8[§7" + icon + "§8]")
                     .withStyle(style -> style
                             .withClickEvent(new ClickEvent(RUN_COMMAND,
-                                    "/pinwand trigger " + kind.name()))
+                                    "/pin trigger " + kind.name()))
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                     Component.literal(enabled
                                             ? "§cClick to disable " + kind.displayName()
@@ -330,9 +330,9 @@ public class    PinWandItem extends Item {
 
         MutableComponent backBtn = Component.literal("§8[§6← Back§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pin"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                Component.literal("§7Return to main wand config"))));
+                                Component.literal("§7Return to main pin config"))));
         msg.append(Component.literal("  "));
         msg.append(backBtn);
 
@@ -369,7 +369,7 @@ public class    PinWandItem extends Item {
         MutableComponent editRadiusBtn = Component.literal("§8[§6\u270e§8]")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(SUGGEST_COMMAND,
-                                "/pinwand emitter radius " + (emitter.isEnabled() ? emitter.radius() : "10.0")))
+                                "/pin emitter radius " + (emitter.isEnabled() ? emitter.radius() : "10.0")))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Set propagation radius (0 = disabled)"))));
         msg.append(editRadiusBtn);
@@ -380,7 +380,7 @@ public class    PinWandItem extends Item {
         MutableComponent editSpeedBtn = Component.literal("§8[§6\u270e§8]")
                 .withStyle(style -> style
                         .withClickEvent(new ClickEvent(SUGGEST_COMMAND,
-                                "/pinwand emitter speed " + (emitter.isEnabled() ? emitter.propagationSpeed() : "5.0")))
+                                "/pin emitter speed " + (emitter.isEnabled() ? emitter.propagationSpeed() : "5.0")))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                 Component.literal("§7Set propagation speed in blocks/tick"))));
         msg.append(editSpeedBtn);
@@ -388,9 +388,9 @@ public class    PinWandItem extends Item {
 
         MutableComponent backBtn = Component.literal("§8[§6← Back§8]")
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pinwand"))
+                        .withClickEvent(new ClickEvent(RUN_COMMAND, "/pin"))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                Component.literal("§7Return to main wand config"))));
+                                Component.literal("§7Return to main pin config"))));
         msg.append(Component.literal("  "));
         msg.append(backBtn);
 

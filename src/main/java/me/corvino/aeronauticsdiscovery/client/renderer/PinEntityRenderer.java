@@ -87,7 +87,7 @@ public class PinEntityRenderer extends EntityRenderer<PinEntity> {
     public boolean shouldRender(PinEntity entity, Frustum camera, double camX, double camY, double camZ) {
         var player = Minecraft.getInstance().player;
         if (player == null) return false;
-        var wand = ItemRegistry.PIN_WAND.get();
-        return player.getMainHandItem().is(wand) || player.getOffhandItem().is(wand);
+        var item = ItemRegistry.CREATIVE_PIN.get();
+        return player.getMainHandItem().is(item) || player.getOffhandItem().is(item);
     }
 }

@@ -76,9 +76,9 @@ public class CreateAeronauticsDiscovery {
 //    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN_TAB =
 //            CREATIVE_MODE_TABS.register("main", () -> CreativeModeTab.builder()
 //                    .title(Component.translatable("itemGroup." + MODID + ".main"))
-//                    .icon(() -> new ItemStack(ItemRegistry.PIN_WAND.get()))
+//                    .icon(() -> new ItemStack(ItemRegistry.CREATIVE_PIN.get()))
 //                    .displayItems((params, output) -> {
-//                        output.accept(ItemRegistry.PIN_WAND.get());
+//                        output.accept(ItemRegistry.CREATIVE_PIN.get());
 //                        output.accept(ItemRegistry.SOARING_TRADER_SPAWN_EGG.get());
 //                    })
 //                    .build());
@@ -172,7 +172,7 @@ public class CreateAeronauticsDiscovery {
         DebugCommands.register(event.getDispatcher());
         PipelineDebugCommand.register(event.getDispatcher());
         CleanChildSubLevelsCommand.register(event.getDispatcher());
-        PinWandCommand.register(event.getDispatcher());
+        PinCommand.register(event.getDispatcher());
         PinTestCommand.register(event.getDispatcher());
         InspectSubLevelCommand.register(event.getDispatcher());
     }

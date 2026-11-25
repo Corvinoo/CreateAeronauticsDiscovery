@@ -19,7 +19,7 @@
     "patch.AquiferMixin"
   ],
   "client": [
-    "client.PinWandCommandSuggestionsMixin"
+    "client.PinCommandSuggestionsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

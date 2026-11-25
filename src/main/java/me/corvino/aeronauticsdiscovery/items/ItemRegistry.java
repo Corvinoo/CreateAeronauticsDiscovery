@@ -20,8 +20,8 @@ public class ItemRegistry {
             ITEMS.register("pillager_aviator_spawn_egg",
                     () -> new SpawnEggItem(EntityRegistry.PILLAGER_AVIATOR.get(), 0x33415F, 0xA5A6B5, new Item.Properties()));
 
-    public static final DeferredHolder<Item, PinWandItem> PIN_WAND =
-            ITEMS.register("pin_wand", () -> new PinWandItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredHolder<Item, CreativePinItem> CREATIVE_PIN =
+            ITEMS.register("creative_pin", () -> new CreativePinItem(new Item.Properties().stacksTo(1)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

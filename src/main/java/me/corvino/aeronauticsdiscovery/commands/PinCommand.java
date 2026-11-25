@@ -7,7 +7,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
-import me.corvino.aeronauticsdiscovery.items.PinWandItem;
+import me.corvino.aeronauticsdiscovery.items.CreativePinItem;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinTrigger;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.ConfigField;
@@ -27,14 +27,14 @@ import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class PinWandCommand {
+public final class PinCommand {
     private static final String TAG_BEHAVIOR_ID = "BehaviorId";
     private static final String TAG_CONFIG = "Config";
 
-    private PinWandCommand() {}
+    private PinCommand() {}
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("pinwand")
+        dispatcher.register(Commands.literal("pin")
                 .requires(source -> source.hasPermission(2))
                 .executes(ctx -> showMainUI(ctx.getSource()))
                 .then(Commands.literal("cycle")
@@ -74,10 +74,10 @@ public final class PinWandCommand {
         if (player == null) return 0;
 
         ItemStack stack = player.getMainHandItem();
-        if (!validateWand(source, stack)) return 0;
+        if (!validateItem(source, stack)) return 0;
 
-        PinWandItem.initConfig(stack);
-        CompoundTag tag = PinWandItem.getDataTag(stack);
+        CreativePinItem.initConfig(stack);
+        CompoundTag tag = CreativePinItem.getDataTag(stack);
         String currentStr = tag.getString(TAG_BEHAVIOR_ID);
 
         List<PinBehaviorType<?>> types = new ArrayList<>(PinBehaviorTypes.getActive().values());
@@ -103,9 +103,9 @@ public final class PinWandCommand {
         PinBehaviorType<?> nextType = types.get(nextIdx);
         tag.putString(TAG_BEHAVIOR_ID, nextType.id().toString());
         tag.put(TAG_CONFIG, nextType.defaultConfig());
-        PinWandItem.setDataTag(stack, tag);
+        CreativePinItem.setDataTag(stack, tag);
 
-        player.sendSystemMessage(PinWandItem.buildConfigUI(stack));
+        player.sendSystemMessage(CreativePinItem.buildConfigUI(stack));
         return 1;
     }
 
@@ -114,14 +114,14 @@ public final class PinWandCommand {
         if (player == null) return 0;
 
         ItemStack stack = player.getMainHandItem();
-        if (!validateWand(source, stack)) return 0;
+        if (!validateItem(source, stack)) return 0;
 
-        PinWandItem.initConfig(stack);
-        CompoundTag tag = PinWandItem.getDataTag(stack);
+        CreativePinItem.initConfig(stack);
+        CompoundTag tag = CreativePinItem.getDataTag(stack);
         String behaviorIdStr = tag.getString(TAG_BEHAVIOR_ID);
         ResourceLocation behaviorId = ResourceLocation.tryParse(behaviorIdStr);
         if (behaviorId == null) {
-            source.sendFailure(Component.literal("No behavior configured - use /pinwand cycle first"));
+            source.sendFailure(Component.literal("No behavior configured - use /pin cycle first"));
             return 0;
         }
 
@@ -147,15 +147,15 @@ public final class PinWandCommand {
 
         CompoundTag config = tag.getCompound(TAG_CONFIG);
         try {
-            PinWandItem.writeConfigValue(config, field, value);
+            CreativePinItem.writeConfigValue(config, field, value);
         } catch (Exception e) {
             source.sendFailure(Component.literal("Invalid value for " + field.label() + ": " + e.getMessage()));
             return 0;
         }
         tag.put(TAG_CONFIG, config);
-        PinWandItem.setDataTag(stack, tag);
+        CreativePinItem.setDataTag(stack, tag);
 
-        player.sendSystemMessage(PinWandItem.buildConfigUI(stack));
+        player.sendSystemMessage(CreativePinItem.buildConfigUI(stack));
         return 1;
     }
 
@@ -165,7 +165,7 @@ public final class PinWandCommand {
 
         Level level = player.level();
         PinEntity pin = null;
-        for (PinEntity candidate : PinWandItem.findPinsAt(level, pos)) {
+        for (PinEntity candidate : CreativePinItem.findPinsAt(level, pos)) {
             if (candidate.getId() == entityId) {
                 pin = candidate;
                 break;
@@ -186,10 +186,10 @@ public final class PinWandCommand {
         if (player == null) return 0;
 
         ItemStack stack = player.getMainHandItem();
-        if (!validateWand(source, stack)) return 0;
+        if (!validateItem(source, stack)) return 0;
 
-        PinWandItem.initConfig(stack);
-        player.sendSystemMessage(PinWandItem.buildConfigUI(stack));
+        CreativePinItem.initConfig(stack);
+        player.sendSystemMessage(CreativePinItem.buildConfigUI(stack));
         return 1;
     }
 
@@ -198,10 +198,10 @@ public final class PinWandCommand {
         if (player == null) return 0;
 
         ItemStack stack = player.getMainHandItem();
-        if (!validateWand(source, stack)) return 0;
+        if (!validateItem(source, stack)) return 0;
 
-        PinWandItem.initConfig(stack);
-        player.sendSystemMessage(PinWandItem.buildTriggerMaskUI(stack));
+        CreativePinItem.initConfig(stack);
+        player.sendSystemMessage(CreativePinItem.buildTriggerMaskUI(stack));
         return 1;
     }
 
@@ -210,7 +210,7 @@ public final class PinWandCommand {
         if (player == null) return 0;
 
         ItemStack stack = player.getMainHandItem();
-        if (!validateWand(source, stack)) return 0;
+        if (!validateItem(source, stack)) return 0;
 
         PinTrigger.Kind kind;
         try {
@@ -220,9 +220,9 @@ public final class PinWandCommand {
             return 0;
         }
 
-        PinWandItem.initConfig(stack);
-        PinWandItem.toggleTriggerKind(stack, kind);
-        player.sendSystemMessage(PinWandItem.buildTriggerMaskUI(stack));
+        CreativePinItem.initConfig(stack);
+        CreativePinItem.toggleTriggerKind(stack, kind);
+        player.sendSystemMessage(CreativePinItem.buildTriggerMaskUI(stack));
         return 1;
     }
 
@@ -231,10 +231,10 @@ public final class PinWandCommand {
         if (player == null) return 0;
 
         ItemStack stack = player.getMainHandItem();
-        if (!validateWand(source, stack)) return 0;
+        if (!validateItem(source, stack)) return 0;
 
-        PinWandItem.initConfig(stack);
-        player.sendSystemMessage(PinWandItem.buildEmitterUI(stack));
+        CreativePinItem.initConfig(stack);
+        player.sendSystemMessage(CreativePinItem.buildEmitterUI(stack));
         return 1;
     }
 
@@ -243,11 +243,11 @@ public final class PinWandCommand {
         if (player == null) return 0;
 
         ItemStack stack = player.getMainHandItem();
-        if (!validateWand(source, stack)) return 0;
+        if (!validateItem(source, stack)) return 0;
 
-        PinWandItem.initConfig(stack);
-        PinWandItem.setEmitterRadius(stack, radius);
-        player.sendSystemMessage(PinWandItem.buildEmitterUI(stack));
+        CreativePinItem.initConfig(stack);
+        CreativePinItem.setEmitterRadius(stack, radius);
+        player.sendSystemMessage(CreativePinItem.buildEmitterUI(stack));
         return 1;
     }
 
@@ -256,11 +256,11 @@ public final class PinWandCommand {
         if (player == null) return 0;
 
         ItemStack stack = player.getMainHandItem();
-        if (!validateWand(source, stack)) return 0;
+        if (!validateItem(source, stack)) return 0;
 
-        PinWandItem.initConfig(stack);
-        PinWandItem.setEmitterSpeed(stack, speed);
-        player.sendSystemMessage(PinWandItem.buildEmitterUI(stack));
+        CreativePinItem.initConfig(stack);
+        CreativePinItem.setEmitterSpeed(stack, speed);
+        player.sendSystemMessage(CreativePinItem.buildEmitterUI(stack));
         return 1;
     }
 
@@ -272,9 +272,9 @@ public final class PinWandCommand {
         return player;
     }
 
-    private static boolean validateWand(CommandSourceStack source, ItemStack stack) {
-        if (stack.getItem() != ItemRegistry.PIN_WAND.get()) {
-            source.sendFailure(Component.literal("You must hold the Pin Wand in your main hand"));
+    private static boolean validateItem(CommandSourceStack source, ItemStack stack) {
+        if (stack.getItem() != ItemRegistry.CREATIVE_PIN.get()) {
+            source.sendFailure(Component.literal("You must hold the Creative Pin in your main hand"));
             return false;
         }
         return true;

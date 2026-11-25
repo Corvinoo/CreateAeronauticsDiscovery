@@ -11,7 +11,7 @@ import java.util.List;
  * tag. Adding a new behaviour means implementing {@link PinBehavior} + a {@link Codec} for
  * its config and registering one of these in {@link PinBehaviorTypes}
  *
- * @param configFields metadata used by the Pin Wand's chat UI to generate parameter editing buttons
+ * @param configFields metadata used by the Creative Pin's chat UI to generate parameter editing buttons
  */
 public record PinBehaviorType<T extends PinBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color, boolean deprecated) {
 

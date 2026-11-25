@@ -30,7 +30,7 @@ import static me.corvino.aeronauticsdiscovery.util.SubLevelTags.SUBLEVEL_ID_TAG;
  *   does a single distance pass over the relevant pins and schedules delayed callbacks for the ones
  *   that should react - rather than each pin polling its surroundings every tick.</li>
  * </ul>
- * Pins without a sub-level tag (world-bound pins, e.g. placed manually with the wand on a normal
+ * Pins without a sub-level tag (world-bound pins, e.g. placed manually with the Creative Pin on a normal
  * block) are grouped under {@link #WORLD_BOUND_KEY} internally. Their triggers propagate spatially within
  * the search radius, with no sub-level grouping.
  */
