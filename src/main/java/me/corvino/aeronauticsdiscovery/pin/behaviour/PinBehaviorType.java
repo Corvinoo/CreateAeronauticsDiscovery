@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
+import javax.annotation.Nullable;
+
 import java.util.List;
 
 /**
@@ -12,15 +14,16 @@ import java.util.List;
  * its config and registering one of these in {@link PinBehaviorTypes}
  *
  * @param configFields metadata used by the Creative Pin's chat UI to generate parameter editing buttons
+ * @param model name of the pin model variant under {@code models/pin/}, or null for the default one
  */
-public record PinBehaviorType<T extends PinBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color, boolean deprecated) {
+public record PinBehaviorType<T extends PinBehavior<T>>(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color, boolean deprecated, @Nullable String model) {
 
     public PinBehaviorType(ResourceLocation id, Codec<T> codec, int color) {
-        this(id, codec, List.of(), color, false);
+        this(id, codec, List.of(), color, false, null);
     }
 
     public PinBehaviorType(ResourceLocation id, Codec<T> codec, List<ConfigField> configFields, int color) {
-        this(id, codec, configFields, color, false);
+        this(id, codec, configFields, color, false, null);
     }
 
     public CompoundTag defaultConfig() {

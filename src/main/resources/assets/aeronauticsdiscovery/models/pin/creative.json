@@ -1,0 +1,6 @@
+{
+  "parent": "aeronauticsdiscovery:pin/pin_base",
+  "textures": {
+    "all": "aeronauticsdiscovery:item/pin/creative"
+  }
+}

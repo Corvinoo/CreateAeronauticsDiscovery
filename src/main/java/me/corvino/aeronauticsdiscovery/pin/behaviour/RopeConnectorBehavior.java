@@ -52,7 +52,8 @@ public record RopeConnectorBehavior(
                     new ConfigField("make_bridge", "Make Bridge", ConfigField.FieldType.BOOLEAN, false),
                     new ConfigField("bridge_block", "Bridge Block", ConfigField.FieldType.RESOURCE_LOCATION, ResourceLocation.parse("minecraft:oak_slab"))
             ),
-            0x80FFA040
+            0x80FFA040,
+            "rope"
     );
 
     @Override

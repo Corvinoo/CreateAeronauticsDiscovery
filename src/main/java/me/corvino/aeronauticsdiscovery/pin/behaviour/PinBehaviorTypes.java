@@ -15,16 +15,24 @@ public final class PinBehaviorTypes {
     private PinBehaviorTypes() {}
 
     public static <T extends PinBehavior<T>> PinBehaviorType<T> register(String path, Codec<T> codec, int color) {
-        return register(path, codec, List.of(), color, false);
+        return register(path, codec, List.of(), color, false, null);
     }
 
     public static <T extends PinBehavior<T>> PinBehaviorType<T> register(String path, Codec<T> codec, List<ConfigField> configFields, int color) {
-        return register(path, codec, configFields, color, false);
+        return register(path, codec, configFields, color, false, null);
+    }
+
+    public static <T extends PinBehavior<T>> PinBehaviorType<T> register(String path, Codec<T> codec, List<ConfigField> configFields, int color, String model) {
+        return register(path, codec, configFields, color, false, model);
     }
 
     public static <T extends PinBehavior<T>> PinBehaviorType<T> register(String path, Codec<T> codec, List<ConfigField> configFields, int color, boolean deprecated) {
+        return register(path, codec, configFields, color, deprecated, null);
+    }
+
+    public static <T extends PinBehavior<T>> PinBehaviorType<T> register(String path, Codec<T> codec, List<ConfigField> configFields, int color, boolean deprecated, @Nullable String model) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(CreateAeronauticsDiscovery.MODID, path);
-        PinBehaviorType<T> type = new PinBehaviorType<>(id, codec, configFields, color, deprecated);
+        PinBehaviorType<T> type = new PinBehaviorType<>(id, codec, configFields, color, deprecated, model);
         if (REGISTRY.put(id, type) != null) {
             throw new IllegalStateException("Duplicate pin behavior registration: " + id);
         }

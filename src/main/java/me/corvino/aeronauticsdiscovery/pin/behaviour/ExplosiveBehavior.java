@@ -31,7 +31,8 @@ public record ExplosiveBehavior(float power)
             List.of(
                     new ConfigField("power", "Power", ConfigField.FieldType.FLOAT, 4.0f)
             ),
-            0x80FF4040
+            0x80FF4040,
+            "explosive"
     );
 
     @Override

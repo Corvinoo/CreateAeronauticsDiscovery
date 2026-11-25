@@ -39,7 +39,8 @@ public record ExecuteBehavior(String command, ResourceLocation function)
                     new ConfigField("command", "Command", ConfigField.FieldType.STRING, ""),
                     new ConfigField("function", "Function", ConfigField.FieldType.RESOURCE_LOCATION, EMPTY_FUNCTION_ID)
             ),
-            0x80FFD040
+            0x80FFD040,
+            "function"
     );
 
     @Override

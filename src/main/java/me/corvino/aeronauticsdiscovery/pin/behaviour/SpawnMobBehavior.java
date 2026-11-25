@@ -41,7 +41,8 @@ public record SpawnMobBehavior(ResourceLocation mobId, String nbt) implements Pi
                     new ConfigField("mob_id", "Mob ID", ConfigField.FieldType.RESOURCE_LOCATION, ResourceLocation.parse("minecraft:pillager")),
                     new ConfigField("nbt", "NBT", ConfigField.FieldType.STRING, "")
             ),
-            0x8040FF80
+            0x8040FF80,
+            "summon"
     );
 
     @Override

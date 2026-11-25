@@ -48,6 +48,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
@@ -189,6 +190,11 @@ public class CreateAeronauticsDiscovery {
             event.registerEntityRenderer(EntityRegistry.SOARING_TRADER.get(), SoaringTraderRenderer::new);
             event.registerEntityRenderer(EntityRegistry.PILLAGER_AVIATOR.get(), PillagerAviatorRenderer::new);
             event.registerEntityRenderer(EntityRegistry.PIN.get(), PinEntityRenderer::new);
+        }
+
+        @SubscribeEvent
+        public static void onRegisterAdditionalModels(ModelEvent.RegisterAdditional event) {
+            PinEntityRenderer.MODELS.forEach(event::register);
         }
     }
 }

@@ -33,7 +33,8 @@ public record BurnTimeBehavior(int burnTime, boolean superheated) implements Pin
                     new ConfigField("burn_time", "Burn Time (ticks)", ConfigField.FieldType.INTEGER, 3200),
                     new ConfigField("superheated", "Superheated", ConfigField.FieldType.BOOLEAN, false)
             ),
-            0x80FFB040
+            0x80FFB040,
+            "burn"
     );
 
     @Override
