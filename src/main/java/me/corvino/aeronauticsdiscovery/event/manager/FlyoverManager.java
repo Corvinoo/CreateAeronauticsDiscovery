@@ -43,12 +43,14 @@ public class FlyoverManager extends SavedData {
 
     private static final String DATA_NAME = CreateAeronauticsDiscovery.MODID + "_flyovers";
     private static final String TAG_KEY = "Flyovers";
+    private static final String ENABLED_KEY = "Enabled";
 
     final Map<UUID, FlyoverEntry> flyovers = new LinkedHashMap<>();
     private final Queue<UUID> externalRemovalQueue = new LinkedList<>();
 
     private ServerLevel level;
     private boolean observerRegistered = false;
+    private @Nullable Boolean enabled;
 
     public FlyoverManager() {
         this(null);
@@ -65,6 +67,15 @@ public class FlyoverManager extends SavedData {
         manager.level = level;
         manager.ensureObserverRegistered();
         return manager;
+    }
+
+    public @Nullable Boolean enabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean value) {
+        enabled = value;
+        setDirty();
     }
 
     public static void onLevelTick(LevelTickEvent.Post event) {
@@ -290,11 +301,13 @@ public class FlyoverManager extends SavedData {
     public @NotNull CompoundTag save(CompoundTag tag, HolderLookup.@NotNull Provider provider) {
         List<FlyoverEntry> snapshot = List.copyOf(flyovers.values());
         tag.put(TAG_KEY, FlyoverEntry.CODEC.listOf().encodeStart(NbtOps.INSTANCE, snapshot).getOrThrow());
+        if (enabled != null) tag.putBoolean(ENABLED_KEY, enabled);
         return tag;
     }
 
     private static FlyoverManager load(ServerLevel level, CompoundTag tag) {
         FlyoverManager manager = new FlyoverManager(level);
+        if (tag.contains(ENABLED_KEY)) manager.enabled = tag.getBoolean(ENABLED_KEY);
         if (tag.contains(TAG_KEY, 9 /* ListTag */)) {
             ListTag list = tag.getList(TAG_KEY, 10 /* CompoundTag */);
             FlyoverEntry.CODEC.listOf()

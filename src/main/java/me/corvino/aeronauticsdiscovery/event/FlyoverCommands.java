@@ -66,7 +66,11 @@ public final class FlyoverCommands {
 
         var flyover = Commands.literal("flyover")
                 .then(Commands.literal("toggle")
-                        .executes(ctx -> executeToggle(ctx.getSource())))
+                        .executes(ctx -> executeToggle(ctx.getSource(), !FlyoverEventScheduler.isEnabled()))
+                        .then(Commands.literal("on")
+                                .executes(ctx -> executeToggle(ctx.getSource(), true)))
+                        .then(Commands.literal("off")
+                                .executes(ctx -> executeToggle(ctx.getSource(), false))))
                 .then(Commands.literal("status")
                         .executes(ctx -> executeStatus(ctx.getSource())))
                 .then(Commands.literal("chunks")
@@ -96,10 +100,10 @@ public final class FlyoverCommands {
         );
     }
 
-    private static int executeToggle(CommandSourceStack source) {
-        boolean now = FlyoverEventScheduler.toggleEnabled();
+    private static int executeToggle(CommandSourceStack source, boolean enabled) {
+        FlyoverEventScheduler.setEnabled(source.getServer(), enabled);
         source.sendSuccess(
-                () -> Component.literal("Flyover events " + (now ? "enabled" : "disabled")),
+                () -> Component.literal("Flyover events " + (enabled ? "enabled" : "disabled")),
                 true
         );
         return 1;

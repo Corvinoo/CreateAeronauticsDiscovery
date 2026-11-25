@@ -7,6 +7,7 @@ import me.corvino.aeronauticsdiscovery.util.ModLog;
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.FLYOVER;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
 import me.corvino.aeronauticsdiscovery.assembly.queue.AssemblyQueue;
+import me.corvino.aeronauticsdiscovery.event.manager.FlyoverManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,14 +26,14 @@ public final class FlyoverEventScheduler {
         return ENABLED;
     }
 
-    public static boolean toggleEnabled() {
-        ENABLED = !ENABLED;
-        return ENABLED;
+    public static void setEnabled(MinecraftServer server, boolean value) {
+        ENABLED = value;
+        FlyoverManager.get(server.overworld()).setEnabled(value);
     }
 
-    public static void applyWorldTypeDefault(MinecraftServer server) {
-        ServerLevel overworld = server.overworld();
-        ENABLED = overworld == null || !isFlatWorld(overworld);
+    public static void loadState(MinecraftServer server) {
+        Boolean saved = FlyoverManager.get(server.overworld()).enabled();
+        ENABLED = saved != null ? saved : !isFlatWorld(server.overworld());
     }
 
     public static void onLevelTick(LevelTickEvent.Post event) {

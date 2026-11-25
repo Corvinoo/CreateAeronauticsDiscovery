@@ -19,7 +19,7 @@ This mod is an extension of the Create Aeronautics and will procedurally generat
 
 `/spawnprefab [pos] [structure]` Spawn any NBT prefab as a physics-enabled airship
 
-`/discovery flyover toggle` Toggle automatic flying events
+`/discovery flyover toggle [on|off]` Toggles or explicitly sets automatic flying events
 
 `/discovery flyover` Triggers a flying event manually
 
