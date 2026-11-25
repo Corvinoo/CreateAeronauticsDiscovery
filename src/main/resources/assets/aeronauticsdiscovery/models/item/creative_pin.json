@@ -1,6 +1,6 @@
 {
-  "parent": "minecraft:item/handheld",
+  "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "minecraft:item/stick"
+    "layer0": "aeronauticsdiscovery:item/creative_pin"
   }
 }

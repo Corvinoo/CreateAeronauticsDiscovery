@@ -56,6 +56,10 @@ If you are interested in creating custom structures and events for the mod, you 
 Default plane nbt: @bitmochibit
 Village balloon construction nbt: @MR CAT
 
+## Credits assets
+
+Pin sprites, textures and model: Tcelovek (Modrinth profile: https://modrinth.com/user/Tcelovek)
+
 ## Attributions
 
 - [Create](https://github.com/Creators-of-Create/Create) (licensed under MIT license)
