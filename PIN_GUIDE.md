@@ -4,9 +4,9 @@ Pins are invisible markers you can place on structures to give them custom behav
 
 Due to schematics limitations, they are sometimes essential to make templates properly work as flyover events.
 
-Everything is done through the **Pin Wand** item and its clickable chat UI. The Pin Wand is a utility item that automatically executes `/pinwand` commands.
+Everything is done through the **Creative Pin** item and its clickable chat UI. The Creative Pin is a utility item that automatically executes `/pin` commands.
 
-> **Important:** Pins are invisible to everyone unless they are holding a Pin Wand. If you can't see your pins, make sure the wand is in your hand or off-hand.
+> **Important:** Pins are invisible to everyone unless they are holding a Creative Pin. If you can't see your pins, make sure the item is in your hand or off-hand.
 
 ---
 
@@ -14,11 +14,12 @@ Everything is done through the **Pin Wand** item and its clickable chat UI. The 
 
 - [Pin Guide](#pin-guide)
   - [Table of Contents](#table-of-contents)
-  - [1. Obtain the Wand](#1-obtain-the-wand)
-  - [2. The Pin Wand UI](#2-the-pin-wand-ui)
+  - [1. Obtain the Creative Pin](#1-obtain-the-creative-pin)
+  - [2. The Creative Pin UI](#2-the-creative-pin-ui)
     - [The trigger sub-menu](#the-trigger-sub-menu)
     - [The emitter sub-menu](#the-emitter-sub-menu)
   - [3. Placing Pins](#3-placing-pins)
+    - [Several pins on one face](#several-pins-on-one-face)
   - [4. Behavior Types](#4-behavior-types)
     - [Explosive](#explosive)
     - [Spawn Mob](#spawn-mob)
@@ -29,6 +30,7 @@ Everything is done through the **Pin Wand** item and its clickable chat UI. The 
   - [6. Chain Reactions (Emitter)](#6-chain-reactions-emitter)
   - [7. Inspecting and Removing Pins](#7-inspecting-and-removing-pins)
     - [Inspect a pin](#inspect-a-pin)
+    - [List the pins on a block](#list-the-pins-on-a-block)
     - [Remove via command](#remove-via-command)
     - [Automatic Despawn](#automatic-despawn)
   - [8. Using Pins in Structure Templates](#8-using-pins-in-structure-templates)
@@ -36,23 +38,23 @@ Everything is done through the **Pin Wand** item and its clickable chat UI. The 
 
 ---
 
-## 1. Obtain the Wand
+## 1. Obtain the Creative Pin
 
-Right now, the Wand is a developer item, and it does not appear in the Creative inventory. To obtain it, you can run a give command:
+Right now, the Creative Pin is a developer item, and it does not appear in the Creative inventory. To obtain it, you can run a give command:
 ```
-/give @s aeronauticsdiscovery:pin_wand
+/give @s aeronauticsdiscovery:creative_pin
 ```
 
-Using the wand (opening its UI, configuring it, or placing pins) and running `/pinwand` both require **permission level 2** (operator). 
+Using the Creative Pin (opening its UI, configuring it, placing or inspecting pins) and running `/pin` both require **permission level 2** (operator).
 
 ---
 
-## 2. The Pin Wand UI
+## 2. The Creative Pin UI
 
-**Right-click while holding the wand** (don't click a block) to open the configuration screen in chat. It will look something like this:
+**Right-click while holding the Creative Pin** (don't click a block or a pin) to open the configuration screen in chat. It will look something like this:
 
 ```
-[ Pin Wand - explosive]
+[- Creative Pin - explosive]
   Behavior: explosive  [⤶ Cycle]
   Parameters:
     Power: 4.0  [✎]
@@ -66,7 +68,7 @@ All the buttons you see are clickable directly from the chat. Here's what each b
 | Button                    | What it does                                                                                                  |
 |---------------------------|---------------------------------------------------------------------------------------------------------------|
 | `[⤶ Cycle]`               | Switches to the next [behavior](#4-behavior-types) type)                                                      |
-| `[✎]` next to a parameter | Pre-fills the chat with `/pinwand set <key> <current_value>`, you only need to edit the value and press Enter |
+| `[✎]` next to a parameter | Pre-fills the chat with `/pin set <key> <current_value>`, you only need to edit the value and press Enter |
 | `[✎ Triggers]`            | Opens the [triggers](#5-triggers) sub-menu                                                                    |
 | `[✎ Emitter]`             | Opens the [emitter](#6-chain-reactions-emitter) sub-menu                                                      |
 
@@ -104,32 +106,26 @@ The emitted trigger will be the same type as the one that triggered the pin in t
 
 ## 3. Placing Pins
 
-Once you have configured the Wand:
+After you have configured the Creative Pin:
 
-1. **Right-click a block** with the wand.
-2. The pin appears as a colored translucent cube appears.
+1. **Right-click a block** with the item.
+2. The pin sticks out the face you cliked.
 3. A chat message confirms placement:
 
 ```
 [✧] Placed explosive at 102 64 -380
 ```
 
-The pin inherits whatever behavior, parameters, triggers, and emitter settings the wand had when you placed it.
+The pin inherits whatever behavior, parameters, triggers, and emitter settings the Creative Pin had when you placed it.
 
 If you place a pin inside a structure (sub-level), it is automatically bound to that structure.
 
-> [!TIP]
-> **Right-click a block while sneaking** to place another pin inside the same block. A block can hold several pins at once. A normal right-click shows the configuration panels for **all** the pins in that block.
 
-The color of the cube indicates the behavior type:
+### Several pins on one face
 
-| Color  | Behavior        |
-|--------|-----------------|
-| Red    | Explosive       |
-| Green  | Spawn Mob       |
-| Orange | Rope Connector  |
-| Cyan   | Fill Up Balloon |
-| Lime   | Execute         |
+You can keep right-clicking the same face to add more pins:
+
+A face holds at most **8 pins**. Every face of a block counts separately.
 
 ---
 
@@ -221,7 +217,7 @@ Execution runs anchored at the **pin's own block/space**, at **permission level 
 
 ## 5. Triggers
 
-Triggers control *when* a pin activates. Click `[✎ Triggers]` in the wand UI to configure them.
+Triggers control *when* a pin activates. Click `[✎ Triggers]` in the Creative Pin UI to configure them.
 
 | Trigger              | What activates it                                                                 |
 |----------------------|-----------------------------------------------------------------------------------|
@@ -247,7 +243,7 @@ Triggers control *when* a pin activates. Click `[✎ Triggers]` in the wand UI t
 
 The emitter lets a pin propagate its trigger to nearby pins. When a pin fires, it sends its trigger to all pins within the configured radius.
 
-Click `[✎ Emitter]` in the wand UI to configure:
+Click `[✎ Emitter]` in the Creative Pin UI to configure:
 
 | Setting    | Description                                                            |
 |------------|------------------------------------------------------------------------|
@@ -262,7 +258,7 @@ The delay between pins is based on distance: **delay (in ticks) = distance / spe
 
 ### Inspect a pin
 
-**Right-click a block that has a pin** with the wand. You'll see something like this:
+You can **right-click the head of a pin** with the Creative Pin to show that pin's info through the chat UI:
 
 ```
 [- Pin Info - explosive]
@@ -275,17 +271,19 @@ The delay between pins is based on distance: **delay (in ticks) = distance / spe
   [✕ Remove]
 ```
 
-> [!NOTE]
-> If a block holds several pins, a normal right-click shows the config panel for **every** pin in that block, each with its own `[✕ Remove]` button. Use **Shift + right-click** to add another pin to the same block instead.
+Click `[✕ Remove]` to delete the pin.
 
-Click `[✕ Remove]` to delete the pin instantly.
+
+### List the pins on a block
+
+**Shift + right-click a block** with the Creative Pin in hand to show the info panel of every pin on that block (all faces).
 
 ### Remove via command
 
 If you know the coordinates, you also need the pin's entity ID (shown when inspecting it):
 
 ```
-/pinwand remove 102 64 -380 1234
+/pin remove 102 64 -380 1234
 ```
 
 > [!NOTE]
