@@ -84,7 +84,9 @@ public class PlaceTemplateEntitiesStep extends AssemblyStep {
                         nbt.getString("id"), info.blockPos);
             }
             created.ifPresent(entity -> {
-                entity.moveTo(info.pos.x, info.pos.y, info.pos.z, entity.getYRot(), entity.getXRot());
+                float yaw = entity.rotate(settings.getRotation());
+                yaw += entity.mirror(settings.getMirror()) - entity.getYRot();
+                entity.moveTo(info.pos.x, info.pos.y, info.pos.z, yaw, entity.getXRot());
                 ctx.level.addFreshEntity(entity);
             });
             placed++;

@@ -22,6 +22,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -184,6 +186,18 @@ public class PinEntity extends Entity {
         this.triggerMask.save(tag);
         this.emitterConfig.save(tag);
         tag.putString(TAG_FACE, getFace().getSerializedName());
+    }
+
+    @Override
+    public float rotate(Rotation rotation) {
+        setFace(rotation.rotate(getFace()));
+        return super.rotate(rotation);
+    }
+
+    @Override
+    public float mirror(Mirror mirror) {
+        setFace(mirror.mirror(getFace()));
+        return super.mirror(mirror);
     }
 
     @Override
