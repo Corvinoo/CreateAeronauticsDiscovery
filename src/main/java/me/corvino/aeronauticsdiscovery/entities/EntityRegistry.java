@@ -1,5 +1,6 @@
 package me.corvino.aeronauticsdiscovery.entities;
 
+import me.corvino.aeronauticsdiscovery.glue.KelpGlueEntity;
 import me.corvino.aeronauticsdiscovery.pin.PinEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -44,5 +45,13 @@ public class EntityRegistry {
                     .sized(1.1F, 1.1F)
                     .eyeHeight(0.0F)
                     .build("pin"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<KelpGlueEntity>> KELP_GLUE = ENTITIES.register("kelp_glue",
+            () -> EntityType.Builder.<KelpGlueEntity>of(KelpGlueEntity::new, MobCategory.MISC)
+                    .noSummon()
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(10)
+                    .updateInterval(Integer.MAX_VALUE)
+                    .build("kelp_glue"));
 
 }

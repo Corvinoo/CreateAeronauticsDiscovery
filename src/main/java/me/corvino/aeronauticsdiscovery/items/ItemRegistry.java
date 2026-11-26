@@ -23,6 +23,9 @@ public class ItemRegistry {
     public static final DeferredHolder<Item, CreativePinItem> CREATIVE_PIN =
             ITEMS.register("creative_pin", () -> new CreativePinItem(new Item.Properties().stacksTo(1)));
 
+    public static final DeferredHolder<Item, KelpGlueItem> KELP_GLUE =
+            ITEMS.register("kelp_glue", () -> new KelpGlueItem(new Item.Properties().stacksTo(1)));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

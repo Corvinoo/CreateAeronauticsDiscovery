@@ -6,6 +6,7 @@ import me.corvino.aeronauticsdiscovery.bridge.BridgeInteractionHandler;
 import me.corvino.aeronauticsdiscovery.bridge.BridgePlankManager;
 import me.corvino.aeronauticsdiscovery.bridge.BridgeSubLevelObserver;
 import me.corvino.aeronauticsdiscovery.client.renderer.PinEntityRenderer;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.PillagerAviatorRenderer;
 import me.corvino.aeronauticsdiscovery.client.renderer.SoaringTraderRenderer;
 import me.corvino.aeronauticsdiscovery.commands.*;
@@ -190,6 +191,7 @@ public class CreateAeronauticsDiscovery {
             event.registerEntityRenderer(EntityRegistry.SOARING_TRADER.get(), SoaringTraderRenderer::new);
             event.registerEntityRenderer(EntityRegistry.PILLAGER_AVIATOR.get(), PillagerAviatorRenderer::new);
             event.registerEntityRenderer(EntityRegistry.PIN.get(), PinEntityRenderer::new);
+            event.registerEntityRenderer(EntityRegistry.KELP_GLUE.get(), NoopRenderer::new);
         }
 
         @SubscribeEvent
