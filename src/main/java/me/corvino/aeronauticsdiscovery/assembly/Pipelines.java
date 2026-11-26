@@ -15,10 +15,11 @@ public final class Pipelines {
             new PlaceBlocksStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
+            new CollectGlueSelectionsStep(),
             new AssembleStep(),
             new RotateSubLevelStep(),
             new AddForceLoadTicketStep(),
-            new ConvertPhysicsBarrelStep(),
+            new SplitGlueSelectionsStep(),
             new CleanUpItemEntities(),
             new UnloadChunkStep()
     )));
@@ -28,7 +29,9 @@ public final class Pipelines {
             new FindAssemblyStartStep(),
             new PlaceTemplateEntitiesStep(),
             new ReadinessCheckStep(),
+            new CollectGlueSelectionsStep(),
             new AssembleStep(),
+            new SplitGlueSelectionsStep(),
             new UnloadChunkStep()
     )));
 
@@ -37,10 +40,11 @@ public final class Pipelines {
             new PlaceBlocksStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
+            new CollectGlueSelectionsStep(),
             new AssembleStep(),
             new RotateSubLevelStep(),
             new AddForceLoadTicketStep(),
-            new ConvertPhysicsBarrelStep(),
+            new SplitGlueSelectionsStep(),
             new CleanUpItemEntities(),
             new UnloadChunkStep()
     )));
@@ -50,9 +54,10 @@ public final class Pipelines {
             new PlaceBlocksStep(),
             new FindAssemblyStartStep(),
             new ReadinessCheckStep(),
+            new CollectGlueSelectionsStep(),
             new AssembleStep(),
             new RotateSubLevelStep(),
-//            new ConvertPhysicsBarrelStep(),
+            new SplitGlueSelectionsStep(),
             new CleanUpItemEntities(),
             new UnloadChunkStep()
     )));

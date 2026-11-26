@@ -4,12 +4,15 @@ import me.corvino.aeronauticsdiscovery.assembly.AssemblyContext;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblyPipeline;
 import me.corvino.aeronauticsdiscovery.assembly.AssemblySource;
 import me.corvino.aeronauticsdiscovery.assembly.Pipelines;
+import me.corvino.aeronauticsdiscovery.glue.GlueSelection;
 import me.corvino.aeronauticsdiscovery.util.ModLog;
 import net.minecraft.core.BlockPos;
 
 import static me.corvino.aeronauticsdiscovery.util.LogCategory.QUEUE;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -19,6 +22,8 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 final class AssemblyEntrySerializer {
@@ -49,6 +54,11 @@ final class AssemblyEntrySerializer {
             tag.putUUID("subLevelId", ctx.subLevelId);
         }
         tag.putInt("CurrentStepIndex", ctx.currentStepIndex);
+        ListTag glue = new ListTag();
+        for (GlueSelection selection : ctx.glueSelections) {
+            glue.add(selection.save());
+        }
+        tag.put("GlueSelections", glue);
         return tag;
     }
 
@@ -89,6 +99,11 @@ final class AssemblyEntrySerializer {
                 ctx.subLevelId = tag.getUUID("subLevelId");
             }
             ctx.currentStepIndex = tag.getInt("CurrentStepIndex");
+            List<GlueSelection> selections = new ArrayList<>();
+            for (Tag glue : tag.getList("GlueSelections", Tag.TAG_COMPOUND)) {
+                selections.add(GlueSelection.load((CompoundTag) glue));
+            }
+            ctx.glueSelections = selections;
             ctx.steps = pipeline.createSteps();
 
             int retryCount = tag.getInt("RetryCount");

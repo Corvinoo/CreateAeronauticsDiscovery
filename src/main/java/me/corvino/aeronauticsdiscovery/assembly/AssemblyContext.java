@@ -3,6 +3,7 @@ package me.corvino.aeronauticsdiscovery.assembly;
 import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import me.corvino.aeronauticsdiscovery.assembly.steps.AssemblyStep;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotPlan;
+import me.corvino.aeronauticsdiscovery.glue.GlueSelection;
 import me.corvino.aeronauticsdiscovery.physics.InitialVelocity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
@@ -38,6 +39,7 @@ public class AssemblyContext {
 
     @Nullable public SimAssemblyHelper.AssemblyResult assemblyResult;
     @Nullable public UUID subLevelId;
+    @NotNull public List<GlueSelection> glueSelections = new ArrayList<>();
 
     //runtime tracker
     public int currentStepIndex = 0;
@@ -74,6 +76,7 @@ public class AssemblyContext {
         this.subLevelId = null;
         this.assemblyResult = null;
         this.assemblerPos = null;
+        this.glueSelections = new ArrayList<>();
     }
 
     private AssemblyContext(ServerLevel level, ResourceLocation templateId, AssemblySource source,

@@ -73,7 +73,7 @@ public class PinSubLevelObserver implements SubLevelObserver {
             if (!pin.isAlive()) continue;
 
             // Only tag pins that are actually contained in this sub-level's chunk area.
-            // This prevents child sub-levels (e.g. from ConvertPhysicsBarrelStep) from
+            // This prevents child sub-levels (e.g. from SplitGlueSelectionsStep) from
             // stealing pins that belong to the main flyover sub-level, while still
             // correctly tagging pins legitimately inside child sub-levels.
             SubLevel containing = Sable.HELPER.getContaining(level, pin.position());
