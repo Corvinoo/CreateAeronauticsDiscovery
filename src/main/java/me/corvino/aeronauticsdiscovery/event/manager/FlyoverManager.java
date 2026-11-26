@@ -216,7 +216,7 @@ public class FlyoverManager extends SavedData {
         // Clean entities and tags from child sub-levels | TODO: make path to handle child-sublevel more clear and streamlined
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container != null) {
-            for (ServerSubLevel child : ChildSubLevelManager.getChildSubLevels(container, entry.subLevelId())) {
+            for (ServerSubLevel child : ChildSubLevelManager.getDescendants(container, entry.subLevelId())) {
                 fireReleasedOnPins(child);
                 ChildSubLevelManager.clearChildTags(child);
                 FlyoverUtils.removeAllEntitiesInSublevel(child, false,

@@ -2,6 +2,7 @@ package me.corvino.aeronauticsdiscovery.physics;
 
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.physics.callback.BlockSubLevelCollisionCallback;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
@@ -55,8 +56,7 @@ public class SubLevelImpactCallback implements BlockSubLevelCollisionCallback {
         SubLevel other = Sable.HELPER.getContaining(level, otherPos);
         if (!(other instanceof ServerSubLevel otherSsl)) return false;
         if (otherSsl.getUniqueId().equals(ssl.getUniqueId())) return true;
-        CompoundTag otherTag = otherSsl.getUserDataTag();
-        return otherTag != null && otherTag.hasUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG)
-                && otherTag.getUUID(ChildSubLevelManager.PARENT_SUBLEVEL_ID_TAG).equals(ssl.getUniqueId());
+        SubLevelContainer container = SubLevelContainer.getContainer(level);
+        return container != null && ChildSubLevelManager.isDescendantOf(container, otherSsl, ssl.getUniqueId());
     }
 }
