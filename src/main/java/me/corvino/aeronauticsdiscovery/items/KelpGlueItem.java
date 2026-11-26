@@ -17,11 +17,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 import javax.annotation.Nullable;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,7 +66,10 @@ public class KelpGlueItem extends Item {
         BlockPos pos = context.getClickedPos();
 
         if (player.isShiftKeyDown()) {
-            removeGlueAt(level, player, pos);
+            if (getFirstCorner(stack) != null) {
+                clearFirstCorner(stack);
+                notify(player, Component.literal("Selection cleared").withStyle(ChatFormatting.GRAY));
+            }
             return InteractionResult.CONSUME;
         }
 
@@ -96,17 +101,50 @@ public class KelpGlueItem extends Item {
         return InteractionResult.CONSUME;
     }
 
-    private static void removeGlueAt(Level level, Player player, BlockPos pos) {
-        Optional<KelpGlueEntity> target = gluesNear(level, new BoundingBox(pos)).stream()
-                .filter(glue -> glue.blockBox().isInside(pos))
-                .min(Comparator.comparingLong(glue -> GlueHierarchy.volume(glue.blockBox())));
-        if (target.isEmpty()) {
-            notify(player, Component.literal("No glue box contains this block").withStyle(ChatFormatting.GRAY));
-            return;
-        }
-        BoundingBox box = target.get().blockBox();
-        target.get().discard();
+    @Override
+    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
+        return false;
+    }
+
+    public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        Player player = event.getEntity();
+        if (player.level().isClientSide) return;
+        if (!event.getItemStack().is(ItemRegistry.KELP_GLUE.get())) return;
+        event.setCanceled(true);
+        if (event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) return;
+        if (!hasOperatorPermission(player)) return;
+        KelpGlueEntity target = hoveredGlue(player);
+        if (target == null) return;
+        target.discard();
         notify(player, Component.literal("Removed glue").withStyle(ChatFormatting.GRAY));
+    }
+
+    @Nullable
+    public static KelpGlueEntity hoveredGlue(Player player) {
+        double range = player.blockInteractionRange() + 1.0;
+        Vec3 origin = player.getEyePosition();
+        Vec3 target = origin.add(player.getViewVector(1.0F).scale(range));
+        KelpGlueEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        long bestVolume = Long.MAX_VALUE;
+        for (KelpGlueEntity glue : player.level().getEntitiesOfClass(KelpGlueEntity.class, player.getBoundingBox().inflate(range))) {
+            AABB box = AABB.of(glue.blockBox());
+            double distance;
+            if (box.contains(origin)) {
+                distance = 0.0;
+            } else {
+                Optional<Vec3> clip = box.clip(origin, target);
+                if (clip.isEmpty()) continue;
+                distance = clip.get().distanceToSqr(origin);
+            }
+            long volume = GlueHierarchy.volume(glue.blockBox());
+            if (distance < bestDistance || (distance == bestDistance && volume < bestVolume)) {
+                best = glue;
+                bestDistance = distance;
+                bestVolume = volume;
+            }
+        }
+        return best;
     }
 
     public static List<KelpGlueEntity> gluesNear(Level level, BoundingBox box) {

@@ -18,6 +18,7 @@ import me.corvino.aeronauticsdiscovery.pin.trigger.ProjectileImpactTrigger;
 import me.corvino.aeronauticsdiscovery.pin.trigger.SubLevelImpactTrigger;
 import me.corvino.aeronauticsdiscovery.entities.EntityRegistry;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
+import me.corvino.aeronauticsdiscovery.items.KelpGlueItem;
 import me.corvino.aeronauticsdiscovery.pin.behaviour.PinBehaviorTypes;
 import me.corvino.aeronauticsdiscovery.autopilot.AutopilotGoalTypes;
 import me.corvino.aeronauticsdiscovery.event.FlyoverCommands;
@@ -116,6 +117,7 @@ public class CreateAeronauticsDiscovery {
         NeoForge.EVENT_BUS.addListener(PlayerProximityTrigger::onLevelTick);
 //        NeoForge.EVENT_BUS.addListener(StructureProximityTracker::onLevelTick); //disabled for now
         NeoForge.EVENT_BUS.addListener(FlyoverCommands::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(KelpGlueItem::onLeftClickBlock);
         NeoForge.EVENT_BUS.addListener(PrefabPhysicsRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(FlyoverEventRegistry::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(PatrolRegistry::onAddReloadListeners);

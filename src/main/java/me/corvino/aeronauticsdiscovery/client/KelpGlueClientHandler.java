@@ -23,7 +23,9 @@ public final class KelpGlueClientHandler {
 
     private static final int GLUE_COLOR = 0x3D7EFF;
     private static final int PREVIEW_COLOR = 0x7FB2FF;
+    private static final int HOVER_COLOR = 0xA8D0FF;
     private static final float GLUE_LINE_WIDTH = 1 / 16f;
+    private static final float HOVER_LINE_WIDTH = 1 / 10f;
     private static final float PREVIEW_LINE_WIDTH = 1 / 12f;
     private static final double VIEW_RANGE = 96.0;
     private static final Object PREVIEW_KEY = new Object();
@@ -38,15 +40,19 @@ public final class KelpGlueClientHandler {
         if (!KelpGlueItem.isHolding(player)) return;
 
         Outliner outliner = Outliner.getInstance();
+        BlockPos first = KelpGlueItem.getFirstCorner(heldGlue(player));
+        KelpGlueEntity hovered = first == null && player.getMainHandItem().is(ItemRegistry.KELP_GLUE.get())
+                ? KelpGlueItem.hoveredGlue(player)
+                : null;
         AABB range = player.getBoundingBox().inflate(VIEW_RANGE);
         for (KelpGlueEntity glue : mc.level.getEntitiesOfClass(KelpGlueEntity.class, range)) {
+            boolean highlight = glue == hovered;
             outliner.showAABB(glue, AABB.of(glue.blockBox()))
-                    .colored(GLUE_COLOR)
-                    .lineWidth(GLUE_LINE_WIDTH)
+                    .colored(highlight ? HOVER_COLOR : GLUE_COLOR)
+                    .lineWidth(highlight ? HOVER_LINE_WIDTH : GLUE_LINE_WIDTH)
                     .disableLineNormals();
         }
 
-        BlockPos first = KelpGlueItem.getFirstCorner(heldGlue(player));
         if (first == null) return;
         BlockPos second = first;
         if (mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
