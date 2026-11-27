@@ -4,10 +4,13 @@ import me.corvino.aeronauticsdiscovery.CreateAeronauticsDiscovery;
 import me.corvino.aeronauticsdiscovery.glue.KelpGlueEntity;
 import me.corvino.aeronauticsdiscovery.items.ItemRegistry;
 import me.corvino.aeronauticsdiscovery.items.KelpGlueItem;
+import net.createmod.catnip.outliner.Outline;
 import net.createmod.catnip.outliner.Outliner;
+import net.createmod.catnip.render.BindableTexture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
@@ -21,12 +24,14 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 @EventBusSubscriber(modid = CreateAeronauticsDiscovery.MODID, value = Dist.CLIENT)
 public final class KelpGlueClientHandler {
 
-    private static final int GLUE_COLOR = 0x3D7EFF;
-    private static final int PREVIEW_COLOR = 0x7FB2FF;
-    private static final int HOVER_COLOR = 0xA8D0FF;
-    private static final float GLUE_LINE_WIDTH = 1 / 16f;
-    private static final float HOVER_LINE_WIDTH = 1 / 10f;
-    private static final float PREVIEW_LINE_WIDTH = 1 / 12f;
+    private static final int GLUE_COLOR = 0x3C4D28;
+    private static final int PREVIEW_COLOR = 0x3B4C27;
+    private static final int HOVER_COLOR = 0x566B3A;
+    private static final BindableTexture GLUE_TEXTURE =
+            () -> ResourceLocation.fromNamespaceAndPath(CreateAeronauticsDiscovery.MODID, "textures/special/kelp_glue.png");
+    private static final float GLUE_LINE_WIDTH = 1 / 24f;
+    private static final float HOVER_LINE_WIDTH = 1 / 16f;
+    private static final float PREVIEW_LINE_WIDTH = 1 / 24f;
     private static final double VIEW_RANGE = 96.0;
     private static final Object PREVIEW_KEY = new Object();
 
@@ -47,10 +52,15 @@ public final class KelpGlueClientHandler {
         AABB range = player.getBoundingBox().inflate(VIEW_RANGE);
         for (KelpGlueEntity glue : mc.level.getEntitiesOfClass(KelpGlueEntity.class, range)) {
             boolean highlight = glue == hovered;
-            outliner.showAABB(glue, AABB.of(glue.blockBox()))
+            Outline.OutlineParams params = outliner.showAABB(glue, AABB.of(glue.blockBox()))
                     .colored(highlight ? HOVER_COLOR : GLUE_COLOR)
                     .lineWidth(highlight ? HOVER_LINE_WIDTH : GLUE_LINE_WIDTH)
                     .disableLineNormals();
+            if (highlight) {
+                params.withFaceTexture(GLUE_TEXTURE);
+            } else {
+                params.clearTextures();
+            }
         }
 
         if (first == null) return;
@@ -60,6 +70,7 @@ public final class KelpGlueClientHandler {
         }
         outliner.chaseAABB(PREVIEW_KEY, AABB.of(BoundingBox.fromCorners(first, second)))
                 .colored(PREVIEW_COLOR)
+                .withFaceTexture(GLUE_TEXTURE)
                 .lineWidth(PREVIEW_LINE_WIDTH)
                 .disableLineNormals();
     }
